@@ -16,7 +16,8 @@ export class TableBVC extends Component<tableProps, tableState> {
 	render() {
 		const { drawerData } = this.state
 		const { meta, data, pageSize } = this.props
-		const columns = meta.map((col: any) => {
+
+		const columns = meta.columns.map((col: any) => {
 			if (col.dataIndex !== 'action') return col
 			return {
 				...col,
@@ -43,16 +44,21 @@ export class TableBVC extends Component<tableProps, tableState> {
 		return (
 			<>
 				<Table
-					pagination={{ pageSize: pageSize || 16 }}
+					pagination={{ defaultPageSize: pageSize || 16 }}
 					bordered
 					size='small'
 					columns={columns}
 					dataSource={data.map((item: any) => ({ ...item, key: item.id }))}
 				/>
-				<Drawer width={640} closable={true} visible={this.state.drawer} onClose={this.closeDrawer}>
+				<Drawer
+					width={'80%'}
+					closable={true}
+					visible={this.state.drawer}
+					onClose={this.closeDrawer}
+				>
 					{BVCComponent ? (
 						<Suspense fallback={<Spin />}>
-							<BVCComponent data={drawerData} />
+							<BVCComponent data={drawerData} metadata={meta} />
 						</Suspense>
 					) : (
 						<NotFound />

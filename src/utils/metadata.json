@@ -1,26 +1,84 @@
-[
-	{
-		"title": "First Name",
-		"dataIndex": "first_name"
+{
+	"ajax": {
+		"create": {
+			"method": "POST",
+			"endpoint": "https://someurl.com/employees"
+		},
+		"update": {
+			"method": "PUT",
+			"endpoint": "https://someurl.com/employees/:id"
+		},
+		"retrieve": {
+			"method": "GET",
+			"endpoint": "https://someurl.com/employees"
+		},
+		"retrieve_single": {
+			"method": "GET",
+			"endpoint": "https://someurl.com/employees/:id"
+		},
+		"delete": {
+			"method": "DELETE",
+			"endpoint": "https://someurl.com/employees/:id"
+		}
 	},
-	{
-		"title": "Last Name",
-		"dataIndex": "last_name"
+	"actions": {
+		"edit": true,
+		"delete": true
 	},
-	{
-		"title": "Email",
-		"dataIndex": "email"
-	},
-	{
-		"title": "Gender",
-		"dataIndex": "gender"
-	},
-	{
-		"title": "IP",
-		"dataIndex": "ip_address"
-	},
-	{
-		"title": "Action",
-		"dataIndex": "action"
-	}
-]
+	"columns": [
+		{
+			"title": "First Name",
+			"dataIndex": "first_name",
+			"field": {
+				"editable": true,
+				"type": "text",
+				"placeholder": "First Name",
+				"validation": [
+					{ "min": 2, "message": "Length have to minimum 2" },
+					{ "max": 10, "message": "Max value length is 10" }
+				]
+			}
+		},
+		{
+			"title": "Last Name",
+			"dataIndex": "last_name",
+			"field": {
+				"editable": true,
+				"type": "text",
+				"placeholder": "Last Name"
+			}
+		},
+		{
+			"title": "Email",
+			"dataIndex": "email",
+			"field": {
+				"editable": true,
+				"type": "email",
+				"placeholder": "Email"
+			}
+		},
+		{
+			"title": "Gender",
+			"dataIndex": "gender",
+			"field": {
+				"editable": true,
+				"type": "radio",
+				"placeholder": "Gender"
+			}
+		},
+		{
+			"title": "IP",
+			"dataIndex": "ip_address",
+			"field": {
+				"editable": false
+			}
+		},
+		{
+			"title": "Action",
+			"dataIndex": "action",
+			"field": {
+				"editable": false
+			}
+		}
+	]
+}

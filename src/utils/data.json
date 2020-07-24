@@ -6,8 +6,7 @@
 		"email": "cwoltman0@nifty.com",
 		"gender": "Male",
 		"ip_address": "30.215.233.76",
-		"bvc": "EmployeeInfo",
-		"bvc_path": "/employee/1"
+		"bvc": "EmployeeInfo"
 	},
 	{
 		"id": 2,
@@ -16,8 +15,7 @@
 		"email": "gborder1@dailymotion.com",
 		"gender": "Female",
 		"ip_address": "103.127.167.189",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/2"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 3,
@@ -26,8 +24,7 @@
 		"email": "wmottley2@businesswire.com",
 		"gender": "Male",
 		"ip_address": "244.101.41.211",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/3"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 4,
@@ -36,8 +33,7 @@
 		"email": "pwarde3@google.co.jp",
 		"gender": "Male",
 		"ip_address": "16.80.142.20",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/4"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 5,
@@ -46,8 +42,7 @@
 		"email": "jvesque4@wikipedia.org",
 		"gender": "Male",
 		"ip_address": "146.153.240.201",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/5"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 6,
@@ -56,8 +51,7 @@
 		"email": "jstockney5@answers.com",
 		"gender": "Female",
 		"ip_address": "200.145.203.225",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/6"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 7,
@@ -66,8 +60,7 @@
 		"email": "vyacob6@devhub.com",
 		"gender": "Female",
 		"ip_address": "176.138.55.33",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/7"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 8,
@@ -76,8 +69,7 @@
 		"email": "ssabatini7@diigo.com",
 		"gender": "Male",
 		"ip_address": "153.29.247.245",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/8"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 9,
@@ -86,8 +78,7 @@
 		"email": "fmacneilly8@bing.com",
 		"gender": "Male",
 		"ip_address": "145.217.249.9",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/9"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 10,
@@ -96,8 +87,7 @@
 		"email": "lcreffeild9@naver.com",
 		"gender": "Male",
 		"ip_address": "177.190.122.241",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/10"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 11,
@@ -106,8 +96,7 @@
 		"email": "vhuisona@arstechnica.com",
 		"gender": "Female",
 		"ip_address": "115.101.46.72",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/11"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 12,
@@ -116,8 +105,7 @@
 		"email": "btimpanyb@ucoz.com",
 		"gender": "Male",
 		"ip_address": "22.133.140.73",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/12"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 13,
@@ -126,8 +114,7 @@
 		"email": "hmuttittc@epa.gov",
 		"gender": "Male",
 		"ip_address": "175.159.55.147",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/13"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 14,
@@ -136,8 +123,7 @@
 		"email": "wrispend@goodreads.com",
 		"gender": "Male",
 		"ip_address": "208.229.128.89",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/14"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 15,
@@ -146,8 +132,7 @@
 		"email": "rfulune@dot.gov",
 		"gender": "Male",
 		"ip_address": "218.152.117.230",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/15"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 16,
@@ -156,8 +141,7 @@
 		"email": "masherf@naver.com",
 		"gender": "Female",
 		"ip_address": "95.66.48.251",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/16"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 17,
@@ -166,8 +150,7 @@
 		"email": "flisimoreg@trellian.com",
 		"gender": "Male",
 		"ip_address": "238.209.255.105",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/17"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 18,
@@ -176,8 +159,7 @@
 		"email": "cfeatherstoneh@tmall.com",
 		"gender": "Female",
 		"ip_address": "121.231.3.243",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/18"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 19,
@@ -186,8 +168,7 @@
 		"email": "ccarrelli@gnu.org",
 		"gender": "Female",
 		"ip_address": "57.52.24.116",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/19"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 20,
@@ -196,8 +177,7 @@
 		"email": "tlaymanj@illinois.edu",
 		"gender": "Female",
 		"ip_address": "173.208.119.207",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/20"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 21,
@@ -206,8 +186,7 @@
 		"email": "ahanmerk@miibeian.gov.cn",
 		"gender": "Male",
 		"ip_address": "64.167.13.132",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/21"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 22,
@@ -216,8 +195,7 @@
 		"email": "eferrettinol@purevolume.com",
 		"gender": "Female",
 		"ip_address": "224.184.104.199",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/22"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 23,
@@ -226,8 +204,7 @@
 		"email": "twheldonm@weather.com",
 		"gender": "Female",
 		"ip_address": "187.139.157.56",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/23"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 24,
@@ -236,8 +213,7 @@
 		"email": "aemelinen@blinklist.com",
 		"gender": "Male",
 		"ip_address": "5.189.210.11",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/24"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 25,
@@ -246,8 +222,7 @@
 		"email": "ublakewayo@vistaprint.com",
 		"gender": "Male",
 		"ip_address": "146.170.105.0",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/25"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 26,
@@ -256,8 +231,7 @@
 		"email": "dspurdensp@moonfruit.com",
 		"gender": "Female",
 		"ip_address": "66.67.119.87",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/26"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 27,
@@ -266,8 +240,7 @@
 		"email": "alindblomq@biglobe.ne.jp",
 		"gender": "Female",
 		"ip_address": "183.247.168.246",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/27"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 28,
@@ -276,8 +249,7 @@
 		"email": "rlorentzr@t.co",
 		"gender": "Male",
 		"ip_address": "195.244.142.239",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/28"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 29,
@@ -286,8 +258,7 @@
 		"email": "tcolters@stumbleupon.com",
 		"gender": "Female",
 		"ip_address": "248.196.33.191",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/29"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 30,
@@ -296,8 +267,7 @@
 		"email": "akenealyt@alexa.com",
 		"gender": "Male",
 		"ip_address": "245.190.157.105",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/30"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 31,
@@ -306,8 +276,7 @@
 		"email": "nlipyeatu@unesco.org",
 		"gender": "Male",
 		"ip_address": "199.108.211.251",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/31"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 32,
@@ -316,8 +285,7 @@
 		"email": "rrussanv@elegantthemes.com",
 		"gender": "Male",
 		"ip_address": "184.242.82.241",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/32"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 33,
@@ -326,8 +294,7 @@
 		"email": "tespinosaw@goo.gl",
 		"gender": "Female",
 		"ip_address": "4.27.144.48",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/33"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 34,
@@ -336,8 +303,7 @@
 		"email": "eworsfieldx@utexas.edu",
 		"gender": "Male",
 		"ip_address": "56.8.239.9",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/34"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 35,
@@ -346,8 +312,7 @@
 		"email": "esandercocky@patch.com",
 		"gender": "Female",
 		"ip_address": "78.51.53.112",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/35"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 36,
@@ -356,8 +321,7 @@
 		"email": "tfinklez@msu.edu",
 		"gender": "Male",
 		"ip_address": "137.14.252.27",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/36"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 37,
@@ -366,8 +330,7 @@
 		"email": "eburbury10@businesswire.com",
 		"gender": "Female",
 		"ip_address": "14.112.223.248",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/37"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 38,
@@ -376,8 +339,7 @@
 		"email": "ldomb11@ed.gov",
 		"gender": "Female",
 		"ip_address": "116.56.45.253",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/38"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 39,
@@ -386,8 +348,7 @@
 		"email": "fdornin12@com.com",
 		"gender": "Male",
 		"ip_address": "58.82.56.49",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/39"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 40,
@@ -396,8 +357,7 @@
 		"email": "apavlata13@washington.edu",
 		"gender": "Female",
 		"ip_address": "242.246.18.240",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/40"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 41,
@@ -406,8 +366,7 @@
 		"email": "glightbourn14@ihg.com",
 		"gender": "Male",
 		"ip_address": "37.45.154.17",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/41"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 42,
@@ -416,8 +375,7 @@
 		"email": "cwalentynowicz15@nbcnews.com",
 		"gender": "Male",
 		"ip_address": "18.141.159.211",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/42"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 43,
@@ -426,8 +384,7 @@
 		"email": "ikarpenya16@zdnet.com",
 		"gender": "Male",
 		"ip_address": "212.64.57.212",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/43"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 44,
@@ -436,8 +393,7 @@
 		"email": "hasp17@hubpages.com",
 		"gender": "Female",
 		"ip_address": "161.246.159.79",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/44"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 45,
@@ -446,8 +402,7 @@
 		"email": "rnoden18@ask.com",
 		"gender": "Male",
 		"ip_address": "100.232.83.197",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/45"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 46,
@@ -456,8 +411,7 @@
 		"email": "bmasi19@cbslocal.com",
 		"gender": "Male",
 		"ip_address": "175.79.111.140",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/46"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 47,
@@ -466,8 +420,7 @@
 		"email": "jkewzick1a@storify.com",
 		"gender": "Female",
 		"ip_address": "86.193.31.147",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/47"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 48,
@@ -476,8 +429,7 @@
 		"email": "nrobertis1b@buzzfeed.com",
 		"gender": "Female",
 		"ip_address": "210.105.177.47",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/48"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 49,
@@ -486,8 +438,7 @@
 		"email": "ldalwood1c@imageshack.us",
 		"gender": "Male",
 		"ip_address": "70.189.50.201",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/49"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 50,
@@ -496,8 +447,7 @@
 		"email": "bhargess1d@exblog.jp",
 		"gender": "Male",
 		"ip_address": "48.28.134.104",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/50"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 51,
@@ -506,8 +456,7 @@
 		"email": "jpetican1e@nyu.edu",
 		"gender": "Female",
 		"ip_address": "40.185.49.230",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/51"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 52,
@@ -516,8 +465,7 @@
 		"email": "mzanetello1f@a8.net",
 		"gender": "Female",
 		"ip_address": "132.2.86.37",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/52"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 53,
@@ -526,8 +474,7 @@
 		"email": "sharbert1g@cnet.com",
 		"gender": "Male",
 		"ip_address": "43.87.184.76",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/53"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 54,
@@ -536,8 +483,7 @@
 		"email": "kplayhill1h@psu.edu",
 		"gender": "Female",
 		"ip_address": "196.176.226.194",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/54"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 55,
@@ -546,8 +492,7 @@
 		"email": "shalgarth1i@4shared.com",
 		"gender": "Male",
 		"ip_address": "78.203.112.242",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/55"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 56,
@@ -556,8 +501,7 @@
 		"email": "jdopson1j@exblog.jp",
 		"gender": "Female",
 		"ip_address": "90.130.192.112",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/56"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 57,
@@ -566,8 +510,7 @@
 		"email": "eproske1k@google.com.hk",
 		"gender": "Male",
 		"ip_address": "127.181.135.104",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/57"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 58,
@@ -576,8 +519,7 @@
 		"email": "lbraam1l@mtv.com",
 		"gender": "Male",
 		"ip_address": "31.79.61.104",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/58"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 59,
@@ -586,8 +528,7 @@
 		"email": "jspowart1m@nba.com",
 		"gender": "Male",
 		"ip_address": "45.0.204.89",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/59"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 60,
@@ -596,8 +537,7 @@
 		"email": "pkintish1n@about.com",
 		"gender": "Male",
 		"ip_address": "189.59.70.130",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/60"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 61,
@@ -606,8 +546,7 @@
 		"email": "tmish1o@mysql.com",
 		"gender": "Female",
 		"ip_address": "116.28.215.228",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/61"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 62,
@@ -616,8 +555,7 @@
 		"email": "cmeedendorpe1p@seattletimes.com",
 		"gender": "Male",
 		"ip_address": "164.100.54.170",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/62"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 63,
@@ -626,8 +564,7 @@
 		"email": "mremer1q@list-manage.com",
 		"gender": "Female",
 		"ip_address": "169.5.10.76",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/63"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 64,
@@ -636,8 +573,7 @@
 		"email": "cgostall1r@arizona.edu",
 		"gender": "Male",
 		"ip_address": "20.177.86.143",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/64"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 65,
@@ -646,8 +582,7 @@
 		"email": "slaugheran1s@zdnet.com",
 		"gender": "Male",
 		"ip_address": "115.164.211.27",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/65"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 66,
@@ -656,8 +591,7 @@
 		"email": "cmunkton1t@blogger.com",
 		"gender": "Male",
 		"ip_address": "89.172.206.243",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/66"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 67,
@@ -666,8 +600,7 @@
 		"email": "kmanoelli1u@merriam-webster.com",
 		"gender": "Female",
 		"ip_address": "98.16.74.82",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/67"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 68,
@@ -676,8 +609,7 @@
 		"email": "ddevillier1v@vimeo.com",
 		"gender": "Male",
 		"ip_address": "96.142.0.159",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/68"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 69,
@@ -686,8 +618,7 @@
 		"email": "sgolagley1w@nytimes.com",
 		"gender": "Female",
 		"ip_address": "92.0.99.127",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/69"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 70,
@@ -696,8 +627,7 @@
 		"email": "kphilcott1x@ucoz.ru",
 		"gender": "Female",
 		"ip_address": "77.77.249.189",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/70"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 71,
@@ -706,8 +636,7 @@
 		"email": "dharte1y@usatoday.com",
 		"gender": "Male",
 		"ip_address": "39.13.171.36",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/71"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 72,
@@ -716,8 +645,7 @@
 		"email": "apaddefield1z@spotify.com",
 		"gender": "Female",
 		"ip_address": "11.238.130.55",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/72"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 73,
@@ -726,8 +654,7 @@
 		"email": "chelversen20@unc.edu",
 		"gender": "Female",
 		"ip_address": "211.15.70.45",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/73"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 74,
@@ -736,8 +663,7 @@
 		"email": "sormesher21@squidoo.com",
 		"gender": "Female",
 		"ip_address": "68.167.50.240",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/74"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 75,
@@ -746,8 +672,7 @@
 		"email": "jskettles22@ifeng.com",
 		"gender": "Male",
 		"ip_address": "33.162.53.171",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/75"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 76,
@@ -756,8 +681,7 @@
 		"email": "nmacgall23@yellowpages.com",
 		"gender": "Male",
 		"ip_address": "214.145.215.104",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/76"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 77,
@@ -766,8 +690,7 @@
 		"email": "mattyeo24@google.ca",
 		"gender": "Female",
 		"ip_address": "241.241.71.115",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/77"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 78,
@@ -776,8 +699,7 @@
 		"email": "bgentle25@1und1.de",
 		"gender": "Female",
 		"ip_address": "129.54.230.134",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/78"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 79,
@@ -786,8 +708,7 @@
 		"email": "gcrosi26@reddit.com",
 		"gender": "Female",
 		"ip_address": "117.132.169.50",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/79"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 80,
@@ -796,8 +717,7 @@
 		"email": "lbaily27@gravatar.com",
 		"gender": "Female",
 		"ip_address": "182.43.253.49",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/80"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 81,
@@ -806,8 +726,7 @@
 		"email": "nhembrow28@canalblog.com",
 		"gender": "Male",
 		"ip_address": "3.4.75.224",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/81"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 82,
@@ -816,8 +735,7 @@
 		"email": "perdis29@yahoo.com",
 		"gender": "Female",
 		"ip_address": "50.198.211.210",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/82"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 83,
@@ -826,8 +744,7 @@
 		"email": "jyallowley2a@army.mil",
 		"gender": "Male",
 		"ip_address": "68.202.232.159",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/83"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 84,
@@ -836,8 +753,7 @@
 		"email": "jneggrini2b@skyrock.com",
 		"gender": "Male",
 		"ip_address": "243.149.84.166",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/84"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 85,
@@ -846,8 +762,7 @@
 		"email": "svankov2c@craigslist.org",
 		"gender": "Male",
 		"ip_address": "120.117.240.17",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/85"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 86,
@@ -856,8 +771,7 @@
 		"email": "hrowston2d@imgur.com",
 		"gender": "Male",
 		"ip_address": "253.148.174.168",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/86"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 87,
@@ -866,8 +780,7 @@
 		"email": "ayukhnini2e@cbslocal.com",
 		"gender": "Male",
 		"ip_address": "71.32.174.171",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/87"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 88,
@@ -876,8 +789,7 @@
 		"email": "tcavee2f@mashable.com",
 		"gender": "Male",
 		"ip_address": "38.188.73.155",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/88"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 89,
@@ -886,8 +798,7 @@
 		"email": "vspearman2g@guardian.co.uk",
 		"gender": "Female",
 		"ip_address": "251.18.172.221",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/89"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 90,
@@ -896,8 +807,7 @@
 		"email": "lskaife2h@newsvine.com",
 		"gender": "Male",
 		"ip_address": "115.5.159.20",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/90"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 91,
@@ -906,8 +816,7 @@
 		"email": "nmcentegart2i@sphinn.com",
 		"gender": "Male",
 		"ip_address": "173.60.230.70",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/91"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 92,
@@ -916,8 +825,7 @@
 		"email": "melstow2j@live.com",
 		"gender": "Male",
 		"ip_address": "187.61.176.93",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/92"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 93,
@@ -926,8 +834,7 @@
 		"email": "jgilogly2k@howstuffworks.com",
 		"gender": "Female",
 		"ip_address": "137.59.79.33",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/93"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 94,
@@ -936,8 +843,7 @@
 		"email": "vpach2l@ycombinator.com",
 		"gender": "Female",
 		"ip_address": "77.82.211.13",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/94"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 95,
@@ -946,8 +852,7 @@
 		"email": "rmacnamee2m@ning.com",
 		"gender": "Male",
 		"ip_address": "222.7.210.46",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/95"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 96,
@@ -956,8 +861,7 @@
 		"email": "ecammell2n@boston.com",
 		"gender": "Male",
 		"ip_address": "125.82.135.60",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/96"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 97,
@@ -966,8 +870,7 @@
 		"email": "hnicklinson2o@whitehouse.gov",
 		"gender": "Male",
 		"ip_address": "126.122.5.218",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/97"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 98,
@@ -976,8 +879,7 @@
 		"email": "gseargeant2p@nbcnews.com",
 		"gender": "Male",
 		"ip_address": "253.76.83.85",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/98"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 99,
@@ -986,8 +888,7 @@
 		"email": "dkiefer2q@facebook.com",
 		"gender": "Male",
 		"ip_address": "89.112.135.87",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/99"
+		"bvc": "EmployeeDetails"
 	},
 	{
 		"id": 100,
@@ -996,7 +897,6 @@
 		"email": "ehapke2r@seattletimes.com",
 		"gender": "Male",
 		"ip_address": "113.98.254.182",
-		"bvc": "EmployeeDetails",
-		"bvc_path": "/employee/100"
+		"bvc": "EmployeeDetails"
 	}
 ]
