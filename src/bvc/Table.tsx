@@ -1,6 +1,6 @@
 import React, { Component, Suspense, useState, useRef, useContext, useEffect } from 'react'
-import { Table, Drawer, Button, Empty, Spin, Form, Input, Radio, Tooltip } from 'antd'
-import { ClearOutlined } from '@ant-design/icons'
+import { Table, Drawer, Button, Empty, Spin, Form, Input, Radio, Tooltip, Popconfirm } from 'antd'
+import { ClearOutlined, DeleteOutlined } from '@ant-design/icons'
 import { clone } from 'ramda'
 
 type tableProps = { meta: any; data: any; pageSize?: number }
@@ -29,22 +29,41 @@ export class TableBVC extends Component<tableProps, tableState> {
 		this.setState({ data: update })
 	}
 
+	handleDelete = (key: string) => {
+		const copy = clone(this.state.data)
+		const update = copy.filter((x: any) => x.id !== key)
+		this.setState({ data: update })
+	}
+
 	render() {
 		const { data, drawerData } = this.state
 		const { meta, pageSize } = this.props
 
 		const columns = meta.columns.map((col: any) => {
-			if (col.dataIndex === 'action')
+			if (col.dataIndex === 'action') {
+				const { capabilities } = meta
 				return {
 					...col,
+					align: 'center',
 					render: (_: any, record: any) => {
 						return (
-							<Button type='link' size='small' onClick={() => this.openDrawer(record)}>
-								View
-							</Button>
+							<>
+								{/* <Button type='link' size='small' onClick={() => this.openDrawer(record)}>
+									View
+								</Button> */}
+								{capabilities.delete && (
+									<Popconfirm
+										title='Sure to delete?'
+										onConfirm={() => this.handleDelete(record.key)}
+									>
+										<Button type='dashed' shape='circle' icon={<DeleteOutlined />} />
+									</Popconfirm>
+								)}
+							</>
 						)
 					},
 				}
+			}
 			if (!col.field.editable) return col
 			return {
 				...col,

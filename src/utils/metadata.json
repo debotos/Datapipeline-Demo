@@ -1,7 +1,11 @@
 {
-	"actions": {
+	"capabilities": {
 		"edit": true,
-		"delete": true
+		"delete": true,
+		"add": {
+			"enable": true,
+			"fields": ["first_name", "last_name", "email", "gender"]
+		}
 	},
 	"columns": [
 		{
