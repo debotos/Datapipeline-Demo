@@ -1,10 +1,18 @@
 import React, { Component, Suspense, useState, useRef, useContext, useEffect } from 'react'
-import { Table, Drawer, Button, Empty, Spin, Form, Input, Radio, Tooltip, Popconfirm } from 'antd'
-import { ClearOutlined, DeleteOutlined } from '@ant-design/icons'
+import { Table, Drawer, Button, Empty, Spin, Form, Popconfirm } from 'antd'
+import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
 import { clone } from 'ramda'
 
+import AddForm from '../components/AddForm'
+import { getEditFormsField } from '../utils/getFormFields'
+
 type tableProps = { meta: any; data: any; pageSize?: number }
-type tableState = { data: any; drawer: boolean; drawerData: any }
+type tableState = {
+	data: any
+	drawer: boolean
+	presentationDrawer: boolean
+	presentationDrawerData: any
+}
 
 export class TableBVC extends Component<tableProps, tableState> {
 	componentDidMount() {
@@ -13,11 +21,20 @@ export class TableBVC extends Component<tableProps, tableState> {
 
 	constructor(props: tableProps) {
 		super(props)
-		this.state = { data: null, drawer: false, drawerData: null }
+		this.state = {
+			data: null,
+			drawer: false,
+			presentationDrawer: false,
+			presentationDrawerData: null,
+		}
 	}
 
-	openDrawer = (record: any) => this.setState({ drawer: true, drawerData: record })
-	closeDrawer = () => this.setState({ drawer: false, drawerData: null })
+	openDrawer = () => this.setState({ drawer: true })
+	closeDrawer = () => this.setState({ drawer: false })
+	openPresentationDrawer = (record: any) =>
+		this.setState({ presentationDrawer: true, presentationDrawerData: record })
+	closePresentationDrawer = () =>
+		this.setState({ presentationDrawer: false, presentationDrawerData: null })
 
 	handleSave = (row: any) => {
 		// console.log(row)
@@ -36,19 +53,20 @@ export class TableBVC extends Component<tableProps, tableState> {
 	}
 
 	render() {
-		const { data, drawerData } = this.state
+		const { data, presentationDrawerData } = this.state
 		const { meta, pageSize } = this.props
+
+		const { capabilities } = meta
 
 		const columns = meta.columns.map((col: any) => {
 			if (col.dataIndex === 'action') {
-				const { capabilities } = meta
 				return {
 					...col,
 					align: 'center',
 					render: (_: any, record: any) => {
 						return (
 							<>
-								{/* <Button type='link' size='small' onClick={() => this.openDrawer(record)}>
+								{/* <Button type='link' size='small' onClick={() => this.openPresentationDrawer(record)}>
 									View
 								</Button> */}
 								{capabilities.delete && (
@@ -80,9 +98,9 @@ export class TableBVC extends Component<tableProps, tableState> {
 
 		let BVCComponent
 
-		if (drawerData && drawerData.bvc) {
+		if (presentationDrawerData && presentationDrawerData.bvc) {
 			BVCComponent = React.lazy(() =>
-				import(`./${drawerData.bvc}`).catch(() => ({
+				import(`./${presentationDrawerData.bvc}`).catch(() => ({
 					default: () => <NotFound />,
 				}))
 			)
@@ -97,6 +115,25 @@ export class TableBVC extends Component<tableProps, tableState> {
 
 		return (
 			<>
+				<div>
+					{capabilities.add.enable && (
+						<div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+							<Button type='primary' size='small' onClick={this.openDrawer}>
+								<PlusOutlined /> {capabilities.add.label}
+							</Button>
+						</div>
+					)}
+					<div>{/* Filters, Settings, Search */}</div>
+				</div>
+				<Drawer
+					title={capabilities.add.label}
+					width={'400px'}
+					closable={true}
+					visible={this.state.drawer}
+					onClose={this.closeDrawer}
+				>
+					<AddForm metadata={meta} />
+				</Drawer>
 				<Table
 					pagination={{ defaultPageSize: pageSize || 16 }}
 					bordered
@@ -106,15 +143,16 @@ export class TableBVC extends Component<tableProps, tableState> {
 					columns={columns}
 					dataSource={data ? data.map((item: any) => ({ ...item, key: item.id })) : []}
 				/>
+				{/* Presentation Drawer */}
 				<Drawer
 					width={'80%'}
 					closable={true}
-					visible={this.state.drawer}
-					onClose={this.closeDrawer}
+					visible={this.state.presentationDrawer}
+					onClose={this.closePresentationDrawer}
 				>
 					{BVCComponent ? (
 						<Suspense fallback={<Spin />}>
-							<BVCComponent data={drawerData} metadata={meta} />
+							<BVCComponent data={presentationDrawerData} metadata={meta} />
 						</Suspense>
 					) : (
 						<NotFound />
@@ -191,49 +229,7 @@ const EditableCell: React.FC<any> = ({
 			)
 		}
 
-		const { type, placeholder } = field
-
-		switch (type) {
-			case 'radio': {
-				const { options } = field
-				return (
-					<Form.Item style={{ margin: 0 }} name={dataIndex} initialValue={record[dataIndex]}>
-						<Radio.Group ref={inputRef} onChange={save} options={options} />
-					</Form.Item>
-				)
-			}
-			default: {
-				const validations = field.validation || []
-				return (
-					<Form.Item
-						style={{ margin: 0 }}
-						name={dataIndex}
-						initialValue={record[dataIndex]}
-						rules={[...validations]}
-						hasFeedback={field.hasFeedback}
-					>
-						<Input
-							placeholder={placeholder}
-							type={type}
-							ref={inputRef}
-							onPressEnter={save}
-							onBlur={save}
-							suffix={
-								<Tooltip title='Revert back to previous value!'>
-									<ClearOutlined
-										style={{ color: 'rgba(0,0,0,.45)', cursor: 'pointer' }}
-										onMouseDown={(e) => {
-											e.preventDefault()
-											form.setFieldsValue({ [dataIndex]: record[dataIndex] })
-										}}
-									/>
-								</Tooltip>
-							}
-						/>
-					</Form.Item>
-				)
-			}
-		}
+		return getEditFormsField(dataIndex, record, field, form, inputRef, save)
 	}
 
 	return <td {...restProps}>{getChildNode()}</td>
