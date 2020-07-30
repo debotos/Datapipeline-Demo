@@ -35,7 +35,7 @@ export const getAddFormsField = (info: any, form: any) => {
 					validateFirst
 					style={{ marginBottom: 10 }}
 				>
-					<Input placeholder={placeholder} type={type} />
+					<Input placeholder={placeholder} type={type} allowClear />
 				</Form.Item>
 			)
 		}
