@@ -2,7 +2,7 @@ import React from 'react'
 import { Router, Switch, Route } from 'react-router-dom'
 import { createBrowserHistory as createHistory } from 'history'
 
-import './App.css'
+import './App.scss'
 import META from '../utils/metadata.json'
 import DATA from '../utils/data.json'
 import Table from '../bvc/Table'

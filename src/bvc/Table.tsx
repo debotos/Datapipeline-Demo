@@ -1,6 +1,16 @@
 import React, { Component, Suspense, useState, useRef, useContext, useEffect } from 'react'
 import { Table, Drawer, Button, Empty, Spin, Form, Popconfirm } from 'antd'
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
+import {
+	EditOutlined,
+	DeleteOutlined,
+	PlusOutlined,
+	SearchOutlined,
+	DownloadOutlined,
+	FilterOutlined,
+	SettingOutlined,
+	SyncOutlined,
+} from '@ant-design/icons'
+import styled from 'styled-components'
 import { clone } from 'ramda'
 
 import AddForm from '../components/AddForm'
@@ -54,9 +64,10 @@ export class TableBVC extends Component<tableProps, tableState> {
 
 	render() {
 		const { data, presentationDrawerData } = this.state
-		const { meta, pageSize } = this.props
+		const { meta } = this.props
 
 		const { capabilities } = meta
+		const { pagination } = capabilities
 
 		const columns = meta.columns.map((col: any) => {
 			if (col.dataIndex === 'action') {
@@ -66,15 +77,25 @@ export class TableBVC extends Component<tableProps, tableState> {
 					render: (_: any, record: any) => {
 						return (
 							<>
-								{/* <Button type='link' size='small' onClick={() => this.openPresentationDrawer(record)}>
-									View
-								</Button> */}
+								<Button
+									type='link'
+									size='small'
+									onClick={() => this.openPresentationDrawer(record)}
+								>
+									<EditOutlined />
+								</Button>
 								{capabilities.delete && (
 									<Popconfirm
 										title='Sure to delete?'
+										placement='left'
 										onConfirm={() => this.handleDelete(record.key)}
 									>
-										<Button type='dashed' shape='circle' icon={<DeleteOutlined />} />
+										<Button
+											type='link'
+											size='small'
+											style={{ color: 'tomato' }}
+											icon={<DeleteOutlined />}
+										/>
 									</Popconfirm>
 								)}
 							</>
@@ -123,7 +144,17 @@ export class TableBVC extends Component<tableProps, tableState> {
 							</Button>
 						</div>
 					)}
-					<div>{/* Filters, Settings, Search */}</div>
+					<Container>
+						<h1 style={{ margin: 0 }}>{meta.heading}</h1>
+						{/* Search, Download, Filters, Settings, Refresh */}
+						<div>
+							{capabilities.search && <SearchOutlined className='icon-btn' />}
+							{capabilities.download && <DownloadOutlined className='icon-btn' />}
+							{capabilities.filter.enable && <FilterOutlined className='icon-btn' />}
+							{capabilities.setting.enable && <SettingOutlined className='icon-btn' />}
+							{capabilities.refresh && <SyncOutlined className='icon-btn' />}
+						</div>
+					</Container>
 				</div>
 				<Drawer
 					title={capabilities.add.label}
@@ -135,7 +166,15 @@ export class TableBVC extends Component<tableProps, tableState> {
 					<AddForm metadata={meta} />
 				</Drawer>
 				<Table
-					pagination={{ defaultPageSize: pageSize || 16 }}
+					pagination={
+						pagination.enable
+							? {
+									position: pagination.position || ['bottomRight'],
+									defaultPageSize: pagination.pageSize || 16,
+									pageSizeOptions: pagination.pageSizeOptions,
+							  }
+							: false
+					}
 					bordered
 					size='small'
 					components={components}
@@ -236,3 +275,11 @@ const EditableCell: React.FC<any> = ({
 }
 
 export default TableBVC
+
+const Container = styled.div`
+	margin-bottom: 5px;
+	border-bottom: 5px solid #000000a8;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+`

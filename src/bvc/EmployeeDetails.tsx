@@ -14,7 +14,7 @@ export class EmployeeDetails extends Component<CProps, CState> {
 	render() {
 		const { editMode } = this.state
 		const { data, metadata } = this.props
-		const { actions, columns } = metadata
+		const { capabilities, columns } = metadata
 
 		const fields = columns
 			.map((x: any) => {
@@ -30,7 +30,7 @@ export class EmployeeDetails extends Component<CProps, CState> {
 
 		return (
 			<div>
-				{actions.edit && (
+				{capabilities.edit && (
 					<Button
 						type='primary'
 						shape='circle'

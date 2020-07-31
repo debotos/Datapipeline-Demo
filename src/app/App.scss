@@ -28,3 +28,14 @@
 .ant-col.ant-col-24.ant-form-item-label {
 	padding: 0;
 }
+
+/* Custom */
+
+.icon-btn {
+	font-size: 20px;
+	padding: 1px 5px;
+	cursor: pointer;
+	&:hover {
+		opacity: 0.6;
+	}
+}
