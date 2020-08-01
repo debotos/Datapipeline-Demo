@@ -172,6 +172,10 @@ export class TableBVC extends Component<tableProps, tableState> {
 									position: pagination.position || ['bottomRight'],
 									defaultPageSize: pagination.pageSize || 16,
 									pageSizeOptions: pagination.pageSizeOptions,
+									showSizeChanger: pagination.showSizeChanger,
+									showQuickJumper: pagination.showQuickJumper,
+									showTotal: (total: number, range: any) =>
+										`${range[0]}-${range[1]} of ${total} items`,
 							  }
 							: false
 					}
