@@ -11,7 +11,10 @@
 				"gender": "Male"
 			}
 		},
-		"search": true,
+		"search": {
+			"enable": true,
+			"fields": ["first_name", "last_name", "email", "ip_address"]
+		},
 		"download": true,
 		"filter": {
 			"enable": true
@@ -33,6 +36,7 @@
 		{
 			"title": "First Name",
 			"dataIndex": "first_name",
+			"searchable": true,
 			"field": {
 				"editable": true,
 				"type": "text",
@@ -48,6 +52,7 @@
 		{
 			"title": "Last Name",
 			"dataIndex": "last_name",
+			"searchable": true,
 			"field": {
 				"editable": true,
 				"type": "text",
@@ -63,6 +68,7 @@
 		{
 			"title": "Email",
 			"dataIndex": "email",
+			"searchable": true,
 			"field": {
 				"editable": true,
 				"type": "email",
@@ -90,6 +96,7 @@
 		{
 			"title": "IP",
 			"dataIndex": "ip_address",
+			"searchable": true,
 			"field": {
 				"editable": false
 			}

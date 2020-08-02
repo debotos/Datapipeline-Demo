@@ -1,5 +1,9 @@
 import React, { Component, Suspense, useState, useRef, useContext, useEffect } from 'react'
-import { Table, Drawer, Button, Empty, Spin, Form, Popconfirm } from 'antd'
+import { Table, Input, Drawer, Button, Empty, Spin, Form, Popconfirm, Space } from 'antd'
+import Highlighter from 'react-highlight-words'
+import styled from 'styled-components'
+import { clone } from 'ramda'
+import debounce from 'lodash/debounce'
 import {
 	EditOutlined,
 	DeleteOutlined,
@@ -10,32 +14,69 @@ import {
 	SettingOutlined,
 	SyncOutlined,
 } from '@ant-design/icons'
-import styled from 'styled-components'
-import { clone } from 'ramda'
 
 import AddForm from '../components/AddForm'
 import { getEditFormsField } from '../utils/getFormFields'
 
-type tableProps = { meta: any; data: any; pageSize?: number }
+type tableProps = { meta: any; data: any }
 type tableState = {
 	data: any
+	globalSearchText: string
+	globalSearchResults: any
+	globalSearchLoading: boolean
+	localSearchText: string
+	searchedColumn: string
 	drawer: boolean
 	presentationDrawer: boolean
 	presentationDrawerData: any
+	showSearchBox: boolean
 }
 
 export class TableBVC extends Component<tableProps, tableState> {
+	private globalSearchInput = React.createRef<any>()
+	searchInput: any
+
+	focusSearchInput() {
+		const node = this.globalSearchInput.current
+		if (node) {
+			node.focus()
+		}
+	}
+
+	handleSearchBtnClick = () => {
+		const { showSearchBox } = this.state
+
+		if (showSearchBox) {
+			// Already showing
+			this.setState({ globalSearchText: '' })
+		} else {
+			this.focusSearchInput()
+		}
+		this.setState((prevState) => ({ showSearchBox: !prevState.showSearchBox }))
+	}
+
 	componentDidMount() {
-		this.setState({ data: this.props.data })
+		const { data } = this.props
+		this.setState({ data: data })
+	}
+
+	componentWillUnmount() {
+		this.performGlobalSearch.cancel()
 	}
 
 	constructor(props: tableProps) {
 		super(props)
 		this.state = {
-			data: null,
+			data: [], // For view purpose
+			globalSearchText: '',
+			globalSearchResults: [],
+			globalSearchLoading: false,
+			localSearchText: '',
+			searchedColumn: '',
 			drawer: false,
 			presentationDrawer: false,
 			presentationDrawerData: null,
+			showSearchBox: false,
 		}
 	}
 
@@ -46,6 +87,13 @@ export class TableBVC extends Component<tableProps, tableState> {
 	closePresentationDrawer = () =>
 		this.setState({ presentationDrawer: false, presentationDrawerData: null })
 
+	performGlobalSearchAgain = () => {
+		const { globalSearchText } = this.state
+		if (globalSearchText) {
+			this.performGlobalSearch(globalSearchText)
+		}
+	}
+
 	handleSave = (row: any) => {
 		// console.log(row)
 		const copy = clone(this.state.data)
@@ -53,17 +101,119 @@ export class TableBVC extends Component<tableProps, tableState> {
 			if (x.id === row.id) return row
 			return x
 		})
-		this.setState({ data: update })
+		this.setState({ data: update }, this.performGlobalSearchAgain)
 	}
 
 	handleDelete = (key: string) => {
 		const copy = clone(this.state.data)
 		const update = copy.filter((x: any) => x.id !== key)
-		this.setState({ data: update })
+		this.setState({ data: update }, this.performGlobalSearchAgain)
+	}
+
+	performGlobalSearch = debounce((searchText: string) => {
+		this.setState({ globalSearchText: searchText })
+
+		const fields = this.props.meta.capabilities.search?.fields
+		if (!fields) return
+
+		this.setState({ globalSearchLoading: true })
+		const results = clone(this.state.data).filter((item: any) => {
+			const string = fields
+				.map((key: string) => item[key])
+				.filter((val: any) => !!val)
+				.join(' ')
+				.toLowerCase()
+
+			return string.includes(searchText.trim().toLowerCase())
+		})
+
+		this.setState({ globalSearchResults: results, globalSearchLoading: false })
+	}, 300)
+
+	handleColumnSearch = (selectedKeys: any, confirm: any, dataIndex: any) => {
+		confirm()
+		this.setState({
+			localSearchText: selectedKeys[0],
+			searchedColumn: dataIndex,
+		})
+	}
+
+	resetColumnSearch = (clearFilters: any) => {
+		clearFilters()
+		this.setState({ localSearchText: '' })
+	}
+
+	getColumnSearchProps = (dataIndex: string, title: string) => ({
+		filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
+			<div style={{ padding: 8 }}>
+				<Input
+					ref={(node: any) => {
+						this.searchInput = node
+					}}
+					placeholder={`Search ${[title]}`}
+					value={selectedKeys[0]}
+					onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+					onPressEnter={() => this.handleColumnSearch(selectedKeys, confirm, dataIndex)}
+					style={{ width: 188, marginBottom: 8, display: 'block' }}
+				/>
+				<Space>
+					<Button
+						type='primary'
+						onClick={() => this.handleColumnSearch(selectedKeys, confirm, dataIndex)}
+						icon={<SearchOutlined />}
+						size='small'
+						style={{ width: 90 }}
+					>
+						Search
+					</Button>
+					<Button
+						onClick={() => this.resetColumnSearch(clearFilters)}
+						size='small'
+						style={{ width: 90 }}
+					>
+						Reset
+					</Button>
+				</Space>
+			</div>
+		),
+		filterIcon: (filtered: boolean) => (
+			<SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
+		),
+		onFilter: (value: any, record: any) =>
+			record[dataIndex]
+				? record[dataIndex].toString().toLowerCase().includes(value.trim().toLowerCase())
+				: '',
+		onFilterDropdownVisibleChange: (visible: boolean) => {
+			if (visible) {
+				setTimeout(() => this.searchInput.select())
+			}
+		},
+		render: (text: any) => {
+			const { globalSearchText } = this.state
+			return this.state.searchedColumn === dataIndex || globalSearchText ? (
+				<Highlighter
+					highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+					searchWords={[this.state.localSearchText, globalSearchText]}
+					autoEscape
+					textToHighlight={text ? text.toString() : ''}
+				/>
+			) : (
+				text
+			)
+		},
+	})
+
+	getDataWithKey = () => {
+		const { data, globalSearchText, globalSearchResults } = this.state
+		let finalData = data
+		if (globalSearchText) {
+			finalData = globalSearchResults
+		}
+		return finalData.map((item: any) => ({ ...item, key: item.id }))
 	}
 
 	render() {
-		const { data, presentationDrawerData } = this.state
+		const { presentationDrawerData, showSearchBox, globalSearchLoading } = this.state
 		const { meta } = this.props
 
 		const { capabilities } = meta
@@ -102,6 +252,9 @@ export class TableBVC extends Component<tableProps, tableState> {
 						)
 					},
 				}
+			}
+			if (col.searchable) {
+				col = { ...col, ...this.getColumnSearchProps(col.dataIndex, col.title) }
 			}
 			if (!col.field.editable) return col
 			return {
@@ -147,8 +300,19 @@ export class TableBVC extends Component<tableProps, tableState> {
 					<Container>
 						<h1 style={{ margin: 0 }}>{meta.heading}</h1>
 						{/* Search, Download, Filters, Settings, Refresh */}
-						<div>
-							{capabilities.search && <SearchOutlined className='icon-btn' />}
+						<div style={{ display: 'flex', alignItems: 'center' }}>
+							{capabilities.search.enable && (
+								<div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+									<SearchBox
+										allowClear
+										ref={this.globalSearchInput}
+										onChange={(e: any) => this.performGlobalSearch(e.target.value)}
+										placeholder='Search'
+										style={{ width: showSearchBox ? '100%' : '0%', opacity: showSearchBox ? 1 : 0 }}
+									/>
+									<SearchOutlined className='icon-btn' onClick={this.handleSearchBtnClick} />
+								</div>
+							)}
 							{capabilities.download && <DownloadOutlined className='icon-btn' />}
 							{capabilities.filter.enable && <FilterOutlined className='icon-btn' />}
 							{capabilities.setting.enable && <SettingOutlined className='icon-btn' />}
@@ -184,7 +348,8 @@ export class TableBVC extends Component<tableProps, tableState> {
 					components={components}
 					rowClassName={() => 'editable-row'}
 					columns={columns}
-					dataSource={data ? data.map((item: any) => ({ ...item, key: item.id })) : []}
+					loading={globalSearchLoading}
+					dataSource={this.getDataWithKey()}
 				/>
 				{/* Presentation Drawer */}
 				<Drawer
@@ -286,4 +451,8 @@ const Container = styled.div`
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+`
+const SearchBox = styled(Input)`
+	margin-right: 10px;
+	transition: all 0.5s ease;
 `
