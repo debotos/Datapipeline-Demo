@@ -36,21 +36,16 @@ export class TableBVC extends Component<tableProps, tableState> {
 	private globalSearchInput = React.createRef<any>()
 	searchInput: any
 
-	focusSearchInput() {
-		const node = this.globalSearchInput.current
-		if (node) {
-			node.focus()
-		}
-	}
-
-	handleSearchBtnClick = () => {
+	handleSearchBtnClick = (e: any) => {
 		const { showSearchBox } = this.state
+		const node = this.globalSearchInput.current
 
 		if (showSearchBox) {
 			// Already showing
 			this.setState({ globalSearchText: '' })
+			node && node.handleReset(e)
 		} else {
-			this.focusSearchInput()
+			node && node.focus()
 		}
 		this.setState((prevState) => ({ showSearchBox: !prevState.showSearchBox }))
 	}
@@ -192,7 +187,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 			const { globalSearchText } = this.state
 			return this.state.searchedColumn === dataIndex || globalSearchText ? (
 				<Highlighter
-					highlightStyle={{ backgroundColor: '#ffc069', padding: 0 }}
+					highlightStyle={{ backgroundColor: '#ffc069', padding: 0, borderRadius: 2 }}
 					searchWords={[this.state.localSearchText, globalSearchText]}
 					autoEscape
 					textToHighlight={text ? text.toString() : ''}
