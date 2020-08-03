@@ -48,7 +48,9 @@ export const getEditFormsField = (
 	field: any,
 	form: any,
 	inputRef: any,
-	save: (e: any) => {}
+	save: (e: any) => {},
+	resetBtn: boolean,
+	setResetBtn: any
 ) => {
 	const { type, placeholder } = field
 
@@ -77,16 +79,29 @@ export const getEditFormsField = (
 						ref={inputRef}
 						onPressEnter={save}
 						onBlur={save}
+						onChange={(e: any) => {
+							const value = e.target.value
+							if (value !== record[dataIndex]) {
+								setResetBtn(true)
+							} else {
+								setResetBtn(false)
+							}
+						}}
 						suffix={
-							<Tooltip title='Revert back to previous value!'>
-								<ClearOutlined
-									style={{ color: 'rgba(0,0,0,.45)', cursor: 'pointer' }}
-									onMouseDown={(e) => {
-										e.preventDefault()
-										form.setFieldsValue({ [dataIndex]: record[dataIndex] })
-									}}
-								/>
-							</Tooltip>
+							resetBtn ? (
+								<Tooltip title='Revert back to previous value!'>
+									<ClearOutlined
+										style={{ color: 'rgba(0,0,0,.45)', cursor: 'pointer' }}
+										onMouseDown={(e) => {
+											e.preventDefault()
+											form.setFieldsValue({ [dataIndex]: record[dataIndex] })
+											setResetBtn(false)
+										}}
+									/>
+								</Tooltip>
+							) : (
+								<span /> // https://ant.design/components/input/#FAQ
+							)
 						}
 					/>
 				</Form.Item>

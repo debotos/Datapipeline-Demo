@@ -47,6 +47,13 @@
 					{ "min": 2, "message": "Minimum length is 2" },
 					{ "max": 10, "message": "Max value length is 10" }
 				]
+			},
+			"sorting": {
+				"enable": true,
+				"type": "string",
+				"sortingProps": {
+					"sortDirections": ["descend", "ascend"]
+				}
 			}
 		},
 		{
@@ -63,6 +70,13 @@
 					{ "min": 2, "message": "Minimum length is 2" },
 					{ "max": 10, "message": "Max value length is 10" }
 				]
+			},
+			"sorting": {
+				"enable": true,
+				"type": "string",
+				"sortingProps": {
+					"sortDirections": ["descend", "ascend"]
+				}
 			}
 		},
 		{
@@ -78,6 +92,13 @@
 					{ "whitespace": true, "required": true, "message": "Email is required" },
 					{ "type": "email", "message": "Email is not valid" }
 				]
+			},
+			"sorting": {
+				"enable": true,
+				"type": "string",
+				"sortingProps": {
+					"sortDirections": ["descend", "ascend"]
+				}
 			}
 		},
 		{
@@ -91,7 +112,8 @@
 					{ "label": "Male", "value": "Male", "disabled": false },
 					{ "label": "Female", "value": "Female", "disabled": false }
 				]
-			}
+			},
+			"filter": true
 		},
 		{
 			"title": "IP",

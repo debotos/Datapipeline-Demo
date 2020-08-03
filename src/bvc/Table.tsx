@@ -215,7 +215,9 @@ export class TableBVC extends Component<tableProps, tableState> {
 		const { pagination } = capabilities
 
 		const columns = meta.columns.map((col: any) => {
-			if (col.dataIndex === 'action') {
+			const { dataIndex } = col
+
+			if (dataIndex === 'action') {
 				return {
 					...col,
 					align: 'center',
@@ -249,7 +251,38 @@ export class TableBVC extends Component<tableProps, tableState> {
 				}
 			}
 			if (col.searchable) {
-				col = { ...col, ...this.getColumnSearchProps(col.dataIndex, col.title) }
+				col = { ...col, ...this.getColumnSearchProps(dataIndex, col.title) }
+			}
+			if (col.sorting?.enable) {
+				const { type, sortingProps } = col.sorting
+				col = {
+					...col,
+					sorter: (a: any, b: any) => {
+						// number
+						if (type === 'number') return a[dataIndex] - b[dataIndex]
+						// string
+						if (a[dataIndex] < b[dataIndex]) return -1
+						if (a[dataIndex] > b[dataIndex]) return 1
+						return 0
+					},
+					...sortingProps,
+				}
+			}
+			if (col.filter) {
+				if (col.field?.options) {
+					const filters = col.field.options.map((x: any) => ({ text: x.label, value: x.value }))
+					if (filters.length > 0) {
+						col = {
+							...col,
+							filters,
+							onFilter: (value: any, record: any) => record[dataIndex] === value,
+						}
+					}
+				} else {
+					console.warn(
+						`Error! No options found at col.field.options for dataIndex:"${dataIndex}" to generate filter input.`
+					)
+				}
 			}
 			if (!col.field.editable) return col
 			return {
@@ -258,7 +291,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 					record,
 					field: col.field,
 					editable: col.field.editable,
-					dataIndex: col.dataIndex,
+					dataIndex: dataIndex,
 					title: col.title,
 					handleSave: this.handleSave,
 				}),
@@ -398,13 +431,35 @@ const EditableCell: React.FC<any> = ({
 	...restProps
 }) => {
 	const [editing, setEditing] = useState(false)
+	const [resetBtn, setResetBtn] = useState(false)
 	const inputRef = useRef(null)
 	const form = useContext(EditableContext)
+	let tableCellElement: any
+
+	const handleCellLeave = (e: any) => {
+		if (!tableCellElement || !field) return
+		const { type, editable } = field
+
+		var isInsideClick = tableCellElement.contains(e.target)
+
+		if (!isInsideClick) {
+			//the click was outside the specifiedElement, do something
+			if (editable && type === 'radio') {
+				setEditing(false)
+			}
+		}
+	}
 
 	useEffect(() => {
 		if (editing) {
 			inputRef.current.focus()
 		}
+		document.addEventListener('click', handleCellLeave)
+		return () => {
+			// unsubscribe event
+			document.removeEventListener('click', handleCellLeave)
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [editing])
 
 	const toggleEdit = () => {
@@ -417,6 +472,7 @@ const EditableCell: React.FC<any> = ({
 			const values = await form.validateFields()
 			toggleEdit()
 			handleSave({ ...record, ...values })
+			setResetBtn(false)
 		} catch (errInfo) {
 			console.log('Save failed:', errInfo)
 		}
@@ -432,10 +488,14 @@ const EditableCell: React.FC<any> = ({
 			)
 		}
 
-		return getEditFormsField(dataIndex, record, field, form, inputRef, save)
+		return getEditFormsField(dataIndex, record, field, form, inputRef, save, resetBtn, setResetBtn)
 	}
 
-	return <td {...restProps}>{getChildNode()}</td>
+	return (
+		<td {...restProps} ref={(el) => (tableCellElement = el)}>
+			{getChildNode()}
+		</td>
+	)
 }
 
 export default TableBVC
