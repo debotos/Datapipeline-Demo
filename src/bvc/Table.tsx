@@ -12,6 +12,8 @@ import {
 	Modal,
 	Divider,
 	Checkbox,
+	Row,
+	Col,
 } from 'antd'
 import Highlighter from 'react-highlight-words'
 import styled from 'styled-components'
@@ -45,6 +47,8 @@ type tableState = {
 	showSearchBox: boolean
 	filterModal: boolean
 	masterFilterCriteria: any
+	settingModal: boolean
+	tableSettings: any
 }
 
 export class TableBVC extends Component<tableProps, tableState> {
@@ -66,8 +70,10 @@ export class TableBVC extends Component<tableProps, tableState> {
 	}
 
 	componentDidMount() {
-		const { data } = this.props
-		this.setState({ data: data })
+		const { data, meta } = this.props
+		const { capabilities } = meta
+		const { setting } = capabilities
+		this.setState({ data: data, tableSettings: setting.props })
 	}
 
 	componentWillUnmount() {
@@ -89,11 +95,15 @@ export class TableBVC extends Component<tableProps, tableState> {
 			showSearchBox: false,
 			filterModal: false,
 			masterFilterCriteria: null,
+			settingModal: false,
+			tableSettings: null,
 		}
 	}
 
 	openFilterModal = () => this.setState({ filterModal: true })
 	closeFilterModal = () => this.setState({ filterModal: false })
+	openSettingModal = () => this.setState({ settingModal: true })
+	closeSettingModal = () => this.setState({ settingModal: false })
 	openDrawer = () => this.setState({ drawer: true })
 	closeDrawer = () => this.setState({ drawer: false })
 	openPresentationDrawer = (record: any) =>
@@ -249,95 +259,101 @@ export class TableBVC extends Component<tableProps, tableState> {
 			showSearchBox,
 			globalSearchLoading,
 			masterFilterCriteria,
+			tableSettings,
 		} = this.state
 		const { meta } = this.props
 
 		const { capabilities } = meta
 		const { pagination } = capabilities
 
-		const columns = meta.columns.map((col: any) => {
-			const { dataIndex } = col
+		const columns = meta.columns
+			.filter((col: any) => {
+				if (!tableSettings || !tableSettings.hide) return true
+				return !tableSettings.hide.includes(col.dataIndex)
+			})
+			.map((col: any) => {
+				const { dataIndex } = col
 
-			if (dataIndex === 'action') {
+				if (dataIndex === 'action') {
+					return {
+						...col,
+						align: 'center',
+						render: (_: any, record: any) => {
+							return (
+								<>
+									<Button
+										type='link'
+										size='small'
+										onClick={() => this.openPresentationDrawer(record)}
+									>
+										<EditOutlined />
+									</Button>
+									{capabilities.delete && (
+										<Popconfirm
+											title='Sure to delete?'
+											placement='left'
+											onConfirm={() => this.handleDelete(record.key)}
+										>
+											<Button
+												type='link'
+												size='small'
+												style={{ color: 'tomato' }}
+												icon={<DeleteOutlined />}
+											/>
+										</Popconfirm>
+									)}
+								</>
+							)
+						},
+					}
+				}
+				if (col.searchable) {
+					col = { ...col, ...this.getColumnSearchProps(dataIndex, col.title) }
+				}
+				if (col.sorting?.enable) {
+					const { type, sortingProps } = col.sorting
+					col = {
+						...col,
+						sorter: (a: any, b: any) => {
+							// number
+							if (type === 'number') return a[dataIndex] - b[dataIndex]
+							// string
+							if (a[dataIndex] < b[dataIndex]) return -1
+							if (a[dataIndex] > b[dataIndex]) return 1
+							return 0
+						},
+						...sortingProps,
+					}
+				}
+				if (col.filter) {
+					if (col.field?.options) {
+						const filters = col.field.options.map((x: any) => ({ text: x.label, value: x.value }))
+						if (filters.length > 0) {
+							col = {
+								...col,
+								filters,
+								onFilter: (value: any, record: any) => record[dataIndex] === value,
+							}
+						}
+					} else {
+						console.warn(
+							`Error! No options found at col.field.options for dataIndex:"${dataIndex}" to generate filter input.`
+						)
+					}
+				}
+				if (!col.field.editable) return col
 				return {
 					...col,
-					align: 'center',
-					render: (_: any, record: any) => {
-						return (
-							<>
-								<Button
-									type='link'
-									size='small'
-									onClick={() => this.openPresentationDrawer(record)}
-								>
-									<EditOutlined />
-								</Button>
-								{capabilities.delete && (
-									<Popconfirm
-										title='Sure to delete?'
-										placement='left'
-										onConfirm={() => this.handleDelete(record.key)}
-									>
-										<Button
-											type='link'
-											size='small'
-											style={{ color: 'tomato' }}
-											icon={<DeleteOutlined />}
-										/>
-									</Popconfirm>
-								)}
-							</>
-						)
-					},
+					onCell: (record: any) => ({
+						record,
+						field: col.field,
+						editable: col.field.editable,
+						dataIndex: dataIndex,
+						title: col.title,
+						handleSave: this.handleSave,
+					}),
 				}
-			}
-			if (col.searchable) {
-				col = { ...col, ...this.getColumnSearchProps(dataIndex, col.title) }
-			}
-			if (col.sorting?.enable) {
-				const { type, sortingProps } = col.sorting
-				col = {
-					...col,
-					sorter: (a: any, b: any) => {
-						// number
-						if (type === 'number') return a[dataIndex] - b[dataIndex]
-						// string
-						if (a[dataIndex] < b[dataIndex]) return -1
-						if (a[dataIndex] > b[dataIndex]) return 1
-						return 0
-					},
-					...sortingProps,
-				}
-			}
-			if (col.filter) {
-				if (col.field?.options) {
-					const filters = col.field.options.map((x: any) => ({ text: x.label, value: x.value }))
-					if (filters.length > 0) {
-						col = {
-							...col,
-							filters,
-							onFilter: (value: any, record: any) => record[dataIndex] === value,
-						}
-					}
-				} else {
-					console.warn(
-						`Error! No options found at col.field.options for dataIndex:"${dataIndex}" to generate filter input.`
-					)
-				}
-			}
-			if (!col.field.editable) return col
-			return {
-				...col,
-				onCell: (record: any) => ({
-					record,
-					field: col.field,
-					editable: col.field.editable,
-					dataIndex: dataIndex,
-					title: col.title,
-					handleSave: this.handleSave,
-				}),
-			}
-		})
+			})
 
 		let BVCComponent
 
@@ -395,7 +411,15 @@ export class TableBVC extends Component<tableProps, tableState> {
 									}}
 								/>
 							)}
-							{capabilities.setting.enable && <SettingOutlined className='icon-btn' />}
+							{capabilities.setting.enable && (
+								<SettingOutlined
+									className='icon-btn'
+									onClick={this.openSettingModal}
+									style={{
+										color: tableSettings && Object.keys(tableSettings).length > 0 && '#3FA9FF',
+									}}
+								/>
+							)}
 							{capabilities.refresh && <SyncOutlined className='icon-btn' />}
 						</div>
 					</Container>
@@ -411,6 +435,10 @@ export class TableBVC extends Component<tableProps, tableState> {
 						}}
 						destroyOnClose={true}
 						closable={false}
+						maskClosable={false}
+						keyboard={false}
+						style={{ top: 25 }}
+						bodyStyle={{ height: '80vh', overflow: 'scroll' }}
 					>
 						{capabilities.filter.fields.map((fieldDataIndex: string, index: number) => {
 							const column = meta.columns.find((x: any) => x.dataIndex === fieldDataIndex)
@@ -433,15 +461,13 @@ export class TableBVC extends Component<tableProps, tableState> {
 												return 0
 											})
 											.map((item: any) => ({ label: item, value: item }))}
+										value={masterFilterCriteria ? masterFilterCriteria[dataIndex] : []}
 										onChange={(checkedValues: any) => {
 											if (checkedValues.length > 0) {
-												const update = {
-													...this.state.masterFilterCriteria,
-													[dataIndex]: checkedValues,
-												}
+												const update = { ...masterFilterCriteria, [dataIndex]: checkedValues }
 												this.setState({ masterFilterCriteria: update })
 											} else {
-												const update = clone(this.state.masterFilterCriteria)
+												const update = clone(masterFilterCriteria)
 												delete update[dataIndex]
 												this.setState({ masterFilterCriteria: update })
 											}
@@ -453,6 +479,45 @@ export class TableBVC extends Component<tableProps, tableState> {
 						})}
 					</Modal>
 				)}
+				{capabilities.setting.enable && (
+					<Modal
+						title='Settings'
+						visible={this.state.settingModal}
+						onOk={this.closeSettingModal}
+						onCancel={this.closeSettingModal}
+						destroyOnClose={true}
+						style={{ top: 25 }}
+						bodyStyle={{ height: '80vh', overflow: 'scroll' }}
+					>
+						<Divider plain style={{ marginTop: 0 }}>
+							Hide/Show Column
+						</Divider>
+						{meta.columns.length > 0 && (
+							<Checkbox.Group
+								style={{ width: '100%' }}
+								value={tableSettings ? tableSettings.hide : []}
+								onChange={(checkedValues: any) => {
+									if (checkedValues.length > 0) {
+										const update = { ...tableSettings, hide: checkedValues }
+										this.setState({ tableSettings: update })
+									} else {
+										const update = clone(tableSettings)
+										delete update.hide
+										this.setState({ tableSettings: update })
+									}
+								}}
+							>
+								<Row>
+									{meta.columns.map((col: any) => (
+										<Col span={8} key={col.dataIndex}>
+											<Checkbox value={col.dataIndex}>{col.title}</Checkbox>
+										</Col>
+									))}
+								</Row>
+							</Checkbox.Group>
+						)}
+					</Modal>
+				)}
 				<Drawer
 					title={capabilities.add.label}
 					width={'400px'}
@@ -462,28 +527,30 @@ export class TableBVC extends Component<tableProps, tableState> {
 				>
 					<AddForm metadata={meta} />
 				</Drawer>
-				<Table
-					pagination={
-						pagination.enable
-							? {
-									position: pagination.position || ['bottomRight'],
-									defaultPageSize: pagination.pageSize || 16,
-									pageSizeOptions: pagination.pageSizeOptions,
-									showSizeChanger: pagination.showSizeChanger,
-									showQuickJumper: pagination.showQuickJumper,
-									showTotal: (total: number, range: any) =>
-										`${range[0]}-${range[1]} of ${total} items`,
-							  }
-							: false
-					}
-					bordered
-					size='small'
-					components={components}
-					rowClassName={() => 'editable-row'}
-					columns={columns}
-					loading={globalSearchLoading}
-					dataSource={this.getDataWithKey()}
-				/>
+				{columns.length > 0 && (
+					<Table
+						pagination={
+							pagination.enable
+								? {
+										position: pagination.position || ['bottomRight'],
+										defaultPageSize: pagination.pageSize || 16,
+										pageSizeOptions: pagination.pageSizeOptions,
+										showSizeChanger: pagination.showSizeChanger,
+										showQuickJumper: pagination.showQuickJumper,
+										showTotal: (total: number, range: any) =>
+											`${range[0]}-${range[1]} of ${total} items`,
+								  }
+								: false
+						}
+						bordered
+						size='small'
+						components={components}
+						rowClassName={() => 'editable-row'}
+						columns={columns}
+						loading={globalSearchLoading}
+						dataSource={this.getDataWithKey()}
+					/>
+				)}
 				{/* Presentation Drawer */}
 				<Drawer
 					width={'80%'}

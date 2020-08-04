@@ -18,10 +18,11 @@
 		"download": true,
 		"filter": {
 			"enable": true,
-			"fields": ["gender", "first_name"]
+			"fields": ["gender"]
 		},
 		"setting": {
-			"enable": true
+			"enable": true,
+			"props": { "hide": ["ip_address"] }
 		},
 		"refresh": true,
 		"pagination": {
