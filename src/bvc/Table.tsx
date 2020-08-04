@@ -1,5 +1,18 @@
 import React, { Component, Suspense, useState, useRef, useContext, useEffect } from 'react'
-import { Table, Input, Drawer, Button, Empty, Spin, Form, Popconfirm, Space } from 'antd'
+import {
+	Table,
+	Input,
+	Drawer,
+	Button,
+	Empty,
+	Spin,
+	Form,
+	Popconfirm,
+	Space,
+	Modal,
+	Divider,
+	Checkbox,
+} from 'antd'
 import Highlighter from 'react-highlight-words'
 import styled from 'styled-components'
 import { clone } from 'ramda'
@@ -30,6 +43,8 @@ type tableState = {
 	presentationDrawer: boolean
 	presentationDrawerData: any
 	showSearchBox: boolean
+	filterModal: boolean
+	masterFilterCriteria: any
 }
 
 export class TableBVC extends Component<tableProps, tableState> {
@@ -72,9 +87,13 @@ export class TableBVC extends Component<tableProps, tableState> {
 			presentationDrawer: false,
 			presentationDrawerData: null,
 			showSearchBox: false,
+			filterModal: false,
+			masterFilterCriteria: null,
 		}
 	}
 
+	openFilterModal = () => this.setState({ filterModal: true })
+	closeFilterModal = () => this.setState({ filterModal: false })
 	openDrawer = () => this.setState({ drawer: true })
 	closeDrawer = () => this.setState({ drawer: false })
 	openPresentationDrawer = (record: any) =>
@@ -199,16 +218,38 @@ export class TableBVC extends Component<tableProps, tableState> {
 	})
 
 	getDataWithKey = () => {
-		const { data, globalSearchText, globalSearchResults } = this.state
+		const { data, globalSearchText, globalSearchResults, masterFilterCriteria } = this.state
 		let finalData = data
 		if (globalSearchText) {
 			finalData = globalSearchResults
 		}
-		return finalData.map((item: any) => ({ ...item, key: item.id }))
+		return finalData
+			.filter((x: any) => {
+				if (!masterFilterCriteria) return true
+				const masterFilterKeys = Object.keys(masterFilterCriteria)
+				if (masterFilterKeys.length === 0) return true
+				const result = new Set(
+					masterFilterKeys.map((key: any) => {
+						const values = masterFilterCriteria[key]
+						if (values.includes(x[key])) {
+							return true
+						}
+						return false
+					})
+				)
+				if (result.has(true)) return true
+				return false
+			})
+			.map((item: any) => ({ ...item, key: item.id }))
 	}
 
 	render() {
-		const { presentationDrawerData, showSearchBox, globalSearchLoading } = this.state
+		const {
+			presentationDrawerData,
+			showSearchBox,
+			globalSearchLoading,
+			masterFilterCriteria,
+		} = this.state
 		const { meta } = this.props
 
 		const { capabilities } = meta
@@ -342,12 +383,76 @@ export class TableBVC extends Component<tableProps, tableState> {
 								</div>
 							)}
 							{capabilities.download && <DownloadOutlined className='icon-btn' />}
-							{capabilities.filter.enable && <FilterOutlined className='icon-btn' />}
+							{capabilities.filter.enable && (
+								<FilterOutlined
+									className='icon-btn'
+									onClick={this.openFilterModal}
+									style={{
+										color:
+											masterFilterCriteria &&
+											Object.keys(masterFilterCriteria).length > 0 &&
+											'#3FA9FF',
+									}}
+								/>
+							)}
 							{capabilities.setting.enable && <SettingOutlined className='icon-btn' />}
 							{capabilities.refresh && <SyncOutlined className='icon-btn' />}
 						</div>
 					</Container>
 				</div>
+				{capabilities.filter.enable && (
+					<Modal
+						title='Master Filter'
+						visible={this.state.filterModal}
+						onOk={this.closeFilterModal}
+						onCancel={() => {
+							this.setState({ masterFilterCriteria: null })
+							this.closeFilterModal()
+						}}
+						destroyOnClose={true}
+						closable={false}
+					>
+						{capabilities.filter.fields.map((fieldDataIndex: string, index: number) => {
+							const column = meta.columns.find((x: any) => x.dataIndex === fieldDataIndex)
+							if (!column) return null
+							const { dataIndex, title } = column
+							// Special case where value is not predictable
+							const inputData = Array.from(new Set(this.state.data.map((x: any) => x[dataIndex])))
+							if (!inputData || inputData.length === 0) return null
+
+							return (
+								<div key={fieldDataIndex}>
+									<Divider plain style={{ marginTop: index === 0 && 0 }}>
+										{title}
+									</Divider>
+									<Checkbox.Group
+										options={inputData
+											.sort((a: any, b: any) => {
+												if (a < b) return -1
+												if (a > b) return 1
+												return 0
+											})
+											.map((item: any) => ({ label: item, value: item }))}
+										onChange={(checkedValues: any) => {
+											if (checkedValues.length > 0) {
+												const update = {
+													...this.state.masterFilterCriteria,
+													[dataIndex]: checkedValues,
+												}
+												this.setState({ masterFilterCriteria: update })
+											} else {
+												const update = clone(this.state.masterFilterCriteria)
+												delete update[dataIndex]
+												this.setState({ masterFilterCriteria: update })
+											}
+										}}
+										className='table-bvc-master-filter-input-group'
+									/>
+								</div>
+							)
+						})}
+					</Modal>
+				)}
 				<Drawer
 					title={capabilities.add.label}
 					width={'400px'}

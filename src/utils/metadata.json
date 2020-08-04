@@ -17,7 +17,8 @@
 		},
 		"download": true,
 		"filter": {
-			"enable": true
+			"enable": true,
+			"fields": ["gender", "first_name"]
 		},
 		"setting": {
 			"enable": true
