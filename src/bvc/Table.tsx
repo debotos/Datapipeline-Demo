@@ -14,6 +14,7 @@ import {
 	Checkbox,
 	Row,
 	Col,
+	message,
 } from 'antd'
 import Highlighter from 'react-highlight-words'
 import styled from 'styled-components'
@@ -32,6 +33,7 @@ import {
 
 import AddForm from '../components/AddForm'
 import { getEditFormsField } from '../utils/getFormFields'
+import generateExcel from '../utils/generateExcel'
 
 type tableProps = { meta: any; data: any }
 type tableState = {
@@ -132,6 +134,25 @@ export class TableBVC extends Component<tableProps, tableState> {
 		const copy = clone(this.state.data)
 		const update = copy.filter((x: any) => x.id !== key)
 		this.setState({ data: update }, this.performGlobalSearchAgain)
+	}
+
+	downloadExcel = () => {
+		const { enable, fields: columns } = this.props.meta.capabilities.download
+		if (!enable || columns.length === 0) {
+			message.error('Sorry, unable to generate excel file!')
+			return
+		}
+		const dataIndexTitlePair: any = {}
+		this.props.meta.columns.forEach((x: any) => (dataIndexTitlePair[x.dataIndex] = x.title))
+
+		generateExcel(
+			this.getDataWithKey(),
+			columns,
+			dataIndexTitlePair,
+			`${this.props.meta.heading} data on ${new Date().toDateString()}`,
+			this.props.meta.capabilities.download?.props,
+			this.props.meta.heading
+		)
 	}
 
 	performGlobalSearch = debounce((searchText: string) => {
@@ -365,12 +386,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 			)
 		}
 
-		const components = {
-			body: {
-				row: EditableRow,
-				cell: EditableCell,
-			},
-		}
+		const components = { body: { row: EditableRow, cell: EditableCell } }
 
 		return (
 			<>
@@ -398,7 +414,9 @@ export class TableBVC extends Component<tableProps, tableState> {
 									<SearchOutlined className='icon-btn' onClick={this.handleSearchBtnClick} />
 								</div>
 							)}
-							{capabilities.download && <DownloadOutlined className='icon-btn' />}
+							{capabilities.download.enable && (
+								<DownloadOutlined className='icon-btn' onClick={this.downloadExcel} />
+							)}
 							{capabilities.filter.enable && (
 								<FilterOutlined
 									className='icon-btn'

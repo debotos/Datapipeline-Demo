@@ -15,7 +15,14 @@
 			"enable": true,
 			"fields": ["first_name", "last_name", "email", "ip_address"]
 		},
-		"download": true,
+		"download": {
+			"enable": true,
+			"fields": ["first_name", "last_name", "email", "gender", "ip_address"],
+			"props": {
+				"note": "Disclaimer Message - This data is property of ezilm and you can not use without permission",
+				"sheetName": "Sheet1"
+			}
+		},
 		"filter": {
 			"enable": true,
 			"fields": ["gender"]
