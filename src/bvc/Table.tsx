@@ -495,14 +495,22 @@ export class TableBVC extends Component<tableProps, tableState> {
 						{meta.columns.length > 0 && (
 							<Checkbox.Group
 								style={{ width: '100%' }}
-								value={tableSettings ? tableSettings.hide : []}
+								value={
+									tableSettings && tableSettings.hide && tableSettings.hide.length > 0
+										? meta.columns
+												.map((x: any) => x.dataIndex)
+												.filter((y: any) => !tableSettings.hide.includes(y))
+										: meta.columns.map((x: any) => x.dataIndex)
+								}
 								onChange={(checkedValues: any) => {
+									const columnList = meta.columns.map((x: any) => x.dataIndex)
 									if (checkedValues.length > 0) {
-										const update = { ...tableSettings, hide: checkedValues }
+										const hide = columnList.filter((y: any) => !checkedValues.includes(y))
+										const update = { ...tableSettings, hide }
 										this.setState({ tableSettings: update })
 									} else {
-										const update = clone(tableSettings)
-										delete update.hide
+										let update = clone(tableSettings)
+										update.hide = columnList
 										this.setState({ tableSettings: update })
 									}
 								}}
