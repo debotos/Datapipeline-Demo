@@ -94,7 +94,7 @@ export default (
 		counter++
 	})
 
-	const dataStartPoint = filterCount + counter
+	const dataStartPoint = filterCount === 0 ? counter : counter + 1
 
 	/* Column headers */
 	worksheet.columns = columns.map((x: any) => ({ key: x, width: 23 }))

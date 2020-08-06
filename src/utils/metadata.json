@@ -25,7 +25,7 @@
 		},
 		"filter": {
 			"enable": true,
-			"fields": ["gender"]
+			"fields": ["gender", "first_name", "ip_address"]
 		},
 		"setting": {
 			"enable": true,
