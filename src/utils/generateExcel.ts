@@ -8,7 +8,8 @@ export default (
 	dataIndexTitlePair: any,
 	name: string,
 	props: any = {},
-	title: string
+	title: string,
+	queries: any
 ) => {
 	/* Data Adjustment(if needed) */
 
@@ -51,9 +52,54 @@ export default (
 	worksheet.getCell('B3').value = moment().format('DD/MM/YYYY')
 	worksheet.getCell('B3').font = { color: { argb: 'FF0000' } }
 
+	let { searchText, filters } = queries
+	let counter = 5
+
+	if (searchText) {
+		worksheet.getCell(`A${counter}`).value = 'Search Term'
+		worksheet.getCell(`B${counter}`).value = searchText
+		worksheet.getCell(`B${counter}`).font = { color: { argb: 'FF0000' } }
+		worksheet.getCell(`A${counter}`).font = { bold: true }
+		worksheet.getCell(`A${counter}`).fill = {
+			type: 'pattern',
+			pattern: 'solid',
+			fgColor: { argb: 'FFFF00' },
+			bgColor: { argb: 'FF000000' },
+		}
+		counter += 2
+	}
+
+	filters = filters ? filters : {}
+	const filterCount = Object.keys(filters).length
+
+	if (filterCount !== 0) {
+		worksheet.mergeCells(`A${counter}`, `B${counter}`)
+		worksheet.getCell(`A${counter}`).value = 'Filters'
+		worksheet.getCell(`A${counter}`).font = { bold: true }
+		worksheet.getCell(`A${counter}`).alignment = { vertical: 'middle', horizontal: 'center' }
+		worksheet.getCell(`A${counter}`).fill = {
+			type: 'pattern',
+			pattern: 'solid',
+			fgColor: { argb: 'FFFF00' },
+			bgColor: { argb: 'FF000000' },
+		}
+		counter++
+	}
+
+	Object.keys(filters).forEach((filterKey: string) => {
+		worksheet.getCell(`A${counter}`).value = filterKey
+		worksheet.getCell(`A${counter}`).font = { bold: true, color: { argb: 'FF0000' } }
+		worksheet.getCell(`B${counter}`).value = filters[filterKey].join(', ')
+		worksheet.getCell(`B${counter}`).font = { color: { argb: 'FF0000' } }
+		counter++
+	})
+
+	const dataStartPoint = filterCount + counter
+
 	/* Column headers */
 	worksheet.columns = columns.map((x: any) => ({ key: x, width: 23 }))
-	worksheet.getRow(7).values = columns.map((x: any) => dataIndexTitlePair[x])
+	worksheet.getRow(dataStartPoint).values = columns.map((x: any) => dataIndexTitlePair[x])
+	worksheet.getRow(dataStartPoint).font = { bold: true }
 
 	/* Add array of rows containing data */
 	worksheet.addRows(data)

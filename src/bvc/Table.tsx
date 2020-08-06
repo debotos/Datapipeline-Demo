@@ -38,6 +38,7 @@ import generateExcel from '../utils/generateExcel'
 type tableProps = { meta: any; data: any }
 type tableState = {
 	data: any
+	loadingData: boolean
 	globalSearchText: string
 	globalSearchResults: any
 	globalSearchLoading: boolean
@@ -75,7 +76,9 @@ export class TableBVC extends Component<tableProps, tableState> {
 		const { data, meta } = this.props
 		const { capabilities } = meta
 		const { setting } = capabilities
-		this.setState({ data: data, tableSettings: setting.props })
+		this.setState({ data: data, tableSettings: setting.props }, () =>
+			this.setState({ loadingData: false })
+		)
 	}
 
 	componentWillUnmount() {
@@ -86,6 +89,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 		super(props)
 		this.state = {
 			data: [], // For view purpose
+			loadingData: true,
 			globalSearchText: '',
 			globalSearchResults: [],
 			globalSearchLoading: false,
@@ -142,6 +146,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 			message.error('Sorry, unable to generate excel file!')
 			return
 		}
+		const hide = message.loading('Action in progress..', 0)
 		const dataIndexTitlePair: any = {}
 		this.props.meta.columns.forEach((x: any) => (dataIndexTitlePair[x.dataIndex] = x.title))
 
@@ -151,8 +156,14 @@ export class TableBVC extends Component<tableProps, tableState> {
 			dataIndexTitlePair,
 			`${this.props.meta.heading} data on ${new Date().toDateString()}`,
 			this.props.meta.capabilities.download?.props,
-			this.props.meta.heading
+			this.props.meta.heading,
+			{
+				searchText: this.state.globalSearchText,
+				filters: this.state.masterFilterCriteria,
+			}
 		)
+
+		setTimeout(hide, 300)
 	}
 
 	performGlobalSearch = debounce((searchText: string) => {
@@ -274,6 +285,30 @@ export class TableBVC extends Component<tableProps, tableState> {
 			.map((item: any) => ({ ...item, key: item.id }))
 	}
 
+	handleRefresh = (e: any) => {
+		e.persist()
+		// Mainly call the api service again to get the data
+		this.setState({ loadingData: true })
+		const hide = message.loading('Refreshing...', 0)
+		setTimeout(() => {
+			const node = this.globalSearchInput.current
+			node && node.handleReset(e)
+			this.setState(
+				{
+					data: this.props.data,
+					globalSearchResults: [],
+					globalSearchText: '',
+					showSearchBox: false,
+					masterFilterCriteria: null,
+				},
+				() => {
+					this.setState({ loadingData: false })
+					hide()
+				}
+			)
+		}, 1000)
+	}
+
 	render() {
 		const {
 			presentationDrawerData,
@@ -281,6 +316,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 			globalSearchLoading,
 			masterFilterCriteria,
 			tableSettings,
+			loadingData,
 		} = this.state
 		const { meta } = this.props
 
@@ -390,7 +426,9 @@ export class TableBVC extends Component<tableProps, tableState> {
 
 		return (
 			<>
-				<div>
+				<div
+					style={{ pointerEvents: loadingData ? 'none' : 'auto', opacity: loadingData ? 0.5 : 1 }}
+				>
 					{capabilities.add.enable && (
 						<div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
 							<Button type='primary' size='small' onClick={this.openDrawer}>
@@ -438,7 +476,13 @@ export class TableBVC extends Component<tableProps, tableState> {
 									}}
 								/>
 							)}
-							{capabilities.refresh && <SyncOutlined className='icon-btn' />}
+							{capabilities.refresh && (
+								<SyncOutlined
+									className='icon-btn'
+									spin={loadingData}
+									onClick={this.handleRefresh}
+								/>
+							)}
 						</div>
 					</Container>
 				</div>
@@ -573,7 +617,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 						components={components}
 						rowClassName={() => 'editable-row'}
 						columns={columns}
-						loading={globalSearchLoading}
+						loading={globalSearchLoading || loadingData}
 						dataSource={this.getDataWithKey()}
 					/>
 				)}
