@@ -34,9 +34,10 @@ export default function AddForm(props: CProps) {
 			initialValues={initialValues}
 			scrollToFirstError={true}
 		>
-			{fields.map((field: string) => {
+			{fields.map((field: string, index: number) => {
 				const info = columns.find((x: any) => x.dataIndex === field)
-				return getAddFormsField(info, form)
+				if (!info) return null
+				return getAddFormsField(info, form, index + 1 === fields.length)
 			})}
 			<Form.Item shouldUpdate={true} style={{ marginTop: 20 }}>
 				{() => (

@@ -9,7 +9,7 @@ export default (
 	name: string,
 	props: any = {},
 	title: string,
-	queries: any
+	queries: any = {}
 ) => {
 	/* Data Adjustment(if needed) */
 

@@ -111,26 +111,27 @@
 			}
 		},
 		{
-			"title": "Gender",
-			"dataIndex": "gender",
-			"field": {
-				"editable": true,
-				"type": "radio",
-				"placeholder": "Gender",
-				"options": [
-					{ "label": "Male", "value": "Male", "disabled": false },
-					{ "label": "Female", "value": "Female", "disabled": false }
-				]
-			},
-			"filter": true
-		},
-		{
 			"title": "IP",
 			"dataIndex": "ip_address",
 			"searchable": true,
 			"field": {
 				"editable": false
 			}
+		},
+		{
+			"title": "Gender",
+			"dataIndex": "gender",
+			"field": {
+				"editable": true,
+				"type": "select",
+				"placeholder": "Gender",
+				"options": [
+					{ "label": "Male", "value": "Male", "disabled": false },
+					{ "label": "Female", "value": "Female", "disabled": false }
+				],
+				"validation": [{ "whitespace": true, "required": true, "message": "Gender is required" }]
+			},
+			"filter": true
 		},
 		{
 			"title": "Action",
