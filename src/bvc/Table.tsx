@@ -679,14 +679,16 @@ const EditableCell: React.FC<any> = ({
 	let tableCellElement: any
 
 	const handleCellLeave = (e: any) => {
+		console.log({ e, tableCellElement, field })
 		if (!tableCellElement || !field) return
 		const { type, editable } = field
 
 		var isInsideClick = tableCellElement.contains(e.target)
-
+		console.log(isInsideClick)
 		if (!isInsideClick) {
+			console.log('Not inside')
 			//the click was outside the specifiedElement, do something
-			if (editable && type === 'radio') {
+			if (editable && (type === 'radio' || type === 'checkbox')) {
 				setEditing(false)
 			}
 		}
@@ -694,7 +696,9 @@ const EditableCell: React.FC<any> = ({
 
 	useEffect(() => {
 		if (editing) {
-			inputRef.current.focus()
+			if (field.type !== 'checkbox') {
+				inputRef.current && inputRef.current.focus()
+			}
 		}
 		document.addEventListener('click', handleCellLeave)
 		return () => {
@@ -712,7 +716,9 @@ const EditableCell: React.FC<any> = ({
 	const save = async (e: any) => {
 		try {
 			const values = await form.validateFields()
-			toggleEdit()
+			if (field.type !== 'checkbox') {
+				toggleEdit()
+			}
 			handleSave({ ...record, ...values })
 			setResetBtn(false)
 		} catch (errInfo) {
@@ -720,12 +726,33 @@ const EditableCell: React.FC<any> = ({
 		}
 	}
 
+	const getCellValue = () => {
+		switch (field.type) {
+			case 'checkbox':
+				const values = record[dataIndex] || []
+				return values
+					.map((value: any) => {
+						const option = field.options.find((x: any) => x.value === value)
+						return option ? option.label : null
+					})
+					.filter((y: any) => !!y)
+					.join(', ')
+
+			default:
+				return record[dataIndex]
+		}
+	}
+
 	const getChildNode = () => {
 		if (!editable) return children
 		if (!editing) {
 			return (
-				<div className='editable-cell-value-wrap' style={{ paddingRight: 24 }} onClick={toggleEdit}>
-					{children}
+				<div
+					className='editable-cell-value-wrap'
+					style={{ paddingRight: 24, height: !record[dataIndex] && 32 }}
+					onClick={toggleEdit}
+				>
+					{getCellValue()}
 				</div>
 			)
 		}

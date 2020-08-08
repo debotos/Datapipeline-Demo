@@ -1,5 +1,5 @@
 import React from 'react'
-import { Form, Input, Radio, Select, Tooltip } from 'antd'
+import { Form, Input, Radio, Select, Tooltip, Checkbox } from 'antd'
 import { ClearOutlined } from '@ant-design/icons'
 
 export const getAddFormsField = (info: any, form: any, isLastField: boolean) => {
@@ -8,9 +8,25 @@ export const getAddFormsField = (info: any, form: any, isLastField: boolean) => 
 	const { type, placeholder, hasFeedback } = field
 
 	const validations = field.validation || []
-	const styles = { marginBottom: 10 }
+	const styles = { marginBottom: 5 }
 
 	switch (type) {
+		case 'checkbox': {
+			const { options } = field
+			return (
+				<Form.Item
+					key={dataIndex}
+					name={dataIndex}
+					label={title}
+					validateFirst
+					rules={[...validations]}
+					style={{ ...styles }}
+					labelCol={{ span: 24 }}
+				>
+					<Checkbox.Group options={options} />
+				</Form.Item>
+			)
+		}
 		case 'radio': {
 			const { options } = field
 			return (
@@ -21,6 +37,7 @@ export const getAddFormsField = (info: any, form: any, isLastField: boolean) => 
 					validateFirst
 					rules={[...validations]}
 					style={{ ...styles }}
+					labelCol={{ span: 24 }}
 				>
 					<Radio.Group options={options} />
 				</Form.Item>
@@ -55,6 +72,21 @@ export const getAddFormsField = (info: any, form: any, isLastField: boolean) => 
 							)
 						})}
 					</Select>
+				</Form.Item>
+			)
+		}
+		case 'textarea': {
+			return (
+				<Form.Item
+					key={dataIndex}
+					name={dataIndex}
+					label={title}
+					validateFirst
+					rules={[...validations]}
+					labelCol={{ span: 24 }}
+					style={{ ...styles }}
+				>
+					<Input.TextArea allowClear placeholder={placeholder} rows={field.rows || 4} />
 				</Form.Item>
 			)
 		}
@@ -93,6 +125,20 @@ export const getEditFormsField = (
 	const validations = field.validation || []
 
 	switch (type) {
+		case 'checkbox': {
+			const { options } = field
+			return (
+				<Form.Item
+					style={{ ...styles }}
+					name={dataIndex}
+					initialValue={record[dataIndex]}
+					rules={[...validations]}
+					validateFirst
+				>
+					<Checkbox.Group ref={inputRef} onChange={save} options={options} />
+				</Form.Item>
+			)
+		}
 		case 'radio': {
 			const { options } = field
 			return (
@@ -101,6 +147,7 @@ export const getEditFormsField = (
 					name={dataIndex}
 					initialValue={record[dataIndex]}
 					rules={[...validations]}
+					validateFirst
 				>
 					<Radio.Group ref={inputRef} onChange={save} options={options} />
 				</Form.Item>
@@ -139,6 +186,27 @@ export const getEditFormsField = (
 				</Form.Item>
 			)
 		}
+		case 'textarea': {
+			return (
+				<Form.Item
+					style={{ ...styles }}
+					name={dataIndex}
+					initialValue={record[dataIndex]}
+					rules={[...validations]}
+					hasFeedback={field.hasFeedback}
+					validateFirst
+				>
+					<Input.TextArea
+						ref={inputRef}
+						onPressEnter={save}
+						onBlur={save}
+						allowClear
+						placeholder={placeholder}
+						rows={field.rows || 4}
+					/>
+				</Form.Item>
+			)
+		}
 		default: {
 			return (
 				<Form.Item
@@ -147,6 +215,7 @@ export const getEditFormsField = (
 					initialValue={record[dataIndex]}
 					rules={[...validations]}
 					hasFeedback={field.hasFeedback}
+					validateFirst
 				>
 					<Input
 						placeholder={placeholder}

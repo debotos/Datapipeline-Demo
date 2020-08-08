@@ -6,9 +6,10 @@
 		"add": {
 			"enable": true,
 			"label": "Add a new user",
-			"fields": ["first_name", "last_name", "email", "gender"],
+			"fields": ["first_name", "last_name", "email", "address", "gender", "permission"],
 			"initialValues": {
-				"gender": "Male"
+				"gender": "Male",
+				"permission": []
 			}
 		},
 		"search": {
@@ -45,6 +46,7 @@
 		{
 			"title": "First Name",
 			"dataIndex": "first_name",
+			"width": 140,
 			"searchable": true,
 			"field": {
 				"editable": true,
@@ -68,6 +70,7 @@
 		{
 			"title": "Last Name",
 			"dataIndex": "last_name",
+			"width": 140,
 			"searchable": true,
 			"field": {
 				"editable": true,
@@ -89,8 +92,26 @@
 			}
 		},
 		{
+			"title": "Address",
+			"dataIndex": "address",
+			"searchable": true,
+			"field": {
+				"editable": true,
+				"type": "textarea",
+				"rows": 2,
+				"placeholder": "Address",
+				"hasFeedback": true,
+				"validation": [
+					{ "whitespace": true, "required": true, "message": "Address is required" },
+					{ "min": 2, "message": "Minimum length is 2" },
+					{ "max": 200, "message": "Max value length is 200" }
+				]
+			}
+		},
+		{
 			"title": "Email",
 			"dataIndex": "email",
+			"width": 250,
 			"searchable": true,
 			"field": {
 				"editable": true,
@@ -121,21 +142,40 @@
 		{
 			"title": "Gender",
 			"dataIndex": "gender",
+			"width": 100,
 			"field": {
 				"editable": true,
-				"type": "select",
+				"type": "radio",
 				"placeholder": "Gender",
 				"options": [
 					{ "label": "Male", "value": "Male", "disabled": false },
 					{ "label": "Female", "value": "Female", "disabled": false }
 				],
-				"validation": [{ "whitespace": true, "required": true, "message": "Gender is required" }]
+				"validation": [{ "required": true, "message": "Gender is required" }]
+			},
+			"filter": true
+		},
+		{
+			"title": "Permission",
+			"dataIndex": "permission",
+			"width": 100,
+			"field": {
+				"editable": true,
+				"type": "checkbox",
+				"placeholder": "Permission",
+				"options": [
+					{ "label": "Add", "value": "add", "disabled": false },
+					{ "label": "Delete", "value": "delete", "disabled": false },
+					{ "label": "Edit", "value": "edit", "disabled": false }
+				],
+				"validation": [{ "required": true, "message": "Permission is required" }]
 			},
 			"filter": true
 		},
 		{
 			"title": "Action",
 			"dataIndex": "action",
+			"width": 100,
 			"field": {
 				"editable": false
 			}

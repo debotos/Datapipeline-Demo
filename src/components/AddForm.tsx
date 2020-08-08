@@ -40,26 +40,36 @@ export default function AddForm(props: CProps) {
 				return getAddFormsField(info, form, index + 1 === fields.length)
 			})}
 			<Form.Item shouldUpdate={true} style={{ marginTop: 20 }}>
-				{() => (
-					<>
-						<Button
-							type='primary'
-							htmlType='submit'
-							disabled={
-								!form.isFieldsTouched(
-									fields.filter((key: any) => !initialValuesArray.includes(key))
-								) || !!form.getFieldsError().filter(({ errors }) => errors.length).length
-							}
-							style={{ marginRight: 10 }}
-							shape='round'
-						>
-							Submit
-						</Button>
-						<Button type='link' htmlType='button' onClick={() => form.resetFields()}>
-							Reset
-						</Button>
-					</>
-				)}
+				{() => {
+					const isFieldsTouched = !form.isFieldsTouched(
+						fields.filter((key: any) => !initialValuesArray.includes(key))
+					)
+					const haveFieldsError = !!form.getFieldsError().filter(({ errors }) => errors.length)
+						.length
+					const disabled = isFieldsTouched || haveFieldsError
+					// console.log({ isFieldsTouched, haveFieldsError })
+					/*
+						Input type checkbox, select, radio have to have initialValue
+						At least there have to be an entry of their dataIndex inside initialValues object
+						Neither submit button disable logic will not work properly
+					*/
+					return (
+						<>
+							<Button
+								type='primary'
+								htmlType='submit'
+								disabled={disabled}
+								style={{ marginRight: 10 }}
+								shape='round'
+							>
+								Submit
+							</Button>
+							<Button type='link' htmlType='button' onClick={() => form.resetFields()}>
+								Reset
+							</Button>
+						</>
+					)
+				}}
 			</Form.Item>
 		</Form>
 	)
