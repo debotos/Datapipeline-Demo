@@ -333,8 +333,8 @@ export class TableBVC extends Component<tableProps, tableState> {
 
 				if (dataIndex === 'action') {
 					return {
-						...col,
 						align: 'center',
+						...col,
 						render: (_: any, record: any) => {
 							return (
 								<>
@@ -525,7 +525,15 @@ export class TableBVC extends Component<tableProps, tableState> {
 												if (a > b) return 1
 												return 0
 											})
-											.map((item: any) => ({ label: item, value: item }))}
+											.map((item: any) => ({
+												label:
+													typeof item === 'boolean'
+														? item.toString() === 'true'
+															? 'Yes'
+															: 'No'
+														: item,
+												value: item,
+											}))}
 										value={masterFilterCriteria ? masterFilterCriteria[dataIndex] : []}
 										onChange={(checkedValues: any) => {
 											if (checkedValues.length > 0) {
@@ -687,7 +695,7 @@ const EditableCell: React.FC<any> = ({
 		var isInsideClick = tableCellElement.contains(e.target)
 		if (!isInsideClick) {
 			//the click was outside the specifiedElement, do something
-			if (editable && (type === 'radio' || type === 'checkbox')) {
+			if (editable && (type === 'radio' || type === 'checkbox' || type === 'boolean')) {
 				setEditing(false)
 			}
 		}
@@ -734,7 +742,8 @@ const EditableCell: React.FC<any> = ({
 					})
 					.filter((y: any) => !!y)
 					.join(', ')
-
+			case 'boolean':
+				return record[dataIndex] ? 'Yes' : 'No'
 			default:
 				return record[dataIndex]
 		}
@@ -749,7 +758,11 @@ const EditableCell: React.FC<any> = ({
 					className='editable-cell-value-wrap'
 					style={{
 						paddingRight: 24,
-						height: Array.isArray(val) ? val.length === 0 && 32 : !val && 32,
+						height: Array.isArray(val)
+							? val.length === 0 && 32
+							: typeof val === 'boolean'
+							? 32
+							: !val && 32,
 					}}
 					onClick={toggleEdit}
 				>

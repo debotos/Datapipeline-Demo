@@ -37,17 +37,18 @@ export default function AddForm(props: CProps) {
 			{fields.map((field: string, index: number) => {
 				const info = columns.find((x: any) => x.dataIndex === field)
 				if (!info) return null
-				return getAddFormsField(info, form, index + 1 === fields.length)
+				return getAddFormsField(info, form, initialValues, index + 1 === fields.length)
 			})}
 			<Form.Item shouldUpdate={true} style={{ marginTop: 20 }}>
 				{() => {
-					const isFieldsTouched = !form.isFieldsTouched(
+					const isFieldsNotTouched = !form.isFieldsTouched(
 						fields.filter((key: any) => !initialValuesArray.includes(key))
 					)
 					const haveFieldsError = !!form.getFieldsError().filter(({ errors }) => errors.length)
 						.length
-					const disabled = isFieldsTouched || haveFieldsError
-					// console.log({ isFieldsTouched, haveFieldsError })
+
+					console.log({ isFieldsNotTouched, haveFieldsError })
+					const disabled = isFieldsNotTouched || haveFieldsError
 					/*
 						Input type checkbox, select, radio have to have initialValue
 						At least there have to be an entry of their dataIndex inside initialValues object

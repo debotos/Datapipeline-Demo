@@ -1,8 +1,13 @@
 import React from 'react'
-import { Form, Input, Radio, Select, Tooltip, Checkbox, Button } from 'antd'
-import { ClearOutlined } from '@ant-design/icons'
+import { Form, Input, Radio, Select, Tooltip, Checkbox, Button, Switch } from 'antd'
+import { ClearOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
 
-export const getAddFormsField = (info: any, form: any, isLastField: boolean) => {
+export const getAddFormsField = (
+	info: any,
+	form: any,
+	initialValues: any,
+	isLastField: boolean
+) => {
 	if (!info) return null
 	const { title, dataIndex, field } = info
 	const { type, placeholder, hasFeedback } = field
@@ -11,6 +16,26 @@ export const getAddFormsField = (info: any, form: any, isLastField: boolean) => 
 	const styles = { marginBottom: 5 }
 
 	switch (type) {
+		case 'boolean': {
+			const { input } = field
+			return (
+				<Form.Item
+					key={dataIndex}
+					name={dataIndex}
+					label={title}
+					validateFirst
+					valuePropName={'checked'}
+					rules={[...validations]}
+					style={{ ...styles }}
+				>
+					{input === 'checkbox' ? (
+						<Checkbox />
+					) : (
+						<Switch checkedChildren={<CheckOutlined />} unCheckedChildren={<CloseOutlined />} />
+					)}
+				</Form.Item>
+			)
+		}
 		case 'checkbox': {
 			const { options } = field
 			return (
@@ -90,6 +115,7 @@ export const getAddFormsField = (info: any, form: any, isLastField: boolean) => 
 				</Form.Item>
 			)
 		}
+
 		default: {
 			return (
 				<Form.Item
@@ -125,6 +151,30 @@ export const getEditFormsField = (
 	const validations = field.validation || []
 
 	switch (type) {
+		case 'boolean': {
+			const { input } = field
+			return (
+				<Form.Item
+					style={{ ...styles }}
+					name={dataIndex}
+					initialValue={record[dataIndex]}
+					rules={[...validations]}
+					valuePropName='checked'
+					validateFirst
+				>
+					{input === 'checkbox' ? (
+						<Checkbox onChange={save} ref={inputRef} />
+					) : (
+						<Switch
+							onChange={save}
+							ref={inputRef}
+							checkedChildren={<CheckOutlined />}
+							unCheckedChildren={<CloseOutlined />}
+						/>
+					)}
+				</Form.Item>
+			)
+		}
 		case 'checkbox': {
 			const { options } = field
 			return (
