@@ -1,5 +1,5 @@
 import React from 'react'
-import { Form, Input, Radio, Select, Tooltip, Checkbox } from 'antd'
+import { Form, Input, Radio, Select, Tooltip, Checkbox, Button } from 'antd'
 import { ClearOutlined } from '@ant-design/icons'
 
 export const getAddFormsField = (info: any, form: any, isLastField: boolean) => {
@@ -128,15 +128,22 @@ export const getEditFormsField = (
 		case 'checkbox': {
 			const { options } = field
 			return (
-				<Form.Item
-					style={{ ...styles }}
-					name={dataIndex}
-					initialValue={record[dataIndex]}
-					rules={[...validations]}
-					validateFirst
-				>
-					<Checkbox.Group ref={inputRef} onChange={save} options={options} />
-				</Form.Item>
+				<>
+					<Form.Item
+						style={{ ...styles }}
+						name={dataIndex}
+						initialValue={record[dataIndex]}
+						rules={[...validations]}
+						validateFirst
+					>
+						<Checkbox.Group ref={inputRef} options={options} />
+					</Form.Item>
+					<Form.Item>
+						<Button size='small' type='primary' ghost onClick={save}>
+							Save
+						</Button>
+					</Form.Item>
+				</>
 			)
 		}
 		case 'radio': {
@@ -200,7 +207,6 @@ export const getEditFormsField = (
 						ref={inputRef}
 						onPressEnter={save}
 						onBlur={save}
-						allowClear
 						placeholder={placeholder}
 						rows={field.rows || 4}
 					/>

@@ -389,7 +389,10 @@ export class TableBVC extends Component<tableProps, tableState> {
 							col = {
 								...col,
 								filters,
-								onFilter: (value: any, record: any) => record[dataIndex] === value,
+								onFilter:
+									col.field.type === 'checkbox'
+										? (value: any, record: any) => record[dataIndex].join().includes(value)
+										: (value: any, record: any) => record[dataIndex] === value,
 							}
 						}
 					} else {
@@ -679,14 +682,10 @@ const EditableCell: React.FC<any> = ({
 	let tableCellElement: any
 
 	const handleCellLeave = (e: any) => {
-		console.log({ e, tableCellElement, field })
 		if (!tableCellElement || !field) return
 		const { type, editable } = field
-
 		var isInsideClick = tableCellElement.contains(e.target)
-		console.log(isInsideClick)
 		if (!isInsideClick) {
-			console.log('Not inside')
 			//the click was outside the specifiedElement, do something
 			if (editable && (type === 'radio' || type === 'checkbox')) {
 				setEditing(false)
@@ -716,9 +715,7 @@ const EditableCell: React.FC<any> = ({
 	const save = async (e: any) => {
 		try {
 			const values = await form.validateFields()
-			if (field.type !== 'checkbox') {
-				toggleEdit()
-			}
+			toggleEdit()
 			handleSave({ ...record, ...values })
 			setResetBtn(false)
 		} catch (errInfo) {
@@ -746,10 +743,14 @@ const EditableCell: React.FC<any> = ({
 	const getChildNode = () => {
 		if (!editable) return children
 		if (!editing) {
+			const val = record[dataIndex]
 			return (
 				<div
 					className='editable-cell-value-wrap'
-					style={{ paddingRight: 24, height: !record[dataIndex] && 32 }}
+					style={{
+						paddingRight: 24,
+						height: Array.isArray(val) ? val.length === 0 && 32 : !val && 32,
+					}}
 					onClick={toggleEdit}
 				>
 					{getCellValue()}
