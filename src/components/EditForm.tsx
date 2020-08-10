@@ -3,27 +3,31 @@ import { Form, Button } from 'antd'
 
 import getAddFormsField from '../utils/getFormFields'
 
-type CProps = { metadata: any }
+type CProps = { metadata: any; initialValues: any; handleSave(row: any): void; closeDrawer(): void }
 
-export default function AddForm(props: CProps) {
+export default function EditForm(props: CProps) {
 	const [form] = Form.useForm()
 	const [, forceUpdate] = useState()
 
 	// To disable submit button at the beginning.
-	useEffect(() => {
-		forceUpdate({})
-	}, [])
+	useEffect(() => forceUpdate({}), [])
+
+	const { metadata, initialValues } = props
+	const { columns, capabilities } = metadata
+	const { label } = capabilities.edit
 
 	const onFinish = (values: any) => {
 		console.log('Finish:', values)
+		props.handleSave({ ...initialValues, ...values })
+		props.closeDrawer()
 	}
 
-	const { metadata } = props
-	const { columns, capabilities } = metadata
-	const { add } = capabilities
-	const { label, fields, initialValues } = add
-
-	const initialValuesArray = Object.keys(initialValues || {})
+	const fields = columns
+		.map((x: any) => {
+			if (x.field?.editable) return x.dataIndex
+			return null
+		})
+		.filter((y: string) => !!y)
 
 	return (
 		<Form
@@ -41,25 +45,15 @@ export default function AddForm(props: CProps) {
 			})}
 			<Form.Item shouldUpdate={true} style={{ marginTop: 20 }}>
 				{() => {
-					const isFieldsNotTouched = !form.isFieldsTouched(
-						fields.filter((key: any) => !initialValuesArray.includes(key))
-					)
 					const haveFieldsError = !!form.getFieldsError().filter(({ errors }) => errors.length)
 						.length
-
-					// console.log({ isFieldsNotTouched, haveFieldsError })
-					const disabled = isFieldsNotTouched || haveFieldsError
-					/*
-						Input type checkbox, select, radio have to have initialValue
-						At least there have to be an entry of their dataIndex inside initialValues object
-						Neither submit button disable logic will not work properly
-					*/
+					// console.log({ haveFieldsError })
 					return (
 						<>
 							<Button
 								type='primary'
 								htmlType='submit'
-								disabled={disabled}
+								disabled={haveFieldsError}
 								style={{ marginRight: 10 }}
 								shape='round'
 							>

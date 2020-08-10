@@ -1,7 +1,10 @@
 {
 	"heading": "Users",
 	"capabilities": {
-		"edit": true,
+		"edit": {
+			"enable": true,
+			"label": "Edit user"
+		},
 		"delete": true,
 		"add": {
 			"enable": true,
@@ -47,7 +50,8 @@
 		{
 			"title": "First Name",
 			"dataIndex": "first_name",
-			"width": 140,
+			"width": 150,
+			"fixed": "left",
 			"searchable": true,
 			"field": {
 				"editable": true,
@@ -71,7 +75,7 @@
 		{
 			"title": "Last Name",
 			"dataIndex": "last_name",
-			"width": 140,
+			"width": 150,
 			"searchable": true,
 			"field": {
 				"editable": true,
@@ -143,7 +147,7 @@
 		{
 			"title": "Gender",
 			"dataIndex": "gender",
-			"width": 100,
+			"width": 120,
 			"field": {
 				"editable": true,
 				"type": "radio",
@@ -193,7 +197,8 @@
 		{
 			"title": "Action",
 			"dataIndex": "action",
-			"width": 100,
+			"fixed": "right",
+			"width": 130,
 			"field": {
 				"editable": false
 			}

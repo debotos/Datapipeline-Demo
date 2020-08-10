@@ -29,11 +29,13 @@ import {
 	FilterOutlined,
 	SettingOutlined,
 	SyncOutlined,
+	PushpinOutlined,
 } from '@ant-design/icons'
 
 import AddForm from '../components/AddForm'
-import { getEditFormsField } from '../utils/getFormFields'
+import { getInlineEditFormsField } from '../utils/getFormFields'
 import generateExcel from '../utils/generateExcel'
+import EditForm from '../components/EditForm'
 
 type tableProps = { meta: any; data: any }
 type tableState = {
@@ -44,7 +46,9 @@ type tableState = {
 	globalSearchLoading: boolean
 	localSearchText: string
 	searchedColumn: string
-	drawer: boolean
+	addFormDrawer: boolean
+	editFormDrawer: boolean
+	editingItemData: any
 	presentationDrawer: boolean
 	presentationDrawerData: any
 	showSearchBox: boolean
@@ -95,7 +99,9 @@ export class TableBVC extends Component<tableProps, tableState> {
 			globalSearchLoading: false,
 			localSearchText: '',
 			searchedColumn: '',
-			drawer: false,
+			addFormDrawer: false,
+			editFormDrawer: false,
+			editingItemData: null,
 			presentationDrawer: false,
 			presentationDrawerData: null,
 			showSearchBox: false,
@@ -110,10 +116,13 @@ export class TableBVC extends Component<tableProps, tableState> {
 	closeFilterModal = () => this.setState({ filterModal: false })
 	openSettingModal = () => this.setState({ settingModal: true })
 	closeSettingModal = () => this.setState({ settingModal: false })
-	openDrawer = () => this.setState({ drawer: true })
-	closeDrawer = () => this.setState({ drawer: false })
+	openAddFormDrawer = () => this.setState({ addFormDrawer: true })
+	closeAddFormDrawer = () => this.setState({ addFormDrawer: false })
+	openEditFormDrawer = (record: any) =>
+		this.setState({ editingItemData: record, editFormDrawer: true })
+	closeEditFormDrawer = () => this.setState({ editFormDrawer: false, editingItemData: null })
 	openPresentationDrawer = (record: any) =>
-		this.setState({ presentationDrawer: true, presentationDrawerData: record })
+		this.setState({ presentationDrawerData: record, presentationDrawer: true })
 	closePresentationDrawer = () =>
 		this.setState({ presentationDrawer: false, presentationDrawerData: null })
 
@@ -132,12 +141,14 @@ export class TableBVC extends Component<tableProps, tableState> {
 			return x
 		})
 		this.setState({ data: update }, this.performGlobalSearchAgain)
+		message.success('Successfully saved the record!', 1.5)
 	}
 
 	handleDelete = (key: string) => {
 		const copy = clone(this.state.data)
 		const update = copy.filter((x: any) => x.id !== key)
 		this.setState({ data: update }, this.performGlobalSearchAgain)
+		message.info('Successfully deleted the record!', 1.5)
 	}
 
 	downloadExcel = () => {
@@ -330,7 +341,15 @@ export class TableBVC extends Component<tableProps, tableState> {
 			})
 			.map((col: any) => {
 				const { dataIndex } = col
-
+				col = {
+					...col,
+					title: (
+						<>
+							<PushpinOutlined style={{ padding: '2px 5px' }} />
+							{col.title}
+						</>
+					),
+				}
 				if (dataIndex === 'action') {
 					return {
 						align: 'center',
@@ -338,13 +357,15 @@ export class TableBVC extends Component<tableProps, tableState> {
 						render: (_: any, record: any) => {
 							return (
 								<>
-									<Button
-										type='link'
-										size='small'
-										onClick={() => this.openPresentationDrawer(record)}
-									>
-										<EditOutlined />
-									</Button>
+									{capabilities.edit?.enable && (
+										<Button
+											type='link'
+											size='small'
+											onClick={() => this.openEditFormDrawer(record)}
+										>
+											<EditOutlined />
+										</Button>
+									)}
 									{capabilities.delete && (
 										<Popconfirm
 											title='Sure to delete?'
@@ -434,7 +455,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 				>
 					{capabilities.add.enable && (
 						<div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
-							<Button type='primary' size='small' onClick={this.openDrawer}>
+							<Button type='primary' size='small' onClick={this.openAddFormDrawer}>
 								<PlusOutlined /> {capabilities.add.label}
 							</Button>
 						</div>
@@ -599,15 +620,17 @@ export class TableBVC extends Component<tableProps, tableState> {
 						)}
 					</Modal>
 				)}
+
 				<Drawer
 					title={capabilities.add.label}
 					width={'400px'}
 					closable={true}
-					visible={this.state.drawer}
-					onClose={this.closeDrawer}
+					visible={this.state.addFormDrawer}
+					onClose={this.closeAddFormDrawer}
 				>
 					<AddForm metadata={meta} />
 				</Drawer>
+
 				{columns.length > 0 && (
 					<Table
 						pagination={
@@ -630,8 +653,28 @@ export class TableBVC extends Component<tableProps, tableState> {
 						columns={columns}
 						loading={globalSearchLoading || loadingData}
 						dataSource={this.getDataWithKey()}
+						scroll={{ x: 1300 }}
 					/>
 				)}
+
+				{/* Edit Form Drawer */}
+				{capabilities.edit?.enable && (
+					<Drawer
+						title={capabilities.edit.label}
+						width={'400px'}
+						closable={true}
+						visible={this.state.editFormDrawer}
+						onClose={this.closeEditFormDrawer}
+					>
+						<EditForm
+							metadata={meta}
+							initialValues={this.state.editingItemData}
+							handleSave={this.handleSave}
+							closeDrawer={this.closeEditFormDrawer}
+						/>
+					</Drawer>
+				)}
+
 				{/* Presentation Drawer */}
 				<Drawer
 					width={'80%'}
@@ -771,7 +814,16 @@ const EditableCell: React.FC<any> = ({
 			)
 		}
 
-		return getEditFormsField(dataIndex, record, field, form, inputRef, save, resetBtn, setResetBtn)
+		return getInlineEditFormsField(
+			dataIndex,
+			record,
+			field,
+			form,
+			inputRef,
+			save,
+			resetBtn,
+			setResetBtn
+		)
 	}
 
 	return (

@@ -2,12 +2,7 @@ import React from 'react'
 import { Form, Input, Radio, Select, Tooltip, Checkbox, Button, Switch } from 'antd'
 import { ClearOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
 
-export const getAddFormsField = (
-	info: any,
-	form: any,
-	initialValues: any,
-	isLastField: boolean
-) => {
+export default function (info: any, form: any, initialValues: any, isLastField: boolean) {
 	if (!info) return null
 	const { title, dataIndex, field } = info
 	const { type, placeholder, hasFeedback } = field
@@ -135,7 +130,7 @@ export const getAddFormsField = (
 	}
 }
 
-export const getEditFormsField = (
+export const getInlineEditFormsField = (
 	dataIndex: string,
 	record: any,
 	field: any,
