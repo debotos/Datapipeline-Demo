@@ -46,162 +46,53 @@
 			"showQuickJumper": true
 		}
 	},
-	"columns": [
+	"columnDefs": [
 		{
-			"title": "First Name",
-			"dataIndex": "first_name",
+			"headerName": "First Name",
+			"field": "first_name",
+			"width": 140
+		},
+		{
+			"headerName": "Last Name",
+			"field": "last_name",
+			"width": 140
+		},
+		{
+			"headerName": "Address",
+			"field": "address",
+			"width": 220
+		},
+		{
+			"headerName": "Email",
+			"field": "email",
+			"width": 220
+		},
+		{
+			"headerName": "IP",
+			"field": "ip_address",
 			"width": 150,
-			"fixed": "left",
-			"searchable": true,
-			"field": {
-				"editable": true,
-				"type": "text",
-				"placeholder": "First Name",
-				"hasFeedback": true,
-				"validation": [
-					{ "whitespace": true, "required": true, "message": "First name is required" },
-					{ "min": 2, "message": "Minimum length is 2" },
-					{ "max": 10, "message": "Max value length is 10" }
-				]
-			},
-			"sorting": {
-				"enable": true,
-				"type": "string",
-				"sortingProps": {
-					"sortDirections": ["descend", "ascend"]
-				}
-			}
+			"type": ["nonEditableColumn"]
 		},
 		{
-			"title": "Last Name",
-			"dataIndex": "last_name",
-			"width": 150,
-			"searchable": true,
-			"field": {
-				"editable": true,
-				"type": "text",
-				"placeholder": "Last Name",
-				"hasFeedback": true,
-				"validation": [
-					{ "whitespace": true, "required": true, "message": "Last name is required" },
-					{ "min": 2, "message": "Minimum length is 2" },
-					{ "max": 10, "message": "Max value length is 10" }
-				]
-			},
-			"sorting": {
-				"enable": true,
-				"type": "string",
-				"sortingProps": {
-					"sortDirections": ["descend", "ascend"]
-				}
-			}
+			"headerName": "Gender",
+			"field": "gender",
+			"width": 100
 		},
 		{
-			"title": "Address",
-			"dataIndex": "address",
-			"searchable": true,
-			"field": {
-				"editable": true,
-				"type": "textarea",
-				"rows": 2,
-				"placeholder": "Address",
-				"hasFeedback": true,
-				"validation": [
-					{ "whitespace": true, "required": true, "message": "Address is required" },
-					{ "min": 2, "message": "Minimum length is 2" },
-					{ "max": 200, "message": "Max value length is 200" }
-				]
-			}
+			"headerName": "Permission",
+			"field": "permission",
+			"width": 150
 		},
 		{
-			"title": "Email",
-			"dataIndex": "email",
-			"width": 250,
-			"searchable": true,
-			"field": {
-				"editable": true,
-				"type": "email",
-				"placeholder": "Email",
-				"hasFeedback": true,
-				"validation": [
-					{ "whitespace": true, "required": true, "message": "Email is required" },
-					{ "type": "email", "message": "Email is not valid" }
-				]
-			},
-			"sorting": {
-				"enable": true,
-				"type": "string",
-				"sortingProps": {
-					"sortDirections": ["descend", "ascend"]
-				}
-			}
+			"headerName": "Active",
+			"field": "active",
+			"width": 100
 		},
 		{
-			"title": "IP",
-			"dataIndex": "ip_address",
-			"searchable": true,
-			"field": {
-				"editable": false
-			}
-		},
-		{
-			"title": "Gender",
-			"dataIndex": "gender",
-			"width": 120,
-			"field": {
-				"editable": true,
-				"type": "radio",
-				"placeholder": "Gender",
-				"options": [
-					{ "label": "Male", "value": "Male", "disabled": false },
-					{ "label": "Female", "value": "Female", "disabled": false }
-				],
-				"validation": [{ "required": true, "message": "Gender is required" }]
-			},
-			"filter": true
-		},
-		{
-			"title": "Permission",
-			"dataIndex": "permission",
-			"width": 170,
-			"field": {
-				"editable": true,
-				"type": "checkbox",
-				"placeholder": "Permission",
-				"options": [
-					{ "label": "Add", "value": "add", "disabled": false },
-					{ "label": "Delete", "value": "delete", "disabled": false },
-					{ "label": "Edit", "value": "edit", "disabled": false },
-					{ "label": "Read", "value": "read", "disabled": false }
-				],
-				"validation": [{ "type": "array", "required": true, "message": "Permission is required" }]
-			},
-			"filter": true
-		},
-		{
-			"title": "Active",
-			"dataIndex": "active",
-			"width": 100,
-			"align": "center",
-			"field": {
-				"editable": true,
-				"type": "boolean",
-				"input": "switch",
-				"options": [
-					{ "label": "Yes", "value": true, "disabled": false },
-					{ "label": "No", "value": false, "disabled": false }
-				]
-			},
-			"filter": true
-		},
-		{
-			"title": "Action",
-			"dataIndex": "action",
-			"fixed": "right",
+			"headerName": "Action",
+			"field": "action",
 			"width": 130,
-			"field": {
-				"editable": false
-			}
+			"type": ["nonEditableColumn", "nonFilterableColumn", "nonSortableColumn"]
 		}
 	]
 }
