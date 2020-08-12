@@ -19,6 +19,7 @@ export class Table extends Component<CProps, CState> {
 		const { meta, data } = this.props
 		this.setState({ columnDefs: meta.columnDefs, rowData: data })
 	}
+
 	constructor(props: CProps) {
 		super(props)
 		this.state = {
@@ -29,30 +30,21 @@ export class Table extends Component<CProps, CState> {
 
 	render() {
 		return (
-			<div className='ag-theme-alpine' style={{ height: '90vh', width: '100%' }}>
+			<div className='ag-theme-alpine' style={{ height: '95vh', width: '100%' }}>
 				<AgGridReact
 					pagination={true}
 					columnDefs={this.state.columnDefs}
 					rowData={this.state.rowData}
 					// a default column definition with properties that get applied to every column
 					defaultColDef={{
-						// set every column width
-						width: 200,
-						// make every column editable
-						editable: true,
-						// make every column use 'text' filter by default
-						filter: 'agTextColumnFilter',
-						// make every column sortable
-						sortable: true,
 						// make every column resizable
 						resizable: true,
-						// column can be pinned
-						lockVisible: true,
-						lockPinned: true,
+						// every column will have floating filter
+						floatingFilter: true,
 					}}
 					// if we had column groups, we could provide default group items here
 					// defaultColGroupDef={{}}
-					// define a column type (you can define as many as you like)
+					// define a column type
 					columnTypes={{
 						nonEditableColumn: { editable: false },
 						nonFilterableColumn: { filter: false },
