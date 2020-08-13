@@ -75,6 +75,7 @@
 			"headerName": "Email",
 			"field": "email",
 			"flex": 1,
+			"minWidth": 200,
 			"editable": true,
 			"filter": true,
 			"sortable": true
@@ -100,7 +101,28 @@
 			"field": "permission",
 			"width": 150,
 			"editable": true,
-			"filter": true
+			"filter": true,
+			"cellRenderer": "arrayValueRenderer",
+			"cellEditor": "arrayValueEditor",
+			"fieldProps": {
+				"type": "checkbox",
+				"placeholder": "Permission",
+				"options": {
+					"array": [
+						{ "label": "Add", "value": "add", "disabled": false },
+						{ "label": "Delete", "value": "delete", "disabled": false },
+						{ "label": "Edit", "value": "edit", "disabled": false },
+						{ "label": "Read", "value": "read", "disabled": false }
+					],
+					"object": {
+						"add": { "label": "Add", "value": "add", "disabled": false },
+						"delete": { "label": "Delete", "value": "delete", "disabled": false },
+						"edit": { "label": "Edit", "value": "edit", "disabled": false },
+						"read": { "label": "Read", "value": "read", "disabled": false }
+					}
+				},
+				"validation": [{ "type": "array", "required": true, "message": "Permission is required" }]
+			}
 		},
 		{
 			"headerName": "Active",
@@ -116,7 +138,8 @@
 			"width": 130,
 			"pinned": "right",
 			"editable": false,
-			"type": ["nonEditableColumn", "nonFilterableColumn", "nonSortableColumn"]
+			"filter": false,
+			"sortable": false
 		}
 	]
 }
