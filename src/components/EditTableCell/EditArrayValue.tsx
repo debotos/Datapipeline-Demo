@@ -44,6 +44,10 @@ export class EditArrayValue extends Component<any, any> {
 		return this.state.isPopup
 	}
 
+	isCancelAfterEnd = () => {
+		return !!this.formRef.current.getFieldsError().filter(({ errors }) => errors.length).length
+	}
+
 	onFinish = (values: any) => {
 		console.log('Form submitted with:', values)
 		const { field } = this.props.colDef
@@ -63,13 +67,16 @@ export class EditArrayValue extends Component<any, any> {
 			<Container ref={this.containerElement} isPopup={isPopup}>
 				<Form
 					className='inline-edit-form'
+					size='small'
 					ref={this.formRef}
 					name={`${field}-edit-form`}
 					onFinish={this.onFinish}
 					initialValues={{ [field]: value }}
 				>
 					<Form.Item name={field} rules={fieldProps.validation} validateFirst style={{ ...style }}>
-						<Checkbox.Group>
+						<Checkbox.Group
+							onChange={(checkedValue: any) => this.setState({ value: checkedValue })}
+						>
 							<Row>
 								{fieldProps.options.array.map((option: any) => {
 									const { label, value: val, disabled } = option

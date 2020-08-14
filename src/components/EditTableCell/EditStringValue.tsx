@@ -45,6 +45,10 @@ export class EditStringValue extends Component<any, any> {
 		return this.state.isPopup
 	}
 
+	isCancelAfterEnd = () => {
+		return !!this.formRef.current.getFieldsError().filter(({ errors }) => errors.length).length
+	}
+
 	onFinish = (values: any) => {
 		console.log('Form submitted with:', values)
 		const { field } = this.props.colDef
@@ -64,6 +68,7 @@ export class EditStringValue extends Component<any, any> {
 			<Container ref={this.containerElement} isPopup={isPopup}>
 				<Form
 					className='inline-edit-form'
+					size='middle'
 					ref={this.formRef}
 					name={`${field}-edit-form`}
 					onFinish={this.onFinish}
@@ -79,6 +84,7 @@ export class EditStringValue extends Component<any, any> {
 						<Input
 							allowClear
 							autoFocus
+							onChange={(e: any) => this.setState({ value: e.target.value })}
 							onPressEnter={() => this.formRef.current.submit()}
 							placeholder={fieldProps.placeholder}
 							ref={this.inputRef}

@@ -35,16 +35,20 @@ export class Table extends Component<CProps, CState> {
 		this.setState({ columnDefs: meta.columnDefs, rowData: data })
 	}
 
-	onGridReady = (params: any) => {
-		this.gridApi = params.api
-		this.gridColumnApi = params.columnApi
-	}
-
 	getColumnDefs = () => {
 		const { columnDefs } = this.state
 		return columnDefs.map((column) => {
 			return column
 		})
+	}
+
+	onGridReady = (params: any) => {
+		this.gridApi = params.api
+		this.gridColumnApi = params.columnApi
+	}
+
+	onCellValueChanged = (params: any) => {
+		console.log(params)
 	}
 
 	render() {
@@ -70,6 +74,7 @@ export class Table extends Component<CProps, CState> {
 						stringValueEditor: TableCellEditString,
 					}}
 					onGridReady={this.onGridReady}
+					onCellValueChanged={this.onCellValueChanged}
 					pagination={true}
 					rowData={this.state.rowData}
 					stopEditingWhenGridLosesFocus={true}
