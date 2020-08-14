@@ -1,9 +1,12 @@
 import React, { Component } from 'react'
 import { Input, Button, Form } from 'antd'
 import { FormInstance } from 'antd/lib/form'
-import styled from 'styled-components'
+
+import { getElementSize } from '../../utils/helpers'
+import { Container } from './EditArrayValue'
 
 export class EditStringValue extends Component<any, any> {
+	private containerElement = React.createRef<any>()
 	private formRef = React.createRef<FormInstance>()
 	private inputRef = React.createRef<any>()
 
@@ -15,11 +18,23 @@ export class EditStringValue extends Component<any, any> {
 	}
 
 	componentDidMount() {
-		this.setState({ value: this.props.value })
+		const { colDef, value } = this.props
+		this.setState({ value, isPopup: colDef?.fieldProps?.popupEdit })
+	}
+
+	componentWillUnmount() {
+		this.props.api.resetRowHeights()
 	}
 
 	afterGuiAttached = () => {
 		this.inputRef.current.focus()
+		const { isPopup } = this.state
+		if (!isPopup) {
+			const el = this.containerElement?.current
+			const { height } = getElementSize(el)
+			this.props.node.setRowHeight(height)
+			this.props.api.onRowHeightChanged()
+		}
 	}
 
 	getValue() {
@@ -27,7 +42,7 @@ export class EditStringValue extends Component<any, any> {
 	}
 
 	isPopup() {
-		return true
+		return this.state.isPopup
 	}
 
 	onFinish = (values: any) => {
@@ -39,14 +54,16 @@ export class EditStringValue extends Component<any, any> {
 	}
 
 	render() {
+		const { isPopup } = this.state
 		const { colDef, value } = this.props
 		const { field, fieldProps } = colDef
 
 		const style = { marginBottom: 3 }
 
 		return (
-			<Container>
+			<Container ref={this.containerElement} isPopup={isPopup}>
 				<Form
+					className='inline-edit-form'
 					ref={this.formRef}
 					name={`${field}-edit-form`}
 					onFinish={this.onFinish}
@@ -67,19 +84,6 @@ export class EditStringValue extends Component<any, any> {
 							ref={this.inputRef}
 						/>
 					</Form.Item>
-					<Form.Item style={{ ...style, textAlign: 'center' }}>
-						<Button size='small' type='primary' htmlType='submit' ghost>
-							Save
-						</Button>
-						<Button
-							type='link'
-							size='small'
-							htmlType='button'
-							onClick={() => this.formRef.current.resetFields()}
-						>
-							Reset
-						</Button>
-					</Form.Item>
 				</Form>
 			</Container>
 		)
@@ -87,7 +91,3 @@ export class EditStringValue extends Component<any, any> {
 }
 
 export default EditStringValue
-
-const Container = styled.div`
-	padding: 10px 20px;
-`

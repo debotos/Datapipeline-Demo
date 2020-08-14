@@ -62,7 +62,8 @@
 					{ "whitespace": true, "required": true, "message": "First name is required" },
 					{ "min": 2, "message": "Minimum length is 2" },
 					{ "max": 10, "message": "Max value length is 10" }
-				]
+				],
+				"popupEdit": true
 			}
 		},
 		{
@@ -80,7 +81,8 @@
 					{ "whitespace": true, "required": true, "message": "Last name is required" },
 					{ "min": 2, "message": "Minimum length is 2" },
 					{ "max": 10, "message": "Max value length is 10" }
-				]
+				],
+				"popupEdit": false
 			}
 		},
 		{
@@ -99,7 +101,8 @@
 					{ "whitespace": true, "required": true, "message": "Address is required" },
 					{ "min": 2, "message": "Minimum length is 2" },
 					{ "max": 200, "message": "Max value length is 200" }
-				]
+				],
+				"popupEdit": false
 			}
 		},
 		{
@@ -117,7 +120,8 @@
 				"validation": [
 					{ "whitespace": true, "required": true, "message": "Email is required" },
 					{ "type": "email", "message": "Email is not valid" }
-				]
+				],
+				"popupEdit": false
 			}
 		},
 		{

@@ -39,6 +39,37 @@
 	font-size: 9px;
 	padding-top: 2px;
 }
+
+.ag-cell.ag-cell-auto-height.ag-cell-value.ag-cell-focus.ag-cell-inline-editing {
+	border: none !important;
+	box-shadow: none !important;
+	background: transparent !important;
+}
+
+.ag-cell.ag-cell-auto-height.ag-cell-value.ag-cell-focus.ag-cell-inline-editing {
+	height: 100% !important;
+}
+
+.inline-edit-form .ant-row.ant-form-item,
+.inline-edit-form.ant-form.ant-form-horizontal,
+.inline-edit-form .ant-form-item-control-input,
+.inline-edit-form .ant-form-item-control-input-content {
+	outline: none !important;
+	box-shadow: none !important;
+	&:focus {
+		outline: none !important;
+		box-shadow: none !important;
+	}
+}
+
+.inline-edit-form .ant-input-affix-wrapper {
+	border-color: #eee !important;
+	box-shadow: none !important;
+	&:focus {
+		outline: none !important;
+		box-shadow: none !important;
+	}
+}
 /* Custom */
 
 .icon-btn {

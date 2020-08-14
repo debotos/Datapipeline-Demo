@@ -54,12 +54,12 @@ export class Table extends Component<CProps, CState> {
 					columnDefs={this.getColumnDefs()}
 					// a default column definition with properties that get applied to every column
 					defaultColDef={{
-						// make every column resizable
-						resizable: true,
-						// every column will have floating filter
-						floatingFilter: true,
 						// String value editor
 						cellEditor: 'stringValueEditor',
+						// every column will have floating filter
+						floatingFilter: true,
+						// make every column resizable
+						resizable: true,
 						// When editing 'enter' key should not close editor without saving
 						suppressKeyboardEvent: suppressEnter,
 					}}
