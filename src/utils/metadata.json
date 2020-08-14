@@ -53,7 +53,17 @@
 			"width": 140,
 			"editable": true,
 			"filter": true,
-			"sortable": true
+			"sortable": true,
+			"fieldProps": {
+				"type": "text",
+				"placeholder": "First Name",
+				"hasFeedback": true,
+				"validation": [
+					{ "whitespace": true, "required": true, "message": "First name is required" },
+					{ "min": 2, "message": "Minimum length is 2" },
+					{ "max": 10, "message": "Max value length is 10" }
+				]
+			}
 		},
 		{
 			"headerName": "Last Name",
@@ -61,7 +71,17 @@
 			"width": 140,
 			"editable": true,
 			"filter": true,
-			"sortable": true
+			"sortable": true,
+			"fieldProps": {
+				"type": "text",
+				"placeholder": "Last Name",
+				"hasFeedback": true,
+				"validation": [
+					{ "whitespace": true, "required": true, "message": "Last name is required" },
+					{ "min": 2, "message": "Minimum length is 2" },
+					{ "max": 10, "message": "Max value length is 10" }
+				]
+			}
 		},
 		{
 			"headerName": "Address",
@@ -69,7 +89,18 @@
 			"width": 220,
 			"editable": true,
 			"filter": true,
-			"sortable": true
+			"sortable": true,
+			"fieldProps": {
+				"type": "textarea",
+				"rows": 2,
+				"placeholder": "Address",
+				"hasFeedback": true,
+				"validation": [
+					{ "whitespace": true, "required": true, "message": "Address is required" },
+					{ "min": 2, "message": "Minimum length is 2" },
+					{ "max": 200, "message": "Max value length is 200" }
+				]
+			}
 		},
 		{
 			"headerName": "Email",
@@ -78,7 +109,16 @@
 			"minWidth": 200,
 			"editable": true,
 			"filter": true,
-			"sortable": true
+			"sortable": true,
+			"fieldProps": {
+				"type": "email",
+				"placeholder": "Email",
+				"hasFeedback": true,
+				"validation": [
+					{ "whitespace": true, "required": true, "message": "Email is required" },
+					{ "type": "email", "message": "Email is not valid" }
+				]
+			}
 		},
 		{
 			"headerName": "IP",
@@ -94,7 +134,17 @@
 			"width": 100,
 			"editable": true,
 			"filter": true,
-			"sortable": true
+			"sortable": true,
+			"floatingFilter": false,
+			"fieldProps": {
+				"type": "radio",
+				"placeholder": "Gender",
+				"options": [
+					{ "label": "Male", "value": "Male", "disabled": false },
+					{ "label": "Female", "value": "Female", "disabled": false }
+				],
+				"validation": [{ "required": true, "message": "Gender is required" }]
+			}
 		},
 		{
 			"headerName": "Permission",
@@ -104,6 +154,7 @@
 			"filter": true,
 			"cellRenderer": "arrayValueRenderer",
 			"cellEditor": "arrayValueEditor",
+			"floatingFilter": false,
 			"fieldProps": {
 				"type": "checkbox",
 				"placeholder": "Permission",
@@ -130,7 +181,16 @@
 			"width": 100,
 			"editable": true,
 			"filter": true,
-			"sortable": true
+			"sortable": true,
+			"floatingFilter": false,
+			"fieldProps": {
+				"type": "boolean",
+				"input": "switch",
+				"options": [
+					{ "label": "Yes", "value": true, "disabled": false },
+					{ "label": "No", "value": false, "disabled": false }
+				]
+			}
 		},
 		{
 			"headerName": "Action",

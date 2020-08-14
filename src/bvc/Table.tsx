@@ -6,6 +6,7 @@ import 'ag-grid-community/dist/styles/ag-theme-alpine.css'
 
 import TableCellViewArray from '../components/ViewTableCell/ViewArrayValue'
 import TableCellEditArray from '../components/EditTableCell/EditArrayValue'
+import TableCellEditString from '../components/EditTableCell/EditStringValue'
 
 interface CProps {
 	meta: any
@@ -39,25 +40,39 @@ export class Table extends Component<CProps, CState> {
 		this.gridColumnApi = params.columnApi
 	}
 
+	getColumnDefs = () => {
+		const { columnDefs } = this.state
+		return columnDefs.map((column) => {
+			return column
+		})
+	}
+
 	render() {
 		return (
 			<div className='ag-theme-alpine' style={{ height: '95vh', width: '100%' }}>
 				<AgGridReact
-					columnDefs={this.state.columnDefs}
+					columnDefs={this.getColumnDefs()}
 					// a default column definition with properties that get applied to every column
 					defaultColDef={{
 						// make every column resizable
 						resizable: true,
 						// every column will have floating filter
 						floatingFilter: true,
+						// String value editor
+						cellEditor: 'stringValueEditor',
+						// When editing 'enter' key should not close editor without saving
+						suppressKeyboardEvent: suppressEnter,
 					}}
+					enableCellChangeFlash={true}
 					frameworkComponents={{
 						arrayValueRenderer: TableCellViewArray,
 						arrayValueEditor: TableCellEditArray,
+						stringValueEditor: TableCellEditString,
 					}}
 					onGridReady={this.onGridReady}
 					pagination={true}
 					rowData={this.state.rowData}
+					stopEditingWhenGridLosesFocus={true}
 				></AgGridReact>
 			</div>
 		)
@@ -65,3 +80,12 @@ export class Table extends Component<CProps, CState> {
 }
 
 export default Table
+
+function suppressEnter(params: any) {
+	if (!params.editing) return false
+	var KEY_ENTER = 13
+	var event = params.event
+	var key = event.which
+	var suppress = key === KEY_ENTER
+	return suppress
+}
