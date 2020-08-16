@@ -1,28 +1,26 @@
 import React, { Component } from 'react'
-import { Input, Form } from 'antd'
+import { Form, Switch, Checkbox } from 'antd'
 import { FormInstance } from 'antd/lib/form'
 
 import { getElementSize } from '../../utils/helpers'
 import { Container } from './EditArrayValue'
+import { CheckOutlined, CloseOutlined } from '@ant-design/icons'
 
-export class EditStringValue extends Component<any, any> {
+export class EditEnumValue extends Component<any, any> {
 	private containerElement = React.createRef<any>()
 	private formRef = React.createRef<FormInstance>()
-	private inputRef = React.createRef<any>()
 
 	constructor(props: any) {
 		super(props)
 		this.state = {
-			value: [], // For refresh() & Ajax purpose only
+			value: false, // For refresh() & Ajax purpose only
+			isPopup: false,
 		}
 	}
 
 	componentDidMount() {
 		const { colDef, value } = this.props
-		this.setState({
-			value,
-			isPopup: colDef.fieldProps.type === 'textarea' ? true : colDef?.fieldProps?.popupEdit,
-		})
+		this.setState({ value, isPopup: colDef?.fieldProps?.popupEdit })
 	}
 
 	componentWillUnmount() {
@@ -30,7 +28,6 @@ export class EditStringValue extends Component<any, any> {
 	}
 
 	afterGuiAttached = () => {
-		this.inputRef.current.focus()
 		const { isPopup } = this.state
 		if (!isPopup) {
 			const el = this.containerElement?.current
@@ -42,38 +39,6 @@ export class EditStringValue extends Component<any, any> {
 
 	getValue() {
 		return this.state.value
-	}
-
-	getField = () => {
-		const { fieldProps } = this.props.colDef
-		const rows = fieldProps.rows || 4
-		switch (fieldProps.type) {
-			case 'textarea': {
-				return (
-					<Input.TextArea
-						allowClear
-						style={{ minWidth: 300 }}
-						bordered={false}
-						onChange={(e: any) => this.setState({ value: e.target.value })}
-						placeholder={fieldProps.placeholder}
-						rows={rows}
-						ref={this.inputRef}
-					/>
-				)
-			}
-			default: {
-				return (
-					<Input
-						allowClear
-						autoFocus
-						onChange={(e: any) => this.setState({ value: e.target.value })}
-						onPressEnter={() => this.formRef.current.submit()}
-						placeholder={fieldProps.placeholder}
-						ref={this.inputRef}
-					/>
-				)
-			}
-		}
 	}
 
 	isPopup() {
@@ -97,26 +62,43 @@ export class EditStringValue extends Component<any, any> {
 		const { colDef, value } = this.props
 		const { field, fieldProps } = colDef
 
-		const style = { marginBottom: isPopup ? 0 : 3 }
+		const style = { marginBottom: 3 }
+		const initialValues = { [field]: value }
 
 		return (
-			<Container ref={this.containerElement} isPopup={isPopup} style={{ margin: isPopup && 5 }}>
+			<Container ref={this.containerElement} isPopup={isPopup}>
 				<Form
 					className='inline-edit-form'
-					size='middle'
+					size='small'
 					ref={this.formRef}
 					name={`${field}-edit-form`}
 					onFinish={this.onFinish}
-					initialValues={{ [field]: value }}
+					initialValues={initialValues}
 				>
 					<Form.Item
 						name={field}
-						hasFeedback={fieldProps.hasFeedback}
 						rules={fieldProps.validation}
 						validateFirst
-						style={{ ...style }}
+						valuePropName='checked'
+						style={{ ...style, marginLeft: '1.2rem' }}
 					>
-						{this.getField()}
+						{fieldProps.input === 'checkbox' ? (
+							<Checkbox
+								onChange={(e: any) => {
+									this.setState({ value: e.target.checked })
+									this.formRef.current.submit()
+								}}
+							/>
+						) : (
+							<Switch
+								onChange={(value) => {
+									this.setState({ value })
+									this.formRef.current.submit()
+								}}
+								checkedChildren={<CheckOutlined />}
+								unCheckedChildren={<CloseOutlined />}
+							/>
+						)}
 					</Form.Item>
 				</Form>
 			</Container>
@@ -124,4 +106,4 @@ export class EditStringValue extends Component<any, any> {
 	}
 }
 
-export default EditStringValue
+export default EditEnumValue

@@ -70,6 +70,12 @@
 		box-shadow: none !important;
 	}
 }
+
+.inline-edit-form .ant-form-item-explain,
+.ant-form-item-extra {
+	min-height: max-content;
+	margin-left: 2px;
+}
 /* Custom */
 
 .icon-btn {

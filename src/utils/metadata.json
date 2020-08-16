@@ -94,7 +94,7 @@
 			"sortable": true,
 			"fieldProps": {
 				"type": "textarea",
-				"rows": 2,
+				"rows": 5,
 				"placeholder": "Address",
 				"hasFeedback": true,
 				"validation": [
@@ -135,7 +135,7 @@
 		{
 			"headerName": "Gender",
 			"field": "gender",
-			"width": 100,
+			"width": 150,
 			"editable": true,
 			"filter": true,
 			"sortable": true,
@@ -143,10 +143,16 @@
 			"fieldProps": {
 				"type": "radio",
 				"placeholder": "Gender",
-				"options": [
-					{ "label": "Male", "value": "Male", "disabled": false },
-					{ "label": "Female", "value": "Female", "disabled": false }
-				],
+				"options": {
+					"array": [
+						{ "label": "Male", "value": "male", "disabled": false },
+						{ "label": "Female", "value": "female", "disabled": false }
+					],
+					"object": {
+						"male": { "label": "Male", "value": "male", "disabled": false },
+						"female": { "label": "Female", "value": "female", "disabled": false }
+					}
+				},
 				"validation": [{ "required": true, "message": "Gender is required" }]
 			}
 		},
@@ -156,8 +162,6 @@
 			"width": 150,
 			"editable": true,
 			"filter": true,
-			"cellRenderer": "arrayValueRenderer",
-			"cellEditor": "arrayValueEditor",
 			"floatingFilter": false,
 			"fieldProps": {
 				"type": "checkbox",
