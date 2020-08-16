@@ -9,6 +9,7 @@ import 'ag-grid-community/dist/styles/ag-theme-alpine.css'
 import TableCellViewArray from '../components/ViewTableCell/ViewArrayValue'
 import TableCellEditArray from '../components/EditTableCell/EditArrayValue'
 import TableCellEditString from '../components/EditTableCell/EditStringValue'
+import TableCellEditNumber from '../components/EditTableCell/EditNumberValue'
 import TableCellViewEnum from '../components/ViewTableCell/ViewEnumValue'
 import TableCellEditEnum from '../components/EditTableCell/EditEnumValue'
 import TableCellViewBoolean from '../components/ViewTableCell/ViewBooleanValue'
@@ -56,6 +57,8 @@ export class Table extends Component<CProps, CState> {
 					return { ...column, cellRenderer: 'enumValueRenderer', cellEditor: 'enumValueEditor' }
 				case 'boolean':
 					return { ...column, cellRenderer: 'boolValueRenderer', cellEditor: 'boolValueEditor' }
+				case 'number':
+					return { ...column, cellEditor: 'numberValueEditor' }
 				default:
 					return column
 			}
@@ -139,6 +142,7 @@ export class Table extends Component<CProps, CState> {
 							boolValueRenderer: TableCellViewBoolean,
 							boolValueEditor: TableCellEditBoolean,
 							stringValueEditor: TableCellEditString,
+							numberValueEditor: TableCellEditNumber,
 						}}
 						onGridReady={this.onGridReady}
 						onCellValueChanged={this.onCellValueChanged}

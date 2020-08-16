@@ -125,6 +125,29 @@
 			}
 		},
 		{
+			"headerName": "Age",
+			"field": "age",
+			"width": 100,
+			"editable": true,
+			"filter": true,
+			"sortable": true,
+			"fieldProps": {
+				"type": "number",
+				"placeholder": "Age",
+				"hasFeedback": true,
+				"validation": [
+					{ "required": true, "message": "Age is required" },
+					{ "type": "integer", "message": "Only integer number allowed!" },
+					{
+						"type": "number",
+						"min": 20,
+						"max": 100,
+						"message": "Age have to be between 20 and 100"
+					}
+				]
+			}
+		},
+		{
 			"headerName": "IP",
 			"field": "ip_address",
 			"width": 150,

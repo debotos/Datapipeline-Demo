@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Input, Form } from 'antd'
+import { InputNumber, Form } from 'antd'
 import { FormInstance } from 'antd/lib/form'
 
 import { getElementSize } from '../../utils/helpers'
@@ -13,16 +13,13 @@ export class EditStringValue extends Component<any, any> {
 	constructor(props: any) {
 		super(props)
 		this.state = {
-			value: '', // For refresh() & Ajax purpose only
+			value: null, // For refresh() & Ajax purpose only
 		}
 	}
 
 	componentDidMount() {
 		const { colDef, value } = this.props
-		this.setState({
-			value,
-			isPopup: colDef.fieldProps.type === 'textarea' ? true : colDef?.fieldProps?.popupEdit,
-		})
+		this.setState({ value, isPopup: colDef?.fieldProps?.popupEdit })
 	}
 
 	componentWillUnmount() {
@@ -42,38 +39,6 @@ export class EditStringValue extends Component<any, any> {
 
 	getValue() {
 		return this.state.value
-	}
-
-	getField = () => {
-		const { fieldProps } = this.props.colDef
-		const rows = fieldProps.rows || 4
-		switch (fieldProps.type) {
-			case 'textarea': {
-				return (
-					<Input.TextArea
-						allowClear
-						style={{ minWidth: 300 }}
-						bordered={false}
-						onChange={(e: any) => this.setState({ value: e.target.value })}
-						placeholder={fieldProps.placeholder}
-						rows={rows}
-						ref={this.inputRef}
-					/>
-				)
-			}
-			default: {
-				return (
-					<Input
-						allowClear
-						autoFocus
-						onChange={(e: any) => this.setState({ value: e.target.value })}
-						onPressEnter={() => this.formRef.current.submit()}
-						placeholder={fieldProps.placeholder}
-						ref={this.inputRef}
-					/>
-				)
-			}
-		}
 	}
 
 	isPopup() {
@@ -97,7 +62,7 @@ export class EditStringValue extends Component<any, any> {
 		const { colDef, value } = this.props
 		const { field, fieldProps } = colDef
 
-		const style = { marginBottom: isPopup ? 0 : 3 }
+		const style = { marginBottom: 3 }
 
 		return (
 			<Container ref={this.containerElement} isPopup={isPopup} style={{ margin: isPopup && 5 }}>
@@ -107,7 +72,7 @@ export class EditStringValue extends Component<any, any> {
 					ref={this.formRef}
 					name={`${field}-edit-form`}
 					onFinish={this.onFinish}
-					initialValues={{ [field]: value }}
+					initialValues={{ [field]: Number(value) }}
 				>
 					<Form.Item
 						name={field}
@@ -116,7 +81,14 @@ export class EditStringValue extends Component<any, any> {
 						validateFirst
 						style={{ ...style }}
 					>
-						{this.getField()}
+						<InputNumber
+							autoFocus
+							onChange={(value: any) => this.setState({ value })}
+							onPressEnter={() => this.formRef.current.submit()}
+							placeholder={fieldProps.placeholder}
+							ref={this.inputRef}
+							style={{ width: '100%' }}
+						/>
 					</Form.Item>
 				</Form>
 			</Container>
