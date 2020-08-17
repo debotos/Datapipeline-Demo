@@ -166,27 +166,36 @@ export class Table extends Component<CProps, CState> {
 	}
 
 	getColumnDefs = () => {
-		const { columnDefs } = this.state
-		return columnDefs.map((column) => {
-			const { fieldProps } = column
-			if (!fieldProps?.type) return column
-			switch (fieldProps.type) {
-				case 'checkbox':
-					return { ...column, cellRenderer: 'arrayValueRenderer', cellEditor: 'arrayValueEditor' }
-				case 'radio':
-				case 'select':
-					return { ...column, cellRenderer: 'enumValueRenderer', cellEditor: 'enumValueEditor' }
-				case 'boolean':
-					return { ...column, cellRenderer: 'boolValueRenderer', cellEditor: 'boolValueEditor' }
-				case 'number':
-					return { ...column, cellEditor: 'numberValueEditor' }
-				default:
-					return column
-			}
-		})
+		const { columnDefs, tableSettings } = this.state
+		return columnDefs
+			.filter((col: any) => {
+				if (!tableSettings || !tableSettings.hide) return true
+				return !tableSettings.hide.includes(col.field)
+			})
+			.map((column) => {
+				const { fieldProps } = column
+				if (!fieldProps?.type) return column
+				switch (fieldProps.type) {
+					case 'checkbox':
+						return { ...column, cellRenderer: 'arrayValueRenderer', cellEditor: 'arrayValueEditor' }
+					case 'radio':
+					case 'select':
+						return { ...column, cellRenderer: 'enumValueRenderer', cellEditor: 'enumValueEditor' }
+					case 'boolean':
+						return { ...column, cellRenderer: 'boolValueRenderer', cellEditor: 'boolValueEditor' }
+					case 'number':
+						return { ...column, cellEditor: 'numberValueEditor' }
+					default:
+						return column
+				}
+			})
 	}
 
 	getCellStyle = (params: any) => {}
+
+	getOverlayLoadingTemplate = () => {
+		return <div>Hey</div>
+	}
 
 	handleSave = (row: any) => {
 		// console.log(row)
@@ -217,6 +226,7 @@ export class Table extends Component<CProps, CState> {
 		e.persist()
 		// Mainly call the api service again to get the data
 		this.setState({ loadingData: true })
+		this.gridApi.showLoadingOverlay()
 		const hide = message.loading('Refreshing...', 0)
 		setTimeout(() => {
 			const node = this.globalSearchInput.current
@@ -232,9 +242,10 @@ export class Table extends Component<CProps, CState> {
 				() => {
 					this.setState({ loadingData: false })
 					hide()
+					this.gridApi.hideOverlay()
 				}
 			)
-		}, 1000)
+		}, 3000)
 	}
 
 	onGridReady = (params: any) => {
@@ -405,18 +416,19 @@ export class Table extends Component<CProps, CState> {
 						style={{ top: 25 }}
 						bodyStyle={{ height: '80vh', overflow: 'scroll' }}
 					>
-						{capabilities.filter.fields.map((fieldDataIndex: string, index: number) => {
-							const column = meta.columnDefs.find((x: any) => x.field === fieldDataIndex)
+						{capabilities.filter.fields.map((field: string, index: number) => {
+							const column = meta.columnDefs.find((x: any) => x.field === field)
 							if (!column) return null
-							const { field, title } = column
+							const { headerName } = column
+
 							// Special case where value is not predictable
 							const inputData = Array.from(new Set(this.state.rowData.map((x: any) => x[field])))
 							if (!inputData || inputData.length === 0) return null
 
 							return (
-								<div key={fieldDataIndex}>
+								<div key={field}>
 									<Divider plain style={{ marginTop: index === 0 && 0 }}>
-										{title}
+										{headerName}
 									</Divider>
 									<Checkbox.Group
 										options={inputData
@@ -491,7 +503,7 @@ export class Table extends Component<CProps, CState> {
 								<Row>
 									{meta.columnDefs.map((col: any) => (
 										<Col span={8} key={col.field}>
-											<Checkbox value={col.field}>{col.title}</Checkbox>
+											<Checkbox value={col.field}>{col.headerName}</Checkbox>
 										</Col>
 									))}
 								</Row>
@@ -561,6 +573,7 @@ export class Table extends Component<CProps, CState> {
 							cellStyle: this.getCellStyle,
 						}}
 						frameworkComponents={{
+							customLoadingOverlay: CustomLoadingOverlay,
 							arrayValueRenderer: TableCellViewArray,
 							arrayValueEditor: TableCellEditArray,
 							enumValueRenderer: TableCellViewEnum,
@@ -570,6 +583,7 @@ export class Table extends Component<CProps, CState> {
 							stringValueEditor: TableCellEditString,
 							numberValueEditor: TableCellEditNumber,
 						}}
+						loadingOverlayComponent='customLoadingOverlay'
 						onGridReady={this.onGridReady}
 						onCellValueChanged={this.onCellValueChanged}
 						pagination={true}
@@ -591,6 +605,14 @@ function suppressEnter(params: any) {
 	var key = event.which
 	var suppress = key === KEY_ENTER
 	return suppress
+}
+
+const CustomLoadingOverlay = () => {
+	return (
+		<div>
+			<img alt='Data Loading' src={require('../assets/loading.min.gif')} height='100' width='100' />
+		</div>
+	)
 }
 
 const Container = styled.div`
