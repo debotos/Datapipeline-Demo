@@ -1,7 +1,19 @@
-import React, { Component } from 'react'
+import React, { Component, Suspense } from 'react'
 import { AgGridReact } from 'ag-grid-react'
-import { Button } from 'antd'
-import * as R from 'ramda'
+import { Button, message, Input, Empty, Divider, Checkbox, Row, Col, Drawer, Spin } from 'antd'
+import styled from 'styled-components'
+import { debounce } from 'lodash'
+import { clone, equals } from 'ramda'
+import {
+	EditOutlined,
+	DeleteOutlined,
+	PlusOutlined,
+	SearchOutlined,
+	DownloadOutlined,
+	FilterOutlined,
+	SettingOutlined,
+	SyncOutlined,
+} from '@ant-design/icons'
 
 import 'ag-grid-community/dist/styles/ag-grid.css'
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css'
@@ -15,6 +27,11 @@ import TableCellEditEnum from '../components/EditTableCell/EditEnumValue'
 import TableCellViewBoolean from '../components/ViewTableCell/ViewBooleanValue'
 import TableCellEditBoolean from '../components/EditTableCell/EditBooleanValue'
 
+import AddForm from '../components/AddForm'
+import EditForm from '../components/EditForm'
+import generateExcel from '../utils/generateExcel'
+import Modal from 'antd/lib/modal/Modal'
+
 interface CProps {
 	meta: any
 	data: any
@@ -24,9 +41,26 @@ interface CState {
 	columnDefs: any[]
 	rowData: any[]
 	dirtyFields: any[]
+	loadingData: boolean
+	globalSearchText: string
+	globalSearchResults: any
+	globalSearchLoading: boolean
+	addFormDrawer: boolean
+	editFormDrawer: boolean
+	editingItemData: any
+	presentationDrawer: boolean
+	presentationDrawerData: any
+	showSearchBox: boolean
+	filterModal: boolean
+	masterFilterCriteria: any
+	settingModal: boolean
+	tableSettings: any
 }
 
+const NotFound = () => <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+
 export class Table extends Component<CProps, CState> {
+	private globalSearchInput = React.createRef<any>()
 	private gridApi: any
 	private gridColumnApi: any
 
@@ -36,12 +70,99 @@ export class Table extends Component<CProps, CState> {
 			columnDefs: [],
 			rowData: [],
 			dirtyFields: [],
+			loadingData: true,
+			globalSearchText: '',
+			globalSearchResults: [],
+			globalSearchLoading: false,
+			addFormDrawer: false,
+			editFormDrawer: false,
+			editingItemData: null,
+			presentationDrawer: false,
+			presentationDrawerData: null,
+			showSearchBox: false,
+			filterModal: false,
+			masterFilterCriteria: null,
+			settingModal: false,
+			tableSettings: null,
 		}
 	}
 
 	componentDidMount() {
 		const { meta, data } = this.props
-		this.setState({ columnDefs: meta.columnDefs, rowData: data })
+		const { capabilities } = meta
+		const { setting } = capabilities
+		this.setState(
+			{ columnDefs: meta.columnDefs, rowData: data, tableSettings: setting.props },
+			() => this.setState({ loadingData: false })
+		)
+	}
+
+	componentWillUnmount() {
+		this.performGlobalSearch.cancel()
+	}
+
+	downloadExcel = () => {
+		const { enable, fields: columns } = this.props.meta.capabilities.download
+		if (!enable || columns.length === 0) {
+			message.error('Sorry, unable to generate excel file!')
+			return
+		}
+		const hide = message.loading('Action in progress..', 0)
+		const fieldTitlePair: any = {}
+		this.props.meta.columnDefs.forEach((x: any) => (fieldTitlePair[x.field] = x.title))
+
+		generateExcel(
+			this.getDataWithKey(),
+			columns,
+			fieldTitlePair,
+			`${this.props.meta.heading} data on ${new Date().toDateString()}`,
+			this.props.meta.capabilities.download?.props,
+			this.props.meta.heading,
+			{
+				searchText: this.state.globalSearchText,
+				filters: this.state.masterFilterCriteria,
+			}
+		)
+
+		setTimeout(hide, 300)
+	}
+
+	openFilterModal = () => this.setState({ filterModal: true })
+	closeFilterModal = () => this.setState({ filterModal: false })
+	openSettingModal = () => this.setState({ settingModal: true })
+	closeSettingModal = () => this.setState({ settingModal: false })
+	openAddFormDrawer = () => this.setState({ addFormDrawer: true })
+	closeAddFormDrawer = () => this.setState({ addFormDrawer: false })
+	openEditFormDrawer = (record: any) =>
+		this.setState({ editingItemData: record, editFormDrawer: true })
+	closeEditFormDrawer = () => this.setState({ editFormDrawer: false, editingItemData: null })
+	openPresentationDrawer = (record: any) =>
+		this.setState({ presentationDrawerData: record, presentationDrawer: true })
+	closePresentationDrawer = () =>
+		this.setState({ presentationDrawer: false, presentationDrawerData: null })
+
+	getDataWithKey = () => {
+		const { rowData, globalSearchText, globalSearchResults, masterFilterCriteria } = this.state
+		let finalData = rowData
+		if (globalSearchText) {
+			finalData = globalSearchResults
+		}
+		return finalData.filter((x: any) => {
+			if (!masterFilterCriteria) return true
+			const masterFilterKeys = Object.keys(masterFilterCriteria)
+			if (masterFilterKeys.length === 0) return true
+			const result = new Set(
+				masterFilterKeys.map((key: any) => {
+					const values = masterFilterCriteria[key]
+					if (values.includes(x[key])) {
+						return true
+					}
+					return false
+				})
+			)
+			if (result.has(true)) return true
+			return false
+		})
 	}
 
 	getColumnDefs = () => {
@@ -67,6 +188,55 @@ export class Table extends Component<CProps, CState> {
 
 	getCellStyle = (params: any) => {}
 
+	handleSave = (row: any) => {
+		// console.log(row)
+		const copy = clone(this.state.rowData)
+		const update = copy.map((x: any) => {
+			if (x.id === row.id) return row
+			return x
+		})
+		this.setState({ rowData: update }, this.performGlobalSearchAgain)
+		message.success('Successfully saved the record!', 1.5)
+	}
+
+	handleSearchBtnClick = (e: any) => {
+		const { showSearchBox } = this.state
+		const node = this.globalSearchInput.current
+
+		if (showSearchBox) {
+			// Already showing
+			this.setState({ globalSearchText: '' })
+			node && node.handleReset(e)
+		} else {
+			node && node.focus()
+		}
+		this.setState((prevState) => ({ showSearchBox: !prevState.showSearchBox }))
+	}
+
+	handleRefresh = (e: any) => {
+		e.persist()
+		// Mainly call the api service again to get the data
+		this.setState({ loadingData: true })
+		const hide = message.loading('Refreshing...', 0)
+		setTimeout(() => {
+			const node = this.globalSearchInput.current
+			node && node.handleReset(e)
+			this.setState(
+				{
+					rowData: this.props.data,
+					globalSearchResults: [],
+					globalSearchText: '',
+					showSearchBox: false,
+					masterFilterCriteria: null,
+				},
+				() => {
+					this.setState({ loadingData: false })
+					hide()
+				}
+			)
+		}, 1000)
+	}
+
 	onGridReady = (params: any) => {
 		this.gridApi = params.api
 		this.gridColumnApi = params.columnApi
@@ -80,7 +250,7 @@ export class Table extends Component<CProps, CState> {
 			flashDelay: 1000,
 			fadeDelay: 500,
 		})
-		if (!R.equals(oldValue, newValue)) {
+		if (!equals(oldValue, newValue)) {
 			this.setState({ dirtyFields: [...this.state.dirtyFields, params] })
 		}
 	}
@@ -104,21 +274,277 @@ export class Table extends Component<CProps, CState> {
 		})
 	}
 
+	performGlobalSearch = debounce((searchText: string) => {
+		this.setState({ globalSearchText: searchText })
+
+		const fields = this.props.meta.capabilities.search?.fields
+		if (!fields) return
+
+		this.setState({ globalSearchLoading: true })
+		const results = clone(this.state.rowData).filter((item: any) => {
+			const string = fields
+				.map((key: string) => item[key])
+				.filter((val: any) => !!val)
+				.join(' ')
+				.toLowerCase()
+
+			return string.includes(searchText.trim().toLowerCase())
+		})
+
+		this.setState({ globalSearchResults: results, globalSearchLoading: false })
+	}, 300)
+
+	performGlobalSearchAgain = () => {
+		const { globalSearchText } = this.state
+		if (globalSearchText) {
+			this.performGlobalSearch(globalSearchText)
+		}
+	}
+
 	render() {
-		const { dirtyFields } = this.state
+		const { dirtyFields, loadingData, showSearchBox, tableSettings } = this.state
+		const { masterFilterCriteria, presentationDrawerData } = this.state
+		const { meta } = this.props
+		const { capabilities } = meta
+
+		let BVCComponent
+		if (presentationDrawerData && presentationDrawerData.bvc) {
+			BVCComponent = React.lazy(() =>
+				import(`./${presentationDrawerData.bvc}`).catch(() => ({
+					default: () => <NotFound />,
+				}))
+			)
+		}
+
 		return (
 			<>
-				{dirtyFields && dirtyFields.length > 0 && (
-					<>
-						<div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-							<Button shape='round' size='small' type='dashed' onClick={this.onCommitChanges}>
-								Commit Changes
+				<div
+					style={{ pointerEvents: loadingData ? 'none' : 'auto', opacity: loadingData ? 0.5 : 1 }}
+				>
+					{dirtyFields && dirtyFields.length > 0 && (
+						<>
+							<div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+								<Button shape='round' size='small' type='dashed' onClick={this.onCommitChanges}>
+									Commit Changes
+								</Button>
+							</div>
+							<br />
+						</>
+					)}
+					{capabilities.add.enable && (
+						<div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+							<Button type='primary' size='small' onClick={this.openAddFormDrawer}>
+								<PlusOutlined /> {capabilities.add.label}
 							</Button>
 						</div>
-						<br />
-					</>
+					)}
+					<Container>
+						<h1 style={{ margin: 0 }}>{meta.heading}</h1>
+						{/* Search, Download, Filters, Settings, Refresh */}
+						<div style={{ display: 'flex', alignItems: 'center' }}>
+							{capabilities.search.enable && (
+								<div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+									<SearchBox
+										allowClear
+										ref={this.globalSearchInput}
+										onChange={(e: any) => this.performGlobalSearch(e.target.value)}
+										placeholder='Search'
+										style={{ width: showSearchBox ? '100%' : '0%', opacity: showSearchBox ? 1 : 0 }}
+									/>
+									<SearchOutlined className='icon-btn' onClick={this.handleSearchBtnClick} />
+								</div>
+							)}
+							{capabilities.download.enable && (
+								<DownloadOutlined className='icon-btn' onClick={this.downloadExcel} />
+							)}
+							{capabilities.filter.enable && (
+								<FilterOutlined
+									className='icon-btn'
+									onClick={this.openFilterModal}
+									style={{
+										color:
+											masterFilterCriteria &&
+											Object.keys(masterFilterCriteria).length > 0 &&
+											'#3FA9FF',
+									}}
+								/>
+							)}
+							{capabilities.setting.enable && (
+								<SettingOutlined
+									className='icon-btn'
+									onClick={this.openSettingModal}
+									style={{
+										color: tableSettings && Object.keys(tableSettings).length > 0 && '#3FA9FF',
+									}}
+								/>
+							)}
+							{capabilities.refresh && (
+								<SyncOutlined
+									className='icon-btn'
+									spin={loadingData}
+									onClick={this.handleRefresh}
+								/>
+							)}
+						</div>
+					</Container>
+				</div>
+
+				{capabilities.filter.enable && (
+					<Modal
+						title='Master Filter'
+						visible={this.state.filterModal}
+						onOk={this.closeFilterModal}
+						onCancel={() => {
+							this.setState({ masterFilterCriteria: null })
+							this.closeFilterModal()
+						}}
+						destroyOnClose={true}
+						closable={false}
+						maskClosable={false}
+						keyboard={false}
+						style={{ top: 25 }}
+						bodyStyle={{ height: '80vh', overflow: 'scroll' }}
+					>
+						{capabilities.filter.fields.map((fieldDataIndex: string, index: number) => {
+							const column = meta.columnDefs.find((x: any) => x.field === fieldDataIndex)
+							if (!column) return null
+							const { field, title } = column
+							// Special case where value is not predictable
+							const inputData = Array.from(new Set(this.state.rowData.map((x: any) => x[field])))
+							if (!inputData || inputData.length === 0) return null
+
+							return (
+								<div key={fieldDataIndex}>
+									<Divider plain style={{ marginTop: index === 0 && 0 }}>
+										{title}
+									</Divider>
+									<Checkbox.Group
+										options={inputData
+											.sort((a: any, b: any) => {
+												if (a < b) return -1
+												if (a > b) return 1
+												return 0
+											})
+											.map((item: any) => ({
+												label:
+													typeof item === 'boolean'
+														? item.toString() === 'true'
+															? 'Yes'
+															: 'No'
+														: item,
+												value: item,
+											}))}
+										value={masterFilterCriteria ? masterFilterCriteria[field] : []}
+										onChange={(checkedValues: any) => {
+											if (checkedValues.length > 0) {
+												const update = { ...masterFilterCriteria, [field]: checkedValues }
+												this.setState({ masterFilterCriteria: update })
+											} else {
+												const update = clone(masterFilterCriteria)
+												delete update[field]
+												this.setState({ masterFilterCriteria: update })
+											}
+										}}
+										className='table-bvc-master-filter-input-group'
+									/>
+								</div>
+							)
+						})}
+					</Modal>
 				)}
-				<div className='ag-theme-alpine' style={{ height: '95vh', width: '100%' }}>
+				{capabilities.setting.enable && (
+					<Modal
+						title='Settings'
+						visible={this.state.settingModal}
+						onOk={this.closeSettingModal}
+						onCancel={this.closeSettingModal}
+						destroyOnClose={true}
+						style={{ top: 25 }}
+						bodyStyle={{ height: '80vh', overflow: 'scroll' }}
+					>
+						<Divider plain style={{ marginTop: 0 }}>
+							Hide/Show Column
+						</Divider>
+						{meta.columnDefs.length > 0 && (
+							<Checkbox.Group
+								style={{ width: '100%' }}
+								value={
+									tableSettings && tableSettings.hide && tableSettings.hide.length > 0
+										? meta.columnDefs
+												.map((x: any) => x.field)
+												.filter((y: any) => !tableSettings.hide.includes(y))
+										: meta.columnDefs.map((x: any) => x.field)
+								}
+								onChange={(checkedValues: any) => {
+									const columnList = meta.columnDefs.map((x: any) => x.field)
+									if (checkedValues.length > 0) {
+										const hide = columnList.filter((y: any) => !checkedValues.includes(y))
+										const update = { ...tableSettings, hide }
+										this.setState({ tableSettings: update })
+									} else {
+										let update = clone(tableSettings)
+										update.hide = columnList
+										this.setState({ tableSettings: update })
+									}
+								}}
+							>
+								<Row>
+									{meta.columnDefs.map((col: any) => (
+										<Col span={8} key={col.field}>
+											<Checkbox value={col.field}>{col.title}</Checkbox>
+										</Col>
+									))}
+								</Row>
+							</Checkbox.Group>
+						)}
+					</Modal>
+				)}
+
+				<Drawer
+					title={capabilities.add.label}
+					width={'400px'}
+					closable={true}
+					visible={this.state.addFormDrawer}
+					onClose={this.closeAddFormDrawer}
+				>
+					<AddForm metadata={meta} />
+				</Drawer>
+
+				{/* Edit Form Drawer */}
+				{capabilities.edit?.enable && (
+					<Drawer
+						title={capabilities.edit.label}
+						width={'400px'}
+						closable={true}
+						visible={this.state.editFormDrawer}
+						onClose={this.closeEditFormDrawer}
+					>
+						<EditForm
+							metadata={meta}
+							initialValues={this.state.editingItemData}
+							handleSave={this.handleSave}
+							closeDrawer={this.closeEditFormDrawer}
+						/>
+					</Drawer>
+				)}
+
+				{/* Presentation Drawer */}
+				<Drawer
+					width={'80%'}
+					closable={true}
+					visible={this.state.presentationDrawer}
+					onClose={this.closePresentationDrawer}
+				>
+					{BVCComponent ? (
+						<Suspense fallback={<Spin />}>
+							<BVCComponent data={presentationDrawerData} metadata={meta} />
+						</Suspense>
+					) : (
+						<NotFound />
+					)}
+				</Drawer>
+
+				<div className='ag-theme-alpine' style={{ height: '85vh', width: '100%' }}>
 					<AgGridReact
 						columnDefs={this.getColumnDefs()}
 						// a default column definition with properties that get applied to every column
@@ -147,7 +573,7 @@ export class Table extends Component<CProps, CState> {
 						onGridReady={this.onGridReady}
 						onCellValueChanged={this.onCellValueChanged}
 						pagination={true}
-						rowData={this.state.rowData}
+						rowData={this.getDataWithKey()}
 						stopEditingWhenGridLosesFocus={true}
 					></AgGridReact>
 				</div>
@@ -166,3 +592,15 @@ function suppressEnter(params: any) {
 	var suppress = key === KEY_ENTER
 	return suppress
 }
+
+const Container = styled.div`
+	margin-bottom: 10px;
+	border-bottom: 5px solid #000000a8;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+`
+const SearchBox = styled(Input)`
+	margin-right: 10px;
+	transition: all 0.5s ease;
+`
