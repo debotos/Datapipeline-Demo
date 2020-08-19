@@ -1,23 +1,23 @@
 import React from 'react'
-import { Form, Input, Radio, Select, Tooltip, Checkbox, Button, Switch } from 'antd'
-import { ClearOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
+import { Form, Input, Radio, Select, Checkbox, Switch, InputNumber } from 'antd'
+import { CheckOutlined, CloseOutlined } from '@ant-design/icons'
 
 export default function (info: any, form: any, initialValues: any, isLastField: boolean) {
 	if (!info) return null
-	const { title, dataIndex, field } = info
-	const { type, placeholder, hasFeedback } = field
+	const { headerName, field, fieldProps } = info
+	const { type, placeholder, hasFeedback } = fieldProps
 
-	const validations = field.validation || []
+	const validations = fieldProps.validation || []
 	const styles = { marginBottom: 5 }
 
 	switch (type) {
 		case 'boolean': {
-			const { input } = field
+			const { input } = fieldProps
 			return (
 				<Form.Item
-					key={dataIndex}
-					name={dataIndex}
-					label={title}
+					key={field}
+					name={field}
+					label={headerName}
 					validateFirst
 					valuePropName={'checked'}
 					rules={[...validations]}
@@ -32,44 +32,44 @@ export default function (info: any, form: any, initialValues: any, isLastField: 
 			)
 		}
 		case 'checkbox': {
-			const { options } = field
+			const { options } = fieldProps
 			return (
 				<Form.Item
-					key={dataIndex}
-					name={dataIndex}
-					label={title}
+					key={field}
+					name={field}
+					label={headerName}
 					validateFirst
 					rules={[...validations]}
 					style={{ ...styles }}
 					labelCol={{ span: 24 }}
 				>
-					<Checkbox.Group options={options} />
+					<Checkbox.Group options={options.array} />
 				</Form.Item>
 			)
 		}
 		case 'radio': {
-			const { options } = field
+			const { options } = fieldProps
 			return (
 				<Form.Item
-					key={dataIndex}
-					name={dataIndex}
-					label={title}
+					key={field}
+					name={field}
+					label={headerName}
 					validateFirst
 					rules={[...validations]}
 					style={{ ...styles }}
 					labelCol={{ span: 24 }}
 				>
-					<Radio.Group options={options} />
+					<Radio.Group options={options.array} />
 				</Form.Item>
 			)
 		}
 		case 'select': {
-			const { placeholder, options } = field
+			const { placeholder, options } = fieldProps
 			return (
 				<Form.Item
-					key={dataIndex}
-					name={dataIndex}
-					label={title}
+					key={field}
+					name={field}
+					label={headerName}
 					validateFirst
 					rules={[...validations]}
 					labelCol={{ span: 24 }}
@@ -84,7 +84,7 @@ export default function (info: any, form: any, initialValues: any, isLastField: 
 						}
 					>
 						{options.map((option: any, index: number) => {
-							const { label, value, disabled } = option
+							const { label, value, disabled } = option.array
 							return (
 								<Select.Option key={index} value={value} disabled={disabled}>
 									{label}
@@ -98,15 +98,31 @@ export default function (info: any, form: any, initialValues: any, isLastField: 
 		case 'textarea': {
 			return (
 				<Form.Item
-					key={dataIndex}
-					name={dataIndex}
-					label={title}
+					key={field}
+					name={field}
+					label={headerName}
 					validateFirst
 					rules={[...validations]}
 					labelCol={{ span: 24 }}
 					style={{ ...styles }}
 				>
-					<Input.TextArea allowClear placeholder={placeholder} rows={field.rows || 4} />
+					<Input.TextArea allowClear placeholder={placeholder} rows={fieldProps.rows || 4} />
+				</Form.Item>
+			)
+		}
+
+		case 'number': {
+			return (
+				<Form.Item
+					key={field}
+					name={field}
+					label={headerName}
+					validateFirst
+					rules={[...validations]}
+					labelCol={{ span: 24 }}
+					style={{ ...styles }}
+				>
+					<InputNumber placeholder={placeholder} />
 				</Form.Item>
 			)
 		}
@@ -114,9 +130,9 @@ export default function (info: any, form: any, initialValues: any, isLastField: 
 		default: {
 			return (
 				<Form.Item
-					key={dataIndex}
-					name={dataIndex}
-					label={title}
+					key={field}
+					name={field}
+					label={headerName}
 					labelCol={{ span: 24 }}
 					rules={[...validations]}
 					hasFeedback={hasFeedback}
@@ -124,181 +140,6 @@ export default function (info: any, form: any, initialValues: any, isLastField: 
 					style={{ ...styles }}
 				>
 					<Input placeholder={placeholder} type={type} allowClear />
-				</Form.Item>
-			)
-		}
-	}
-}
-
-export const getInlineEditFormsField = (
-	dataIndex: string,
-	record: any,
-	field: any,
-	form: any,
-	inputRef: any,
-	save: (e: any) => {},
-	resetBtn: boolean,
-	setResetBtn: any
-) => {
-	const { type, placeholder } = field
-
-	const styles = { margin: 0 }
-	const validations = field.validation || []
-
-	switch (type) {
-		case 'boolean': {
-			const { input } = field
-			return (
-				<Form.Item
-					style={{ ...styles }}
-					name={dataIndex}
-					initialValue={record[dataIndex]}
-					rules={[...validations]}
-					valuePropName='checked'
-					validateFirst
-				>
-					{input === 'checkbox' ? (
-						<Checkbox onChange={save} ref={inputRef} />
-					) : (
-						<Switch
-							onChange={save}
-							ref={inputRef}
-							checkedChildren={<CheckOutlined />}
-							unCheckedChildren={<CloseOutlined />}
-						/>
-					)}
-				</Form.Item>
-			)
-		}
-		case 'checkbox': {
-			const { options } = field
-			return (
-				<>
-					<Form.Item
-						style={{ ...styles }}
-						name={dataIndex}
-						initialValue={record[dataIndex]}
-						rules={[...validations]}
-						validateFirst
-					>
-						<Checkbox.Group ref={inputRef} options={options} />
-					</Form.Item>
-					<Form.Item>
-						<Button size='small' type='primary' ghost onClick={save}>
-							Save
-						</Button>
-					</Form.Item>
-				</>
-			)
-		}
-		case 'radio': {
-			const { options } = field
-			return (
-				<Form.Item
-					style={{ ...styles }}
-					name={dataIndex}
-					initialValue={record[dataIndex]}
-					rules={[...validations]}
-					validateFirst
-				>
-					<Radio.Group ref={inputRef} onChange={save} options={options} />
-				</Form.Item>
-			)
-		}
-		case 'select': {
-			const { placeholder, options } = field
-			return (
-				<Form.Item
-					name={dataIndex}
-					initialValue={record[dataIndex]}
-					validateFirst
-					rules={[...validations]}
-					style={{ ...styles }}
-				>
-					<Select
-						ref={inputRef}
-						placeholder={placeholder}
-						allowClear
-						showSearch
-						onBlur={save}
-						onChange={save}
-						filterOption={(input: string, option: any) =>
-							option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-						}
-					>
-						{options.map((option: any, index: number) => {
-							const { label, value, disabled } = option
-							return (
-								<Select.Option key={index} value={value} disabled={disabled}>
-									{label}
-								</Select.Option>
-							)
-						})}
-					</Select>
-				</Form.Item>
-			)
-		}
-		case 'textarea': {
-			return (
-				<Form.Item
-					style={{ ...styles }}
-					name={dataIndex}
-					initialValue={record[dataIndex]}
-					rules={[...validations]}
-					hasFeedback={field.hasFeedback}
-					validateFirst
-				>
-					<Input.TextArea
-						ref={inputRef}
-						onPressEnter={save}
-						onBlur={save}
-						placeholder={placeholder}
-						rows={field.rows || 4}
-					/>
-				</Form.Item>
-			)
-		}
-		default: {
-			return (
-				<Form.Item
-					style={{ ...styles }}
-					name={dataIndex}
-					initialValue={record[dataIndex]}
-					rules={[...validations]}
-					hasFeedback={field.hasFeedback}
-					validateFirst
-				>
-					<Input
-						placeholder={placeholder}
-						type={type}
-						ref={inputRef}
-						onPressEnter={save}
-						onBlur={save}
-						onChange={(e: any) => {
-							const value = e.target.value
-							if (value !== record[dataIndex]) {
-								setResetBtn(true)
-							} else {
-								setResetBtn(false)
-							}
-						}}
-						suffix={
-							resetBtn ? (
-								<Tooltip title='Revert back to previous value!'>
-									<ClearOutlined
-										style={{ color: 'rgba(0,0,0,.45)', cursor: 'pointer' }}
-										onMouseDown={(e) => {
-											e.preventDefault()
-											form.setFieldsValue({ [dataIndex]: record[dataIndex] })
-											setResetBtn(false)
-										}}
-									/>
-								</Tooltip>
-							) : (
-								<span /> // https://ant.design/components/input/#FAQ
-							)
-						}
-					/>
 				</Form.Item>
 			)
 		}

@@ -13,7 +13,7 @@ export default function EditForm(props: CProps) {
 	useEffect(() => forceUpdate({}), [])
 
 	const { metadata, initialValues } = props
-	const { columns, capabilities } = metadata
+	const { columnDefs, capabilities } = metadata
 	const { label } = capabilities.edit
 
 	const onFinish = (values: any) => {
@@ -22,9 +22,9 @@ export default function EditForm(props: CProps) {
 		props.closeDrawer()
 	}
 
-	const fields = columns
+	const fields = columnDefs
 		.map((x: any) => {
-			if (x.field?.editable) return x.dataIndex
+			if (x.editable) return x.field
 			return null
 		})
 		.filter((y: string) => !!y)
@@ -39,7 +39,7 @@ export default function EditForm(props: CProps) {
 			scrollToFirstError={true}
 		>
 			{fields.map((field: string, index: number) => {
-				const info = columns.find((x: any) => x.dataIndex === field)
+				const info = columnDefs.find((x: any) => x.field === field)
 				if (!info) return null
 				return getAddFormsField(info, form, initialValues, index + 1 === fields.length)
 			})}

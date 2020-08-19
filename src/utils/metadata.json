@@ -9,9 +9,18 @@
 		"add": {
 			"enable": true,
 			"label": "Add a new user",
-			"fields": ["first_name", "last_name", "email", "address", "gender", "permission", "active"],
+			"fields": [
+				"first_name",
+				"last_name",
+				"email",
+				"address",
+				"gender",
+				"age",
+				"permission",
+				"active"
+			],
 			"initialValues": {
-				"gender": "Male",
+				"gender": "male",
 				"permission": ["read"],
 				"active": false
 			}
@@ -39,11 +48,7 @@
 		"refresh": true,
 		"pagination": {
 			"enable": true,
-			"position": ["topRight", "bottomRight"],
-			"pageSize": 10,
-			"showSizeChanger": true,
-			"pageSizeOptions": [10, 16, 25, 50, 100],
-			"showQuickJumper": true
+			"pageSize": 10
 		}
 	},
 	"columnDefs": [

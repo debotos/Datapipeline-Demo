@@ -4,16 +4,8 @@ import { Button, message, Input, Empty, Divider, Checkbox, Row, Col, Drawer, Spi
 import styled from 'styled-components'
 import { debounce } from 'lodash'
 import { clone, equals } from 'ramda'
-import {
-	EditOutlined,
-	DeleteOutlined,
-	PlusOutlined,
-	SearchOutlined,
-	DownloadOutlined,
-	FilterOutlined,
-	SettingOutlined,
-	SyncOutlined,
-} from '@ant-design/icons'
+import { FilterOutlined, SettingOutlined, SyncOutlined } from '@ant-design/icons'
+import { PlusOutlined, SearchOutlined, DownloadOutlined } from '@ant-design/icons'
 
 import 'ag-grid-community/dist/styles/ag-grid.css'
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css'
@@ -27,6 +19,7 @@ import TableCellEditEnum from '../components/EditTableCell/EditEnumValue'
 import TableCellViewBoolean from '../components/ViewTableCell/ViewBooleanValue'
 import TableCellEditBoolean from '../components/EditTableCell/EditBooleanValue'
 
+import RowActions from '../components/RowActions'
 import AddForm from '../components/AddForm'
 import EditForm from '../components/EditForm'
 import generateExcel from '../utils/generateExcel'
@@ -112,7 +105,7 @@ export class Table extends Component<CProps, CState> {
 		this.props.meta.columnDefs.forEach((x: any) => (fieldTitlePair[x.field] = x.title))
 
 		generateExcel(
-			this.getDataWithKey(),
+			this.getData(),
 			columns,
 			fieldTitlePair,
 			`${this.props.meta.heading} data on ${new Date().toDateString()}`,
@@ -134,14 +127,16 @@ export class Table extends Component<CProps, CState> {
 	openAddFormDrawer = () => this.setState({ addFormDrawer: true })
 	closeAddFormDrawer = () => this.setState({ addFormDrawer: false })
 	openEditFormDrawer = (record: any) =>
-		this.setState({ editingItemData: record, editFormDrawer: true })
+		this.setState({ editingItemData: record }, () => this.setState({ editFormDrawer: true }))
 	closeEditFormDrawer = () => this.setState({ editFormDrawer: false, editingItemData: null })
 	openPresentationDrawer = (record: any) =>
-		this.setState({ presentationDrawerData: record, presentationDrawer: true })
+		this.setState({ presentationDrawerData: record }, () =>
+			this.setState({ presentationDrawer: true })
+		)
 	closePresentationDrawer = () =>
 		this.setState({ presentationDrawer: false, presentationDrawerData: null })
 
-	getDataWithKey = () => {
+	getData = () => {
 		const { rowData, globalSearchText, globalSearchResults, masterFilterCriteria } = this.state
 		let finalData = rowData
 		if (globalSearchText) {
@@ -173,8 +168,21 @@ export class Table extends Component<CProps, CState> {
 				return !tableSettings.hide.includes(col.field)
 			})
 			.map((column) => {
+				if (column.field === 'action') {
+					return {
+						...column,
+						cellRenderer: 'rowActions',
+						cellRendererParams: {
+							capabilities: this.props.meta.capabilities,
+							openEditFormDrawer: this.openEditFormDrawer,
+							handleDelete: this.handleDelete,
+						},
+					}
+				}
+
 				const { fieldProps } = column
 				if (!fieldProps?.type) return column
+
 				switch (fieldProps.type) {
 					case 'checkbox':
 						return { ...column, cellRenderer: 'arrayValueRenderer', cellEditor: 'arrayValueEditor' }
@@ -206,6 +214,13 @@ export class Table extends Component<CProps, CState> {
 		})
 		this.setState({ rowData: update }, this.performGlobalSearchAgain)
 		message.success('Successfully saved the record!', 1.5)
+	}
+
+	handleDelete = (key: string) => {
+		const copy = clone(this.state.rowData)
+		const update = copy.filter((x: any) => x.id !== key)
+		this.setState({ rowData: update }, this.performGlobalSearchAgain)
+		message.info('Successfully deleted the record!', 1.5)
 	}
 
 	handleSearchBtnClick = (e: any) => {
@@ -317,6 +332,7 @@ export class Table extends Component<CProps, CState> {
 		const { masterFilterCriteria, presentationDrawerData } = this.state
 		const { meta } = this.props
 		const { capabilities } = meta
+		const { pagination } = capabilities
 
 		let BVCComponent
 		if (presentationDrawerData && presentationDrawerData.bvc) {
@@ -530,6 +546,7 @@ export class Table extends Component<CProps, CState> {
 						closable={true}
 						visible={this.state.editFormDrawer}
 						onClose={this.closeEditFormDrawer}
+						destroyOnClose={true}
 					>
 						<EditForm
 							metadata={meta}
@@ -576,18 +593,20 @@ export class Table extends Component<CProps, CState> {
 							customLoadingOverlay: CustomLoadingOverlay,
 							arrayValueRenderer: TableCellViewArray,
 							arrayValueEditor: TableCellEditArray,
-							enumValueRenderer: TableCellViewEnum,
-							enumValueEditor: TableCellEditEnum,
 							boolValueRenderer: TableCellViewBoolean,
 							boolValueEditor: TableCellEditBoolean,
-							stringValueEditor: TableCellEditString,
+							enumValueRenderer: TableCellViewEnum,
+							enumValueEditor: TableCellEditEnum,
 							numberValueEditor: TableCellEditNumber,
+							stringValueEditor: TableCellEditString,
+							rowActions: RowActions,
 						}}
 						loadingOverlayComponent='customLoadingOverlay'
 						onGridReady={this.onGridReady}
 						onCellValueChanged={this.onCellValueChanged}
-						pagination={true}
-						rowData={this.getDataWithKey()}
+						pagination={pagination.enable}
+						paginationPageSize={pagination.pageSize}
+						rowData={this.getData()}
 						stopEditingWhenGridLosesFocus={true}
 					></AgGridReact>
 				</div>

@@ -19,7 +19,7 @@ export default function AddForm(props: CProps) {
 	}
 
 	const { metadata } = props
-	const { columns, capabilities } = metadata
+	const { columnDefs, capabilities } = metadata
 	const { add } = capabilities
 	const { label, fields, initialValues } = add
 
@@ -35,7 +35,7 @@ export default function AddForm(props: CProps) {
 			scrollToFirstError={true}
 		>
 			{fields.map((field: string, index: number) => {
-				const info = columns.find((x: any) => x.dataIndex === field)
+				const info = columnDefs.find((x: any) => x.field === field)
 				if (!info) return null
 				return getAddFormsField(info, form, initialValues, index + 1 === fields.length)
 			})}
