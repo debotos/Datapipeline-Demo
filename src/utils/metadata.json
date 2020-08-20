@@ -47,8 +47,7 @@
 		},
 		"refresh": true,
 		"pagination": {
-			"enable": true,
-			"pageSize": 10
+			"enable": true
 		}
 	},
 	"columnDefs": [

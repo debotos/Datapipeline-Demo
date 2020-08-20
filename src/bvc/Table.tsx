@@ -36,8 +36,6 @@ interface CState {
 	dirtyFields: any[]
 	loadingData: boolean
 	globalSearchText: string
-	globalSearchResults: any
-	globalSearchLoading: boolean
 	addFormDrawer: boolean
 	editFormDrawer: boolean
 	editingItemData: any
@@ -65,8 +63,6 @@ export class Table extends Component<CProps, CState> {
 			dirtyFields: [],
 			loadingData: true,
 			globalSearchText: '',
-			globalSearchResults: [],
-			globalSearchLoading: false,
 			addFormDrawer: false,
 			editFormDrawer: false,
 			editingItemData: null,
@@ -102,19 +98,18 @@ export class Table extends Component<CProps, CState> {
 		}
 		const hide = message.loading('Action in progress..', 0)
 		const fieldTitlePair: any = {}
-		this.props.meta.columnDefs.forEach((x: any) => (fieldTitlePair[x.field] = x.title))
+		this.props.meta.columnDefs.forEach((x: any) => (fieldTitlePair[x.field] = x.headerName))
+
+		const { globalSearchText, masterFilterCriteria } = this.state
 
 		generateExcel(
-			this.getData(),
+			this.getExcelData(),
 			columns,
 			fieldTitlePair,
 			`${this.props.meta.heading} data on ${new Date().toDateString()}`,
 			this.props.meta.capabilities.download?.props,
 			this.props.meta.heading,
-			{
-				searchText: this.state.globalSearchText,
-				filters: this.state.masterFilterCriteria,
-			}
+			{ searchText: globalSearchText, filters: masterFilterCriteria }
 		)
 
 		setTimeout(hide, 300)
@@ -136,13 +131,24 @@ export class Table extends Component<CProps, CState> {
 	closePresentationDrawer = () =>
 		this.setState({ presentationDrawer: false, presentationDrawerData: null })
 
-	getData = () => {
-		const { rowData, globalSearchText, globalSearchResults, masterFilterCriteria } = this.state
-		let finalData = rowData
+	getExcelData = () => {
+		const { globalSearchText } = this.state
+
 		if (globalSearchText) {
-			finalData = globalSearchResults
+			const data: any[] = []
+			this.gridApi.forEachNodeAfterFilter(function (rowNode: any) {
+				data.push(rowNode.data)
+			})
+			return data
+		} else {
+			return this.state.rowData
 		}
-		return finalData.filter((x: any) => {
+	}
+
+	getData = () => {
+		const { rowData, masterFilterCriteria } = this.state
+
+		return rowData.filter((x: any) => {
 			if (!masterFilterCriteria) return true
 			const masterFilterKeys = Object.keys(masterFilterCriteria)
 			if (masterFilterKeys.length === 0) return true
@@ -201,10 +207,6 @@ export class Table extends Component<CProps, CState> {
 
 	getCellStyle = (params: any) => {}
 
-	getOverlayLoadingTemplate = () => {
-		return <div>Hey</div>
-	}
-
 	handleSave = (row: any) => {
 		// console.log(row)
 		const copy = clone(this.state.rowData)
@@ -249,7 +251,6 @@ export class Table extends Component<CProps, CState> {
 			this.setState(
 				{
 					rowData: this.props.data,
-					globalSearchResults: [],
 					globalSearchText: '',
 					showSearchBox: false,
 					masterFilterCriteria: null,
@@ -270,13 +271,14 @@ export class Table extends Component<CProps, CState> {
 
 	onCellValueChanged = (params: any) => {
 		const { oldValue, newValue, colDef, node } = params
-		this.gridApi.flashCells({
-			rowNodes: [node],
-			columns: [colDef.field],
-			flashDelay: 1000,
-			fadeDelay: 500,
-		})
+
 		if (!equals(oldValue, newValue)) {
+			this.gridApi.flashCells({
+				rowNodes: [node],
+				columns: [colDef.field],
+				flashDelay: 1000,
+				fadeDelay: 500,
+			})
 			this.setState({ dirtyFields: [...this.state.dirtyFields, params] })
 		}
 	}
@@ -302,22 +304,7 @@ export class Table extends Component<CProps, CState> {
 
 	performGlobalSearch = debounce((searchText: string) => {
 		this.setState({ globalSearchText: searchText })
-
-		const fields = this.props.meta.capabilities.search?.fields
-		if (!fields) return
-
-		this.setState({ globalSearchLoading: true })
-		const results = clone(this.state.rowData).filter((item: any) => {
-			const string = fields
-				.map((key: string) => item[key])
-				.filter((val: any) => !!val)
-				.join(' ')
-				.toLowerCase()
-
-			return string.includes(searchText.trim().toLowerCase())
-		})
-
-		this.setState({ globalSearchResults: results, globalSearchLoading: false })
+		this.gridApi.setQuickFilter(searchText)
 	}, 300)
 
 	performGlobalSearchAgain = () => {

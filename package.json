@@ -12,6 +12,7 @@
 		"ag-grid-community": "^23.2.1",
 		"ag-grid-react": "^23.2.1",
 		"antd": "^4.5.4",
+		"axios": "^0.19.2",
 		"exceljs": "^4.1.1",
 		"file-saver": "^2.0.2",
 		"lodash": "^4.17.19",
