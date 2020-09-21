@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import { Form, Button } from 'antd'
 
-import getAddFormsField from '../utils/getFormFields'
+import { getFormField } from '../utils/getFormField'
 
 type CProps = { metadata: any }
 
 export default function AddForm(props: CProps) {
 	const [form] = Form.useForm()
-	const [, forceUpdate] = useState()
+	const [, forceUpdate] = useState<any>()
 
 	// To disable submit button at the beginning.
-	useEffect(() => {
-		forceUpdate({})
-	}, [])
+	useEffect(() => forceUpdate({}), [])
 
 	const onFinish = (values: any) => {
 		console.log('Finish:', values)
@@ -37,15 +35,12 @@ export default function AddForm(props: CProps) {
 			{fields.map((field: string, index: number) => {
 				const info = columns.find((x: any) => x.dataIndex === field)
 				if (!info) return null
-				return getAddFormsField(info, form, initialValues, index + 1 === fields.length)
+				return getFormField(info, form, initialValues, index + 1 === fields.length)
 			})}
 			<Form.Item shouldUpdate={true} style={{ marginTop: 20 }}>
 				{() => {
-					const isFieldsNotTouched = !form.isFieldsTouched(
-						fields.filter((key: any) => !initialValuesArray.includes(key))
-					)
-					const haveFieldsError = !!form.getFieldsError().filter(({ errors }) => errors.length)
-						.length
+					const isFieldsNotTouched = !form.isFieldsTouched(fields.filter((key: any) => !initialValuesArray.includes(key)))
+					const haveFieldsError = !!form.getFieldsError().filter(({ errors }) => errors.length).length
 
 					// console.log({ isFieldsNotTouched, haveFieldsError })
 					const disabled = isFieldsNotTouched || haveFieldsError
@@ -56,13 +51,7 @@ export default function AddForm(props: CProps) {
 					*/
 					return (
 						<>
-							<Button
-								type='primary'
-								htmlType='submit'
-								disabled={disabled}
-								style={{ marginRight: 10 }}
-								shape='round'
-							>
+							<Button type='primary' htmlType='submit' disabled={disabled} style={{ marginRight: 10 }} shape='round'>
 								Submit
 							</Button>
 							<Button type='link' htmlType='button' onClick={() => form.resetFields()}>

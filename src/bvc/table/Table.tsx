@@ -1,22 +1,5 @@
 import React, { Component, Suspense, useState, useRef, useContext, useEffect } from 'react'
-import {
-	Table,
-	Input,
-	Drawer,
-	Button,
-	Empty,
-	Spin,
-	Form,
-	Popconfirm,
-	Space,
-	Modal,
-	Divider,
-	Checkbox,
-	Row,
-	Col,
-	message,
-} from 'antd'
-import Highlighter from 'react-highlight-words'
+import { Input, Drawer, Button, Empty, Spin, Popconfirm, Space, Modal, Divider, Checkbox, Row, Col, message } from 'antd'
 import styled from 'styled-components'
 import { clone } from 'ramda'
 import debounce from 'lodash/debounce'
@@ -29,13 +12,13 @@ import {
 	FilterOutlined,
 	SettingOutlined,
 	SyncOutlined,
-	PushpinOutlined,
 } from '@ant-design/icons'
 
-import AddForm from '../components/AddForm'
-import { getInlineEditFormsField } from '../utils/getFormFields'
-import generateExcel from '../utils/generateExcel'
-import EditForm from '../components/EditForm'
+import './table.scss'
+import generateExcel from '../../utils/generateExcel'
+// import EditForm from '../components/EditForm'
+// import AddForm from '../components/AddForm'
+import { sleep } from '../../utils/helpers'
 
 type tableProps = { meta: any; data: any }
 type tableState = {
@@ -80,9 +63,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 		const { data, meta } = this.props
 		const { capabilities } = meta
 		const { setting } = capabilities
-		this.setState({ data: data, tableSettings: setting.props }, () =>
-			this.setState({ loadingData: false })
-		)
+		this.setState({ data: data, tableSettings: setting.props }, () => this.setState({ loadingData: false }))
 	}
 
 	componentWillUnmount() {
@@ -118,13 +99,10 @@ export class TableBVC extends Component<tableProps, tableState> {
 	closeSettingModal = () => this.setState({ settingModal: false })
 	openAddFormDrawer = () => this.setState({ addFormDrawer: true })
 	closeAddFormDrawer = () => this.setState({ addFormDrawer: false })
-	openEditFormDrawer = (record: any) =>
-		this.setState({ editingItemData: record, editFormDrawer: true })
+	openEditFormDrawer = (record: any) => this.setState({ editingItemData: record, editFormDrawer: true })
 	closeEditFormDrawer = () => this.setState({ editFormDrawer: false, editingItemData: null })
-	openPresentationDrawer = (record: any) =>
-		this.setState({ presentationDrawerData: record, presentationDrawer: true })
-	closePresentationDrawer = () =>
-		this.setState({ presentationDrawer: false, presentationDrawerData: null })
+	openPresentationDrawer = (record: any) => this.setState({ presentationDrawerData: record, presentationDrawer: true })
+	closePresentationDrawer = () => this.setState({ presentationDrawer: false, presentationDrawerData: null })
 
 	performGlobalSearchAgain = () => {
 		const { globalSearchText } = this.state
@@ -233,40 +211,19 @@ export class TableBVC extends Component<tableProps, tableState> {
 					>
 						Search
 					</Button>
-					<Button
-						onClick={() => this.resetColumnSearch(clearFilters)}
-						size='small'
-						style={{ width: 90 }}
-					>
+					<Button onClick={() => this.resetColumnSearch(clearFilters)} size='small' style={{ width: 90 }}>
 						Reset
 					</Button>
 				</Space>
 			</div>
 		),
-		filterIcon: (filtered: boolean) => (
-			<SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
-		),
+		filterIcon: (filtered: boolean) => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
 		onFilter: (value: any, record: any) =>
-			record[dataIndex]
-				? record[dataIndex].toString().toLowerCase().includes(value.trim().toLowerCase())
-				: '',
+			record[dataIndex] ? record[dataIndex].toString().toLowerCase().includes(value.trim().toLowerCase()) : '',
 		onFilterDropdownVisibleChange: (visible: boolean) => {
 			if (visible) {
 				setTimeout(() => this.searchInput.select())
 			}
-		},
-		render: (text: any) => {
-			const { globalSearchText } = this.state
-			return this.state.searchedColumn === dataIndex || globalSearchText ? (
-				<Highlighter
-					highlightStyle={{ backgroundColor: '#ffc069', padding: 0, borderRadius: 2 }}
-					searchWords={[this.state.localSearchText, globalSearchText]}
-					autoEscape
-					textToHighlight={text ? text.toString() : ''}
-				/>
-			) : (
-				text
-			)
 		},
 	})
 
@@ -296,28 +253,21 @@ export class TableBVC extends Component<tableProps, tableState> {
 			.map((item: any) => ({ ...item, key: item.id }))
 	}
 
-	handleRefresh = (e: any) => {
+	handleRefresh = async (e: any) => {
 		e.persist()
 		// Mainly call the api service again to get the data
 		this.setState({ loadingData: true })
 		const hide = message.loading('Refreshing...', 0)
-		setTimeout(() => {
-			const node = this.globalSearchInput.current
-			node && node.handleReset(e)
-			this.setState(
-				{
-					data: this.props.data,
-					globalSearchResults: [],
-					globalSearchText: '',
-					showSearchBox: false,
-					masterFilterCriteria: null,
-				},
-				() => {
-					this.setState({ loadingData: false })
-					hide()
-				}
-			)
-		}, 1000)
+		await sleep(2000)
+		const node = this.globalSearchInput.current
+		node && node.handleReset(e)
+		this.setState(
+			{ data: this.props.data, globalSearchResults: [], globalSearchText: '', showSearchBox: false, masterFilterCriteria: null },
+			() => {
+				this.setState({ loadingData: false })
+				hide()
+			}
+		)
 	}
 
 	render() {
@@ -341,15 +291,6 @@ export class TableBVC extends Component<tableProps, tableState> {
 			})
 			.map((col: any) => {
 				const { dataIndex } = col
-				col = {
-					...col,
-					title: (
-						<>
-							<PushpinOutlined style={{ padding: '2px 5px' }} />
-							{col.title}
-						</>
-					),
-				}
 				if (dataIndex === 'action') {
 					return {
 						align: 'center',
@@ -358,26 +299,13 @@ export class TableBVC extends Component<tableProps, tableState> {
 							return (
 								<>
 									{capabilities.edit?.enable && (
-										<Button
-											type='link'
-											size='small'
-											onClick={() => this.openEditFormDrawer(record)}
-										>
+										<Button type='link' size='small' onClick={() => this.openEditFormDrawer(record)}>
 											<EditOutlined />
 										</Button>
 									)}
 									{capabilities.delete && (
-										<Popconfirm
-											title='Sure to delete?'
-											placement='left'
-											onConfirm={() => this.handleDelete(record.key)}
-										>
-											<Button
-												type='link'
-												size='small'
-												style={{ color: 'tomato' }}
-												icon={<DeleteOutlined />}
-											/>
+										<Popconfirm title='Sure to delete?' placement='left' onConfirm={() => this.handleDelete(record.key)}>
+											<Button type='link' size='small' style={{ color: 'tomato' }} icon={<DeleteOutlined />} />
 										</Popconfirm>
 									)}
 								</>
@@ -417,9 +345,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 							}
 						}
 					} else {
-						console.warn(
-							`Error! No options found at col.field.options for dataIndex:"${dataIndex}" to generate filter input.`
-						)
+						console.warn(`Error! No options found at col.field.options for dataIndex:"${dataIndex}" to generate filter input.`)
 					}
 				}
 				if (!col.field.editable) return col
@@ -446,70 +372,54 @@ export class TableBVC extends Component<tableProps, tableState> {
 			)
 		}
 
-		const components = { body: { row: EditableRow, cell: EditableCell } }
-
 		return (
-			<>
-				<div
-					style={{ pointerEvents: loadingData ? 'none' : 'auto', opacity: loadingData ? 0.5 : 1 }}
-				>
-					{capabilities.add.enable && (
-						<div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
-							<Button type='primary' size='small' onClick={this.openAddFormDrawer}>
-								<PlusOutlined /> {capabilities.add.label}
-							</Button>
-						</div>
-					)}
-					<Container>
-						<h1 style={{ margin: 0 }}>{meta.heading}</h1>
-						{/* Search, Download, Filters, Settings, Refresh */}
-						<div style={{ display: 'flex', alignItems: 'center' }}>
-							{capabilities.search.enable && (
-								<div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-									<SearchBox
-										allowClear
-										ref={this.globalSearchInput}
-										onChange={(e: any) => this.performGlobalSearch(e.target.value)}
-										placeholder='Search'
-										style={{ width: showSearchBox ? '100%' : '0%', opacity: showSearchBox ? 1 : 0 }}
-									/>
-									<SearchOutlined className='icon-btn' onClick={this.handleSearchBtnClick} />
-								</div>
-							)}
-							{capabilities.download.enable && (
-								<DownloadOutlined className='icon-btn' onClick={this.downloadExcel} />
-							)}
-							{capabilities.filter.enable && (
-								<FilterOutlined
-									className='icon-btn'
-									onClick={this.openFilterModal}
-									style={{
-										color:
-											masterFilterCriteria &&
-											Object.keys(masterFilterCriteria).length > 0 &&
-											'#3FA9FF',
-									}}
+			<div style={{ pointerEvents: loadingData ? 'none' : 'auto', opacity: loadingData ? 0.5 : 1 }}>
+				{capabilities.add.enable && (
+					<div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+						<Button type='primary' size='small' onClick={this.openAddFormDrawer}>
+							<PlusOutlined /> {capabilities.add.label}
+						</Button>
+					</div>
+				)}
+				<Container>
+					<h1 style={{ margin: 0 }}>{meta.heading}</h1>
+					{/* Search, Download, Filters, Settings, Refresh */}
+					<div style={{ display: 'flex', alignItems: 'center' }}>
+						{capabilities.search.enable && (
+							<div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+								<SearchBox
+									allowClear
+									ref={this.globalSearchInput}
+									onChange={(e: any) => this.performGlobalSearch(e.target.value)}
+									placeholder='Search'
+									style={{ width: showSearchBox ? '100%' : '0%', opacity: showSearchBox ? 1 : 0 }}
 								/>
-							)}
-							{capabilities.setting.enable && (
-								<SettingOutlined
-									className='icon-btn'
-									onClick={this.openSettingModal}
-									style={{
-										color: tableSettings && Object.keys(tableSettings).length > 0 && '#3FA9FF',
-									}}
-								/>
-							)}
-							{capabilities.refresh && (
-								<SyncOutlined
-									className='icon-btn'
-									spin={loadingData}
-									onClick={this.handleRefresh}
-								/>
-							)}
-						</div>
-					</Container>
-				</div>
+								<SearchOutlined className='icon-btn' onClick={this.handleSearchBtnClick} />
+							</div>
+						)}
+						{capabilities.download.enable && <DownloadOutlined className='icon-btn' onClick={this.downloadExcel} />}
+						{capabilities.filter.enable && (
+							<FilterOutlined
+								className='icon-btn'
+								onClick={this.openFilterModal}
+								style={{
+									color: masterFilterCriteria && Object.keys(masterFilterCriteria).length > 0 && '#3FA9FF',
+								}}
+							/>
+						)}
+						{capabilities.setting.enable && (
+							<SettingOutlined
+								className='icon-btn'
+								onClick={this.openSettingModal}
+								style={{
+									color: tableSettings && Object.keys(tableSettings).length > 0 && '#3FA9FF',
+								}}
+							/>
+						)}
+						{capabilities.refresh && <SyncOutlined className='icon-btn' spin={loadingData} onClick={this.handleRefresh} />}
+					</div>
+				</Container>
+
 				{capabilities.filter.enable && (
 					<Modal
 						title='Master Filter'
@@ -547,12 +457,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 												return 0
 											})
 											.map((item: any) => ({
-												label:
-													typeof item === 'boolean'
-														? item.toString() === 'true'
-															? 'Yes'
-															: 'No'
-														: item,
+												label: typeof item === 'boolean' ? (item.toString() === 'true' ? 'Yes' : 'No') : item,
 												value: item,
 											}))}
 										value={masterFilterCriteria ? masterFilterCriteria[dataIndex] : []}
@@ -573,6 +478,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 						})}
 					</Modal>
 				)}
+
 				{capabilities.setting.enable && (
 					<Modal
 						title='Settings'
@@ -591,9 +497,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 								style={{ width: '100%' }}
 								value={
 									tableSettings && tableSettings.hide && tableSettings.hide.length > 0
-										? meta.columns
-												.map((x: any) => x.dataIndex)
-												.filter((y: any) => !tableSettings.hide.includes(y))
+										? meta.columns.map((x: any) => x.dataIndex).filter((y: any) => !tableSettings.hide.includes(y))
 										: meta.columns.map((x: any) => x.dataIndex)
 								}
 								onChange={(checkedValues: any) => {
@@ -621,6 +525,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 					</Modal>
 				)}
 
+				{/* Add Form Drawer */}
 				<Drawer
 					title={capabilities.add.label}
 					width={'400px'}
@@ -628,34 +533,9 @@ export class TableBVC extends Component<tableProps, tableState> {
 					visible={this.state.addFormDrawer}
 					onClose={this.closeAddFormDrawer}
 				>
-					<AddForm metadata={meta} />
+					Add form is here
+					{/* <AddForm metadata={meta} /> */}
 				</Drawer>
-
-				{columns.length > 0 && (
-					<Table
-						pagination={
-							pagination.enable
-								? {
-										position: pagination.position || ['bottomRight'],
-										defaultPageSize: pagination.pageSize || 16,
-										pageSizeOptions: pagination.pageSizeOptions,
-										showSizeChanger: pagination.showSizeChanger,
-										showQuickJumper: pagination.showQuickJumper,
-										showTotal: (total: number, range: any) =>
-											`${range[0]}-${range[1]} of ${total} items`,
-								  }
-								: false
-						}
-						bordered
-						size='small'
-						components={components}
-						rowClassName={() => 'editable-row'}
-						columns={columns}
-						loading={globalSearchLoading || loadingData}
-						dataSource={this.getDataWithKey()}
-						scroll={{ x: 1300 }}
-					/>
-				)}
 
 				{/* Edit Form Drawer */}
 				{capabilities.edit?.enable && (
@@ -666,22 +546,18 @@ export class TableBVC extends Component<tableProps, tableState> {
 						visible={this.state.editFormDrawer}
 						onClose={this.closeEditFormDrawer}
 					>
-						<EditForm
+						Edit form is here
+						{/* <EditForm
 							metadata={meta}
 							initialValues={this.state.editingItemData}
 							handleSave={this.handleSave}
 							closeDrawer={this.closeEditFormDrawer}
-						/>
+						/> */}
 					</Drawer>
 				)}
 
 				{/* Presentation Drawer */}
-				<Drawer
-					width={'80%'}
-					closable={true}
-					visible={this.state.presentationDrawer}
-					onClose={this.closePresentationDrawer}
-				>
+				<Drawer width={'80%'} closable={true} visible={this.state.presentationDrawer} onClose={this.closePresentationDrawer}>
 					{BVCComponent ? (
 						<Suspense fallback={<Spin />}>
 							<BVCComponent data={presentationDrawerData} metadata={meta} />
@@ -690,148 +566,69 @@ export class TableBVC extends Component<tableProps, tableState> {
 						<NotFound />
 					)}
 				</Drawer>
-			</>
+
+				{/* Actual Table */}
+				{columns.length > 0 && (
+					<div className='table-container'>
+						<table className='table is-bordered is-narrow is-hoverable is-fullwidth'>
+							<thead>
+								<tr>
+									<th>
+										<abbr title='Position'>Pos</abbr>
+									</th>
+									<th>Team</th>
+									<th>
+										<abbr title='Played'>Pld</abbr>
+									</th>
+									<th>
+										<abbr title='Won'>W</abbr>
+									</th>
+									<th>
+										<abbr title='Drawn'>D</abbr>
+									</th>
+									<th>
+										<abbr title='Lost'>L</abbr>
+									</th>
+									<th>
+										<abbr title='Goals for'>GF</abbr>
+									</th>
+									<th>
+										<abbr title='Goals against'>GA</abbr>
+									</th>
+									<th>
+										<abbr title='Goal difference'>GD</abbr>
+									</th>
+									<th>
+										<abbr title='Points'>Pts</abbr>
+									</th>
+									<th>Qualification or relegation</th>
+								</tr>
+							</thead>
+
+							<tbody>
+								<tr>
+									<th>1</th>
+									<td>Leicester City</td>
+									<td>38</td>
+									<td>23</td>
+									<td>12</td>
+									<td>3</td>
+									<td>68</td>
+									<td>36</td>
+									<td>+32</td>
+									<td>81</td>
+									<td>Champions League group stage</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				)}
+			</div>
 		)
 	}
 }
 
 const NotFound = () => <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-
-// Editable Row
-interface EditableRowProps {
-	index: number
-}
-
-const EditableContext = React.createContext<any>({})
-
-const EditableRow: React.FC<EditableRowProps> = ({ index, ...props }) => {
-	const [form] = Form.useForm()
-	return (
-		<Form form={form} component={false}>
-			<EditableContext.Provider value={form}>
-				<tr {...props} />
-			</EditableContext.Provider>
-		</Form>
-	)
-}
-
-// Editable Cell
-const EditableCell: React.FC<any> = ({
-	title,
-	editable,
-	children,
-	dataIndex,
-	record,
-	field,
-	handleSave,
-	...restProps
-}) => {
-	const [editing, setEditing] = useState(false)
-	const [resetBtn, setResetBtn] = useState(false)
-	const inputRef = useRef(null)
-	const form = useContext(EditableContext)
-	let tableCellElement: any
-
-	const handleCellLeave = (e: any) => {
-		if (!tableCellElement || !field) return
-		const { type, editable } = field
-		var isInsideClick = tableCellElement.contains(e.target)
-		if (!isInsideClick) {
-			//the click was outside the specifiedElement, do something
-			if (editable && (type === 'radio' || type === 'checkbox' || type === 'boolean')) {
-				setEditing(false)
-			}
-		}
-	}
-
-	useEffect(() => {
-		if (editing) {
-			if (field.type !== 'checkbox') {
-				inputRef.current && inputRef.current.focus()
-			}
-		}
-		document.addEventListener('click', handleCellLeave)
-		return () => {
-			// unsubscribe event
-			document.removeEventListener('click', handleCellLeave)
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [editing])
-
-	const toggleEdit = () => {
-		setEditing(!editing)
-		form.setFieldsValue({ [dataIndex]: record[dataIndex] })
-	}
-
-	const save = async (e: any) => {
-		try {
-			const values = await form.validateFields()
-			toggleEdit()
-			handleSave({ ...record, ...values })
-			setResetBtn(false)
-		} catch (errInfo) {
-			console.log('Save failed:', errInfo)
-		}
-	}
-
-	const getCellValue = () => {
-		switch (field.type) {
-			case 'checkbox':
-				const values = record[dataIndex] || []
-				return values
-					.map((value: any) => {
-						const option = field.options.find((x: any) => x.value === value)
-						return option ? option.label : null
-					})
-					.filter((y: any) => !!y)
-					.join(', ')
-			case 'boolean':
-				return record[dataIndex] ? 'Yes' : 'No'
-			default:
-				return record[dataIndex]
-		}
-	}
-
-	const getChildNode = () => {
-		if (!editable) return children
-		if (!editing) {
-			const val = record[dataIndex]
-			return (
-				<div
-					className='editable-cell-value-wrap'
-					style={{
-						paddingRight: 24,
-						height: Array.isArray(val)
-							? val.length === 0 && 32
-							: typeof val === 'boolean'
-							? 32
-							: !val && 32,
-					}}
-					onClick={toggleEdit}
-				>
-					{getCellValue()}
-				</div>
-			)
-		}
-
-		return getInlineEditFormsField(
-			dataIndex,
-			record,
-			field,
-			form,
-			inputRef,
-			save,
-			resetBtn,
-			setResetBtn
-		)
-	}
-
-	return (
-		<td {...restProps} ref={(el) => (tableCellElement = el)}>
-			{getChildNode()}
-		</td>
-	)
-}
 
 export default TableBVC
 
