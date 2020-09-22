@@ -24,7 +24,7 @@ export class App extends Component<any, CState> {
 	async componentDidMount() {
 		try {
 			const response = await axios.get('http://localhost:5000/')
-			console.log(response.data)
+			// console.log(response.data)
 			this.setState({ data: response.data }, () => this.setState({ loading: false }))
 		} catch (error) {
 			console.log(error)

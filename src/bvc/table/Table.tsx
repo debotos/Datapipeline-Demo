@@ -151,7 +151,10 @@ export class TableBVC extends Component<tableProps, tableState> {
 
 		this.setState({ globalSearchLoading: true })
 
-		const results = matchSorter(this.state.data, searchText.trim().toLowerCase(), { keys: fields })
+		const results = matchSorter(this.state.data, searchText.trim().toLowerCase(), {
+			threshold: matchSorter.rankings.CONTAINS,
+			keys: fields,
+		})
 
 		this.setState({ globalSearchResults: results, globalSearchLoading: false })
 	}, 300)
@@ -187,17 +190,25 @@ export class TableBVC extends Component<tableProps, tableState> {
 		const masterFilterKeys = Object.keys(masterFilterCriteria)
 		if (masterFilterKeys.length === 0) return finalData
 
-		return finalData.filter((x: any) => {
+		const resultData = []
+
+		for (let index = 0; index < finalData.length; index++) {
+			const data = finalData[index]
+
 			const result = new Set(
 				masterFilterKeys.map((key: any) => {
 					const values = masterFilterCriteria[key]
-					if (values.includes(x[key])) return true
+					if (values.includes(data[key])) return true
 					return false
 				})
 			)
-			if (result.has(true)) return true
-			return false
-		})
+
+			if (!result.has(false)) {
+				resultData.push(data)
+			}
+		}
+
+		return resultData
 	}
 
 	handleRefresh = async (e: any) => {

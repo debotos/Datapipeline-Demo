@@ -10,7 +10,7 @@ function ReactTable(props: any) {
 
 	const getColumnsDef = () => {
 		const { openEditFormDrawer, handleDelete } = props
-
+		console.log('Get column definition func is running!')
 		return meta.columns
 			.filter((col: any) => {
 				if (!tableSettings || !tableSettings.hide) return true
