@@ -39,4 +39,6 @@ const DataSchema = new Schema(
 	{ timestamps: true }
 )
 
+DataSchema.plugin(require('meanie-mongoose-to-json'))
+
 module.exports = mongoose.model('Data', DataSchema)

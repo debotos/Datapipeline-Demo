@@ -3,7 +3,7 @@ import { Form, Button } from 'antd'
 
 import { getFormField } from '../utils/getFormField'
 
-type CProps = { metadata: any }
+type CProps = { metadata: any; handleAdd(row: any): void; closeDrawer(): void }
 
 export default function AddForm(props: CProps) {
 	const [form] = Form.useForm()
@@ -14,6 +14,8 @@ export default function AddForm(props: CProps) {
 
 	const onFinish = (values: any) => {
 		console.log('Finish:', values)
+		props.handleAdd(values)
+		props.closeDrawer()
 	}
 
 	const { metadata } = props

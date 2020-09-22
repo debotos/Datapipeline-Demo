@@ -52,4 +52,5 @@ module.exports = async function seedDatabase(count = 100000) {
 		const newData = new Data(generateData())
 		await newData.save()
 	}
+	console.log('Seeding finished!')
 }

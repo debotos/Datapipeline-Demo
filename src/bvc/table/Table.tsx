@@ -1,24 +1,17 @@
-import React, { Component, Suspense, useState, useRef, useContext, useEffect } from 'react'
-import { Input, Drawer, Button, Empty, Spin, Popconfirm, Space, Modal, Divider, Checkbox, Row, Col, message } from 'antd'
+import React, { Component, Suspense } from 'react'
+import { Input, Drawer, Button, Empty, Spin, Modal, Divider, Checkbox, Row, Col, message } from 'antd'
+import { PlusOutlined, SearchOutlined, DownloadOutlined, FilterOutlined, SettingOutlined, SyncOutlined } from '@ant-design/icons'
 import styled from 'styled-components'
 import { clone } from 'ramda'
 import debounce from 'lodash/debounce'
-import {
-	EditOutlined,
-	DeleteOutlined,
-	PlusOutlined,
-	SearchOutlined,
-	DownloadOutlined,
-	FilterOutlined,
-	SettingOutlined,
-	SyncOutlined,
-} from '@ant-design/icons'
+import matchSorter from 'match-sorter'
 
 import './table.scss'
 import generateExcel from '../../utils/generateExcel'
-// import EditForm from '../components/EditForm'
-// import AddForm from '../components/AddForm'
-import { sleep } from '../../utils/helpers'
+import EditForm from '../../components/EditForm'
+import AddForm from '../../components/AddForm'
+import { sleep, isEmpty } from '../../utils/helpers'
+import ReactTable from './ReactTable'
 
 type tableProps = { meta: any; data: any }
 type tableState = {
@@ -104,13 +97,6 @@ export class TableBVC extends Component<tableProps, tableState> {
 	openPresentationDrawer = (record: any) => this.setState({ presentationDrawerData: record, presentationDrawer: true })
 	closePresentationDrawer = () => this.setState({ presentationDrawer: false, presentationDrawerData: null })
 
-	performGlobalSearchAgain = () => {
-		const { globalSearchText } = this.state
-		if (globalSearchText) {
-			this.performGlobalSearch(globalSearchText)
-		}
-	}
-
 	handleSave = (row: any) => {
 		// console.log(row)
 		const copy = clone(this.state.data)
@@ -122,9 +108,15 @@ export class TableBVC extends Component<tableProps, tableState> {
 		message.success('Successfully saved the record!', 1.5)
 	}
 
-	handleDelete = (key: string) => {
+	handleAdd = (row: any) => {
+		// console.log(row)
+		this.setState({ data: [row, ...this.state.data] }, this.performGlobalSearchAgain)
+		message.success('Successfully added the record!', 1.5)
+	}
+
+	handleDelete = (id: string) => {
 		const copy = clone(this.state.data)
-		const update = copy.filter((x: any) => x.id !== key)
+		const update = copy.filter((x: any) => x.id !== id)
 		this.setState({ data: update }, this.performGlobalSearchAgain)
 		message.info('Successfully deleted the record!', 1.5)
 	}
@@ -132,24 +124,20 @@ export class TableBVC extends Component<tableProps, tableState> {
 	downloadExcel = () => {
 		const { enable, fields: columns } = this.props.meta.capabilities.download
 		if (!enable || columns.length === 0) {
-			message.error('Sorry, unable to generate excel file!')
-			return
+			return message.error('Sorry, unable to generate excel file!')
 		}
 		const hide = message.loading('Action in progress..', 0)
 		const dataIndexTitlePair: any = {}
 		this.props.meta.columns.forEach((x: any) => (dataIndexTitlePair[x.dataIndex] = x.title))
-
+		const { globalSearchText, masterFilterCriteria } = this.state
 		generateExcel(
-			this.getDataWithKey(),
+			this.getData(),
 			columns,
 			dataIndexTitlePair,
 			`${this.props.meta.heading} data on ${new Date().toDateString()}`,
 			this.props.meta.capabilities.download?.props,
 			this.props.meta.heading,
-			{
-				searchText: this.state.globalSearchText,
-				filters: this.state.masterFilterCriteria,
-			}
+			{ searchText: globalSearchText, filters: masterFilterCriteria }
 		)
 
 		setTimeout(hide, 300)
@@ -162,18 +150,18 @@ export class TableBVC extends Component<tableProps, tableState> {
 		if (!fields) return
 
 		this.setState({ globalSearchLoading: true })
-		const results = clone(this.state.data).filter((item: any) => {
-			const string = fields
-				.map((key: string) => item[key])
-				.filter((val: any) => !!val)
-				.join(' ')
-				.toLowerCase()
 
-			return string.includes(searchText.trim().toLowerCase())
-		})
+		const results = matchSorter(this.state.data, searchText.trim().toLowerCase(), { keys: fields })
 
 		this.setState({ globalSearchResults: results, globalSearchLoading: false })
 	}, 300)
+
+	performGlobalSearchAgain = () => {
+		const { globalSearchText } = this.state
+		if (globalSearchText) {
+			this.performGlobalSearch(globalSearchText)
+		}
+	}
 
 	handleColumnSearch = (selectedKeys: any, confirm: any, dataIndex: any) => {
 		confirm()
@@ -188,69 +176,28 @@ export class TableBVC extends Component<tableProps, tableState> {
 		this.setState({ localSearchText: '' })
 	}
 
-	getColumnSearchProps = (dataIndex: string, title: string) => ({
-		filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
-			<div style={{ padding: 8 }}>
-				<Input
-					ref={(node: any) => {
-						this.searchInput = node
-					}}
-					placeholder={`Search ${[title]}`}
-					value={selectedKeys[0]}
-					onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-					onPressEnter={() => this.handleColumnSearch(selectedKeys, confirm, dataIndex)}
-					style={{ width: 188, marginBottom: 8, display: 'block' }}
-				/>
-				<Space>
-					<Button
-						type='primary'
-						onClick={() => this.handleColumnSearch(selectedKeys, confirm, dataIndex)}
-						icon={<SearchOutlined />}
-						size='small'
-						style={{ width: 90 }}
-					>
-						Search
-					</Button>
-					<Button onClick={() => this.resetColumnSearch(clearFilters)} size='small' style={{ width: 90 }}>
-						Reset
-					</Button>
-				</Space>
-			</div>
-		),
-		filterIcon: (filtered: boolean) => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
-		onFilter: (value: any, record: any) =>
-			record[dataIndex] ? record[dataIndex].toString().toLowerCase().includes(value.trim().toLowerCase()) : '',
-		onFilterDropdownVisibleChange: (visible: boolean) => {
-			if (visible) {
-				setTimeout(() => this.searchInput.select())
-			}
-		},
-	})
-
-	getDataWithKey = () => {
+	getData = () => {
 		const { data, globalSearchText, globalSearchResults, masterFilterCriteria } = this.state
 		let finalData = data
 		if (globalSearchText) {
 			finalData = globalSearchResults
 		}
-		return finalData
-			.filter((x: any) => {
-				if (!masterFilterCriteria) return true
-				const masterFilterKeys = Object.keys(masterFilterCriteria)
-				if (masterFilterKeys.length === 0) return true
-				const result = new Set(
-					masterFilterKeys.map((key: any) => {
-						const values = masterFilterCriteria[key]
-						if (values.includes(x[key])) {
-							return true
-						}
-						return false
-					})
-				)
-				if (result.has(true)) return true
-				return false
-			})
-			.map((item: any) => ({ ...item, key: item.id }))
+
+		if (!masterFilterCriteria) return finalData
+		const masterFilterKeys = Object.keys(masterFilterCriteria)
+		if (masterFilterKeys.length === 0) return finalData
+
+		return finalData.filter((x: any) => {
+			const result = new Set(
+				masterFilterKeys.map((key: any) => {
+					const values = masterFilterCriteria[key]
+					if (values.includes(x[key])) return true
+					return false
+				})
+			)
+			if (result.has(true)) return true
+			return false
+		})
 	}
 
 	handleRefresh = async (e: any) => {
@@ -280,88 +227,9 @@ export class TableBVC extends Component<tableProps, tableState> {
 			loadingData,
 		} = this.state
 		const { meta } = this.props
-
 		const { capabilities } = meta
-		const { pagination } = capabilities
-
-		const columns = meta.columns
-			.filter((col: any) => {
-				if (!tableSettings || !tableSettings.hide) return true
-				return !tableSettings.hide.includes(col.dataIndex)
-			})
-			.map((col: any) => {
-				const { dataIndex } = col
-				if (dataIndex === 'action') {
-					return {
-						align: 'center',
-						...col,
-						render: (_: any, record: any) => {
-							return (
-								<>
-									{capabilities.edit?.enable && (
-										<Button type='link' size='small' onClick={() => this.openEditFormDrawer(record)}>
-											<EditOutlined />
-										</Button>
-									)}
-									{capabilities.delete && (
-										<Popconfirm title='Sure to delete?' placement='left' onConfirm={() => this.handleDelete(record.key)}>
-											<Button type='link' size='small' style={{ color: 'tomato' }} icon={<DeleteOutlined />} />
-										</Popconfirm>
-									)}
-								</>
-							)
-						},
-					}
-				}
-				if (col.searchable) {
-					col = { ...col, ...this.getColumnSearchProps(dataIndex, col.title) }
-				}
-				if (col.sorting?.enable) {
-					const { type, sortingProps } = col.sorting
-					col = {
-						...col,
-						sorter: (a: any, b: any) => {
-							// number
-							if (type === 'number') return a[dataIndex] - b[dataIndex]
-							// string
-							if (a[dataIndex] < b[dataIndex]) return -1
-							if (a[dataIndex] > b[dataIndex]) return 1
-							return 0
-						},
-						...sortingProps,
-					}
-				}
-				if (col.filter) {
-					if (col.field?.options) {
-						const filters = col.field.options.map((x: any) => ({ text: x.label, value: x.value }))
-						if (filters.length > 0) {
-							col = {
-								...col,
-								filters,
-								onFilter:
-									col.field.type === 'checkbox'
-										? (value: any, record: any) => record[dataIndex].join().includes(value)
-										: (value: any, record: any) => record[dataIndex] === value,
-							}
-						}
-					} else {
-						console.warn(`Error! No options found at col.field.options for dataIndex:"${dataIndex}" to generate filter input.`)
-					}
-				}
-				if (!col.field.editable) return col
-				return {
-					...col,
-					onCell: (record: any) => ({
-						record,
-						field: col.field,
-						editable: col.field.editable,
-						dataIndex: dataIndex,
-						title: col.title,
-						handleSave: this.handleSave,
-					}),
-				}
-			})
-
+		const actionInProgress = globalSearchLoading || loadingData
+		const tableData = this.getData()
 		let BVCComponent
 
 		if (presentationDrawerData && presentationDrawerData.bvc) {
@@ -373,7 +241,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 		}
 
 		return (
-			<div style={{ pointerEvents: loadingData ? 'none' : 'auto', opacity: loadingData ? 0.5 : 1 }}>
+			<div style={{ pointerEvents: actionInProgress ? 'none' : 'auto', opacity: actionInProgress ? 0.5 : 1 }}>
 				{capabilities.add.enable && (
 					<div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
 						<Button type='primary' size='small' onClick={this.openAddFormDrawer}>
@@ -416,7 +284,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 								}}
 							/>
 						)}
-						{capabilities.refresh && <SyncOutlined className='icon-btn' spin={loadingData} onClick={this.handleRefresh} />}
+						{capabilities.refresh && <SyncOutlined className='icon-btn' spin={actionInProgress} onClick={this.handleRefresh} />}
 					</div>
 				</Container>
 
@@ -439,7 +307,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 						{capabilities.filter.fields.map((fieldDataIndex: string, index: number) => {
 							const column = meta.columns.find((x: any) => x.dataIndex === fieldDataIndex)
 							if (!column) return null
-							const { dataIndex, title } = column
+							const { dataIndex, headerName } = column
 							// Special case where value is not predictable
 							const inputData = Array.from(new Set(this.state.data.map((x: any) => x[dataIndex])))
 							if (!inputData || inputData.length === 0) return null
@@ -447,7 +315,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 							return (
 								<div key={fieldDataIndex}>
 									<Divider plain style={{ marginTop: index === 0 && 0 }}>
-										{title}
+										{headerName}
 									</Divider>
 									<Checkbox.Group
 										options={inputData
@@ -516,7 +384,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 								<Row>
 									{meta.columns.map((col: any) => (
 										<Col span={8} key={col.dataIndex}>
-											<Checkbox value={col.dataIndex}>{col.title}</Checkbox>
+											<Checkbox value={col.dataIndex}>{col.headerName}</Checkbox>
 										</Col>
 									))}
 								</Row>
@@ -533,8 +401,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 					visible={this.state.addFormDrawer}
 					onClose={this.closeAddFormDrawer}
 				>
-					Add form is here
-					{/* <AddForm metadata={meta} /> */}
+					<AddForm metadata={meta} handleAdd={this.handleAdd} closeDrawer={this.closeAddFormDrawer} />
 				</Drawer>
 
 				{/* Edit Form Drawer */}
@@ -545,14 +412,14 @@ export class TableBVC extends Component<tableProps, tableState> {
 						closable={true}
 						visible={this.state.editFormDrawer}
 						onClose={this.closeEditFormDrawer}
+						destroyOnClose
 					>
-						Edit form is here
-						{/* <EditForm
+						<EditForm
 							metadata={meta}
 							initialValues={this.state.editingItemData}
 							handleSave={this.handleSave}
 							closeDrawer={this.closeEditFormDrawer}
-						/> */}
+						/>
 					</Drawer>
 				)}
 
@@ -568,60 +435,16 @@ export class TableBVC extends Component<tableProps, tableState> {
 				</Drawer>
 
 				{/* Actual Table */}
-				{columns.length > 0 && (
-					<div className='table-container'>
-						<table className='table is-bordered is-narrow is-hoverable is-fullwidth'>
-							<thead>
-								<tr>
-									<th>
-										<abbr title='Position'>Pos</abbr>
-									</th>
-									<th>Team</th>
-									<th>
-										<abbr title='Played'>Pld</abbr>
-									</th>
-									<th>
-										<abbr title='Won'>W</abbr>
-									</th>
-									<th>
-										<abbr title='Drawn'>D</abbr>
-									</th>
-									<th>
-										<abbr title='Lost'>L</abbr>
-									</th>
-									<th>
-										<abbr title='Goals for'>GF</abbr>
-									</th>
-									<th>
-										<abbr title='Goals against'>GA</abbr>
-									</th>
-									<th>
-										<abbr title='Goal difference'>GD</abbr>
-									</th>
-									<th>
-										<abbr title='Points'>Pts</abbr>
-									</th>
-									<th>Qualification or relegation</th>
-								</tr>
-							</thead>
-
-							<tbody>
-								<tr>
-									<th>1</th>
-									<td>Leicester City</td>
-									<td>38</td>
-									<td>23</td>
-									<td>12</td>
-									<td>3</td>
-									<td>68</td>
-									<td>36</td>
-									<td>+32</td>
-									<td>81</td>
-									<td>Champions League group stage</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
+				{isEmpty(tableData) ? (
+					<NotFound />
+				) : (
+					<ReactTable
+						meta={meta}
+						data={tableData}
+						tableSettings={tableSettings}
+						openEditFormDrawer={this.openEditFormDrawer}
+						handleDelete={this.handleDelete}
+					/>
 				)}
 			</div>
 		)

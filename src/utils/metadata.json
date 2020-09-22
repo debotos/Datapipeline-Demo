@@ -11,7 +11,7 @@
 			"label": "Add a new user",
 			"fields": ["first_name", "last_name", "email", "address", "gender", "permission", "active"],
 			"initialValues": {
-				"gender": "Male",
+				"gender": "male",
 				"permission": ["read"],
 				"active": false
 			}
@@ -39,8 +39,7 @@
 		"refresh": true,
 		"pagination": {
 			"enable": true,
-			"position": ["topRight", "bottomRight"],
-			"pageSize": 10,
+			"defaultPageSize": 10,
 			"showSizeChanger": true,
 			"pageSizeOptions": [10, 16, 25, 50, 100],
 			"showQuickJumper": true
@@ -48,11 +47,12 @@
 	},
 	"columns": [
 		{
-			"title": "First Name",
+			"headerName": "First Name",
 			"dataIndex": "first_name",
 			"width": 150,
 			"fixed": "left",
 			"searchable": true,
+			"sortable": true,
 			"field": {
 				"editable": true,
 				"type": "text",
@@ -63,20 +63,14 @@
 					{ "min": 2, "message": "Minimum length is 2" },
 					{ "max": 10, "message": "Max value length is 10" }
 				]
-			},
-			"sorting": {
-				"enable": true,
-				"type": "string",
-				"sortingProps": {
-					"sortDirections": ["descend", "ascend"]
-				}
 			}
 		},
 		{
-			"title": "Last Name",
+			"headerName": "Last Name",
 			"dataIndex": "last_name",
 			"width": 150,
 			"searchable": true,
+			"sortable": true,
 			"field": {
 				"editable": true,
 				"type": "text",
@@ -87,17 +81,10 @@
 					{ "min": 2, "message": "Minimum length is 2" },
 					{ "max": 10, "message": "Max value length is 10" }
 				]
-			},
-			"sorting": {
-				"enable": true,
-				"type": "string",
-				"sortingProps": {
-					"sortDirections": ["descend", "ascend"]
-				}
 			}
 		},
 		{
-			"title": "Address",
+			"headerName": "Address",
 			"dataIndex": "address",
 			"searchable": true,
 			"field": {
@@ -114,10 +101,11 @@
 			}
 		},
 		{
-			"title": "Email",
+			"headerName": "Email",
 			"dataIndex": "email",
 			"width": 250,
 			"searchable": true,
+			"sortable": true,
 			"field": {
 				"editable": true,
 				"type": "email",
@@ -127,17 +115,10 @@
 					{ "whitespace": true, "required": true, "message": "Email is required" },
 					{ "type": "email", "message": "Email is not valid" }
 				]
-			},
-			"sorting": {
-				"enable": true,
-				"type": "string",
-				"sortingProps": {
-					"sortDirections": ["descend", "ascend"]
-				}
 			}
 		},
 		{
-			"title": "IP",
+			"headerName": "IP",
 			"dataIndex": "ip_address",
 			"searchable": true,
 			"field": {
@@ -145,7 +126,7 @@
 			}
 		},
 		{
-			"title": "Gender",
+			"headerName": "Gender",
 			"dataIndex": "gender",
 			"width": 120,
 			"field": {
@@ -153,15 +134,15 @@
 				"type": "radio",
 				"placeholder": "Gender",
 				"options": [
-					{ "label": "Male", "value": "Male", "disabled": false },
-					{ "label": "Female", "value": "Female", "disabled": false }
+					{ "label": "Male", "value": "male", "disabled": false },
+					{ "label": "Female", "value": "female", "disabled": false }
 				],
 				"validation": [{ "required": true, "message": "Gender is required" }]
 			},
 			"filter": true
 		},
 		{
-			"title": "Permission",
+			"headerName": "Permission",
 			"dataIndex": "permission",
 			"width": 170,
 			"field": {
@@ -179,7 +160,7 @@
 			"filter": true
 		},
 		{
-			"title": "Active",
+			"headerName": "Active",
 			"dataIndex": "active",
 			"width": 100,
 			"align": "center",
@@ -195,7 +176,7 @@
 			"filter": true
 		},
 		{
-			"title": "Action",
+			"headerName": "Action",
 			"dataIndex": "action",
 			"fixed": "right",
 			"width": 130,

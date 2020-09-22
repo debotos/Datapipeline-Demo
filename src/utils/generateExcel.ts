@@ -104,8 +104,8 @@ export default (
 	/* Add array of rows containing data */
 	worksheet.addRows(data)
 
-	workbook.xlsx.writeBuffer().then(function (data: any) {
-		var blob = new Blob([data], {
+	workbook.xlsx.writeBuffer().then(function (finalData: any) {
+		const blob = new Blob([finalData], {
 			type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 		})
 		saveAs(blob, `${name}.xlsx`)

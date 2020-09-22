@@ -26,7 +26,7 @@ mongoose
 	.then(() => console.log(`✅ Connected to MongoDB`))
 	.catch((error) => console.error(` ❌ Error: Unable to connect MongoDB!`, error))
 
-// seedDatabase(100)
+seedDatabase(100)
 
 app.get('/', (req, res) => {
 	Data.find({}, (err, data) => {
