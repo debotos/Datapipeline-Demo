@@ -82,7 +82,7 @@ export const getFormField = (info: any, form: any, initialValues: any, isLastFie
 						filterOption={(input: string, option: any) => option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
 					>
 						{options.map((option: any, index: number) => {
-							const { label, value, disabled } = option.array
+							const { label, value, disabled } = option
 							return (
 								<Select.Option key={index} value={value} disabled={disabled}>
 									{label}

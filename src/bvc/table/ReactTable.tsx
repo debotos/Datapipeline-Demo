@@ -1,14 +1,15 @@
 import React from 'react'
 import { isArray } from 'lodash'
 import styled from 'styled-components'
-import { Button, Pagination, Popconfirm, Row, Tooltip } from 'antd'
-import { useTable, usePagination, useSortBy, useBlockLayout } from 'react-table'
+import { useSticky } from 'react-table-sticky'
+import { Button, Input, Pagination, Popconfirm, Row, Tooltip } from 'antd'
+import { useTable, usePagination, useSortBy, useBlockLayout, useResizeColumns } from 'react-table'
 import { DeleteOutlined, EditOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons'
 
 import { isEmpty } from '../../utils/helpers'
 
 function ReactTable(props: any) {
-	const { meta, data, tableSettings } = props
+	const { meta, data, tableSettings, handleSave } = props
 	const { capabilities } = meta
 	const { pagination } = capabilities
 
@@ -27,6 +28,8 @@ function ReactTable(props: any) {
 				if (dataIndex === 'action') {
 					return {
 						...col,
+						className: 'sticky',
+						headerClassName: 'sticky',
 						Cell: (args: any) => {
 							const { row } = args
 							return (
@@ -47,7 +50,7 @@ function ReactTable(props: any) {
 					}
 				}
 
-				return { ...col, Cell: ({ cell }: any) => transformValueToDisplay(cell) }
+				return col
 			})
 	}
 
@@ -65,57 +68,17 @@ function ReactTable(props: any) {
 		return value
 	}
 
-	const transformValueToDisplay = (cell: any) => {
-		const { column, value = '' } = cell
-		const { field } = column
-		const { type, options } = field
-
-		if (!type) return value
-
-		switch (type) {
-			case 'boolean': {
-				return value === true ? 'Yes' : 'No'
-			}
-
-			case 'radio': {
-				const option = options.find((x: any) => x.value === value)
-				if (option) {
-					return option.label
-				} else {
-					return value
-				}
-			}
-
-			case 'checkbox': {
-				if (isEmpty(value)) return ''
-				if (!isArray(value)) {
-					const option = options.find((x: any) => x.value === value)
-					if (option) {
-						return option.label
-					} else {
-						return value
-					}
-				}
-				const val = []
-				for (let index = 0; index < value.length; index++) {
-					const element = value[index]
-					const option = options.find((x: any) => x.value === element)
-					if (option) {
-						val.push(option.label)
-					} else {
-						val.push(element)
-					}
-				}
-				return val.join(', ')
-			}
-
-			default:
-				return value
-		}
-	}
-
+	// Set our editable cell renderer as the default Cell renderer
+	const defaultColumn = { minWidth: 100, maxWidth: 400, Cell: EditableCell }
 	const columns = React.useMemo(getColumnsDef, [tableSettings?.hide])
-	const tableInstance = useTable({ columns, data }, useBlockLayout, useSortBy, usePagination)
+	const tableInstance = useTable(
+		{ columns, data, defaultColumn, handleSave },
+		useBlockLayout,
+		useSticky,
+		useResizeColumns,
+		useSortBy,
+		usePagination
+	)
 	const { getTableProps, getTableBodyProps, headerGroups, page, prepareRow } = tableInstance
 	const {
 		gotoPage,
@@ -137,24 +100,34 @@ function ReactTable(props: any) {
 									{
 										// Loop over the headers in each row
 										headerGroup.headers.map((column, index) => {
-											const { sortable, isSorted, isSortedDesc } = column as any
+											const { sortable, resizable, isSorted, isSortedDesc } = column as any
+											const sortingProps = sortable ? column.getSortByToggleProps() : {}
 											const tableHeaderElement = ( // Apply the header cell props
-												<th {...column.getHeaderProps(sortable && column.getSortByToggleProps())} title=''>
-													{/* Render the header */}
-													{column.render('Header')}
-													{/* Sort direction indicator */}
-													{sortable && (
-														<span>
-															{isSorted ? (
-																isSortedDesc ? (
-																	<SortDescendingOutlined style={{ fontSize: 15 }} />
+												<th {...column.getHeaderProps()} title=''>
+													<HeadContent {...sortingProps}>
+														{/* Render the header */}
+														{column.render('Header')}
+														{/* Sort direction indicator */}
+														{sortable && (
+															<span>
+																{isSorted ? (
+																	isSortedDesc ? (
+																		<SortDescendingOutlined style={{ fontSize: 15 }} />
+																	) : (
+																		<SortAscendingOutlined style={{ fontSize: 15 }} />
+																	)
 																) : (
-																	<SortAscendingOutlined style={{ fontSize: 15 }} />
-																)
-															) : (
-																''
-															)}
-														</span>
+																	''
+																)}
+															</span>
+														)}
+													</HeadContent>
+													{/* Use column.getResizerProps to hook up the events correctly */}
+													{resizable && (
+														<ResizingElement
+															{...column.getResizerProps()}
+															className={`resizer ${column.isResizing ? 'isResizing' : ''}`}
+														/>
 													)}
 												</th>
 											)
@@ -194,19 +167,10 @@ function ReactTable(props: any) {
 									<tr {...row.getRowProps()}>
 										{
 											// Loop over the rows cells
-											row.cells.map((cell, index) => {
-												const { tooltip } = cell.column as any
-
+											row.cells.map((cell) => {
 												const cellContent = cell.render('Cell') // Render the cell contents
 												const cellElement = <td {...cell.getCellProps()}>{cellContent}</td> // Apply the cell props
-
-												return tooltip ? (
-													<Tooltip key={index} placement='top' title={cellContent}>
-														{cellElement}
-													</Tooltip>
-												) : (
-													cellElement
-												)
+												return cellElement
 											})
 										}
 									</tr>
@@ -248,3 +212,127 @@ const ActionContainer = styled.div`
 	width: 100%;
 	height: 100%;
 `
+const HeadContent = styled.div`
+	display: flex;
+	align-items: center;
+	& .anticon {
+		vertical-align: middle;
+	}
+`
+const ResizingElement = styled.span`
+	display: inline-block;
+	/* background: blue; */
+	width: 10px;
+	height: 100%;
+	position: absolute;
+	right: 0;
+	top: 0;
+	transform: translateX(50%);
+	z-index: 1;
+	touch-action: none; /* prevents from scrolling while dragging on touch devices */
+	&.isResizing {
+		/* background: red; */
+	}
+`
+
+// Create an editable cell renderer
+const EditableCell = (cellProps: any) => {
+	const {
+		value: initialValue,
+		row,
+		column,
+		handleSave, // This is a custom function that we supplied to our table instance
+	} = cellProps
+	// We need to keep and update the state of the cell normally
+	const [value, setValue] = React.useState(initialValue)
+	const [editing, setEditing] = React.useState(false)
+
+	const toggleEditing = () => setEditing(!editing)
+
+	const onChange = (e: any) => {
+		setValue(e.target.value)
+	}
+
+	// We'll only update the external data when the input is blurred
+	const onFinished = () => {
+		const identical = checkIsIdentical(value, initialValue)
+		if (identical) return toggleEditing()
+		const { dataIndex } = column
+		const { id } = row.original
+		handleSave({ id, [dataIndex]: value })
+		setEditing(false)
+	}
+
+	// If the initialValue is changed external, sync it up with our state
+	React.useEffect(() => {
+		setValue(initialValue)
+	}, [initialValue])
+
+	const handleDoubleClick = () => {
+		setEditing(true)
+	}
+
+	return editing ? (
+		<Input placeholder='Basic usage' value={value} onChange={onChange} onBlur={onFinished} />
+	) : (
+		<div onDoubleClick={handleDoubleClick} style={{ minHeight: 15, height: '100%' }}>
+			{transformValueToDisplay(cellProps)}
+		</div>
+	)
+}
+
+const checkIsIdentical = (newVal: any, oldVal: any) => {
+	if (newVal !== oldVal) {
+		return false // Something changed
+	}
+	return true
+}
+
+const transformValueToDisplay = (cell: any) => {
+	const { column, value = '' } = cell
+	const { field } = column
+	const { type, options } = field
+
+	if (!type) return value
+
+	switch (type) {
+		case 'boolean': {
+			return value === true ? 'Yes' : 'No'
+		}
+
+		case 'radio': {
+			const option = options.find((x: any) => x.value === value)
+			if (option) {
+				return option.label
+			} else {
+				return value
+			}
+		}
+
+		case 'checkbox': {
+			if (isEmpty(value)) return ''
+			if (!isArray(value)) {
+				const option = options.find((x: any) => x.value === value)
+				if (option) {
+					return option.label
+				} else {
+					return value
+				}
+			}
+			const val = []
+			for (let index = 0; index < value.length; index++) {
+				const element = value[index]
+				const option = options.find((x: any) => x.value === element)
+				if (option) {
+					val.push(option.label)
+				} else {
+					val.push(element)
+				}
+			}
+			return val.join(', ')
+		}
+
+		default:
+			return value
+	}
+}

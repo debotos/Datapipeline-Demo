@@ -100,7 +100,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 	handleSave = (row: any) => {
 		// console.log(row)
 		const update = this.state.data.map((x: any) => {
-			if (x.id === row.id) return row
+			if (x.id === row.id) return { ...x, ...row }
 			return x
 		})
 		this.setState({ data: update }, this.performGlobalSearchAgain)
@@ -443,6 +443,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 						tableSettings={tableSettings}
 						openEditFormDrawer={this.openEditFormDrawer}
 						handleDelete={this.handleDelete}
+						handleSave={this.handleSave}
 					/>
 				)}
 			</Wrapper>

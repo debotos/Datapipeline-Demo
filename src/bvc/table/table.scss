@@ -25,6 +25,21 @@ table th {
 .table {
 	background-color: white;
 	color: #363636;
+
+	/* react-table-sticky npm required */
+	[data-sticky-td] {
+		position: sticky !important;
+		background-color: #fff;
+	}
+
+	[data-sticky-last-left-td] {
+		box-shadow: 2px 0px 3px #ccc;
+	}
+
+	[data-sticky-first-right-td] {
+		box-shadow: -2px 0px 3px #ccc;
+	}
+	/* react-table-sticky npm required */
 }
 
 /* Customizing border */
@@ -33,7 +48,7 @@ table th {
 .table th {
 	border-left: 1px solid #dbdbdb;
 	border-width: 0 0 1px;
-	padding: 0.5em 0.75em;
+	// padding: 0.5em 0.75em;
 	vertical-align: top;
 }
 
@@ -57,7 +72,7 @@ table th {
 
 /* Truncate */
 
-.table td {
+.table td div {
 	text-overflow: ellipsis;
 	overflow: hidden;
 	white-space: nowrap;
@@ -238,7 +253,14 @@ table th {
 	background-color: whitesmoke;
 }
 
-.table.is-narrow td,
+.table.is-narrow td {
+	padding: 0;
+}
+
+.table.is-narrow td div {
+	padding: 0.25em 0.5em;
+}
+
 .table.is-narrow th {
 	padding: 0.25em 0.5em;
 }

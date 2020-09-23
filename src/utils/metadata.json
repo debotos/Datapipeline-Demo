@@ -49,7 +49,6 @@
 		{
 			"headerName": "First Name",
 			"dataIndex": "first_name",
-			"fixed": "left",
 			"searchable": true,
 			"sortable": true,
 			"field": {
@@ -108,7 +107,7 @@
 			"dataIndex": "company",
 			"searchable": true,
 			"sortable": true,
-			"tooltip": true,
+			"resizable": true,
 			"field": {
 				"editable": true,
 				"type": "text",
@@ -122,11 +121,11 @@
 			}
 		},
 		{
+			"width": 200,
 			"headerName": "Country",
 			"dataIndex": "country",
 			"searchable": true,
 			"sortable": true,
-			"tooltip": true,
 			"field": {
 				"editable": true,
 				"type": "text",
@@ -178,7 +177,7 @@
 			"headerName": "Address",
 			"dataIndex": "address",
 			"searchable": true,
-			"tooltip": true,
+			"resizable": true,
 			"field": {
 				"editable": true,
 				"type": "textarea",
@@ -201,7 +200,7 @@
 				"type": "number",
 				"placeholder": "Balance",
 				"hasFeedback": true,
-				"validation": [{ "whitespace": true, "required": true, "message": "Balance is required" }]
+				"validation": [{ "required": true, "message": "Balance is required" }]
 			}
 		},
 		{
@@ -210,7 +209,7 @@
 			"dataIndex": "email",
 			"searchable": true,
 			"sortable": true,
-			"tooltip": true,
+			"resizable": true,
 			"field": {
 				"editable": true,
 				"type": "email",
@@ -222,7 +221,6 @@
 				]
 			}
 		},
-
 		{
 			"headerName": "Gender",
 			"dataIndex": "gender",
@@ -251,7 +249,7 @@
 				"validation": [
 					{ "whitespace": true, "required": true, "message": "Phone is required" },
 					{ "min": 6, "message": "Minimum length is 6" },
-					{ "max": 15, "message": "Max value length is 15" }
+					{ "max": 25, "message": "Max value length is 25" }
 				]
 			}
 		},
@@ -311,19 +309,20 @@
 			},
 			"filter": true
 		},
+
 		{
 			"headerName": "Status",
 			"dataIndex": "status",
 			"field": {
 				"editable": true,
-				"type": "checkbox",
+				"type": "select",
 				"placeholder": "Status",
 				"options": [
 					{ "label": "Working", "value": "Working", "disabled": false },
 					{ "label": "Sleeping", "value": "Sleeping", "disabled": false },
 					{ "label": "Busy", "value": "Busy", "disabled": false }
 				],
-				"validation": [{ "type": "array", "required": true, "message": "Status is required" }]
+				"validation": [{ "required": true, "message": "Status is required" }]
 			},
 			"filter": true
 		},
@@ -331,7 +330,7 @@
 			"headerName": "Action",
 			"dataIndex": "action",
 			"width": 100,
-			"fixed": "right",
+			"sticky": "right",
 			"field": {
 				"editable": false
 			}
