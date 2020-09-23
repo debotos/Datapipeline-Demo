@@ -5,7 +5,7 @@ import { Button, Pagination, Popconfirm, Row, Tooltip } from 'antd'
 import { useTable, usePagination, useSortBy, useBlockLayout } from 'react-table'
 import { DeleteOutlined, EditOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons'
 
-import { isEmpty, getContainer } from '../../utils/helpers'
+import { isEmpty } from '../../utils/helpers'
 
 function ReactTable(props: any) {
 	const { meta, data, tableSettings } = props
@@ -170,7 +170,7 @@ function ReactTable(props: any) {
 											}
 
 											return sortable ? (
-												<Tooltip key={index} getPopupContainer={getContainer} placement='top' title={tooltip}>
+												<Tooltip key={index} placement='top' title={tooltip}>
 													{tableHeaderElement}
 												</Tooltip>
 											) : (
@@ -194,10 +194,19 @@ function ReactTable(props: any) {
 									<tr {...row.getRowProps()}>
 										{
 											// Loop over the rows cells
-											row.cells.map((cell) => {
+											row.cells.map((cell, index) => {
+												const { tooltip } = cell.column as any
+
 												const cellContent = cell.render('Cell') // Render the cell contents
-												// Apply the cell props
-												return <td {...cell.getCellProps()}>{cellContent}</td>
+												const cellElement = <td {...cell.getCellProps()}>{cellContent}</td> // Apply the cell props
+
+												return tooltip ? (
+													<Tooltip key={index} placement='top' title={cellContent}>
+														{cellElement}
+													</Tooltip>
+												) : (
+													cellElement
+												)
 											})
 										}
 									</tr>

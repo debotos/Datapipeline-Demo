@@ -108,6 +108,7 @@
 			"dataIndex": "company",
 			"searchable": true,
 			"sortable": true,
+			"tooltip": true,
 			"field": {
 				"editable": true,
 				"type": "text",
@@ -125,6 +126,7 @@
 			"dataIndex": "country",
 			"searchable": true,
 			"sortable": true,
+			"tooltip": true,
 			"field": {
 				"editable": true,
 				"type": "text",
@@ -176,6 +178,7 @@
 			"headerName": "Address",
 			"dataIndex": "address",
 			"searchable": true,
+			"tooltip": true,
 			"field": {
 				"editable": true,
 				"type": "textarea",
@@ -202,11 +205,12 @@
 			}
 		},
 		{
-			"width": 350,
+			"width": 250,
 			"headerName": "Email",
 			"dataIndex": "email",
 			"searchable": true,
 			"sortable": true,
+			"tooltip": true,
 			"field": {
 				"editable": true,
 				"type": "email",
@@ -326,6 +330,7 @@
 		{
 			"headerName": "Action",
 			"dataIndex": "action",
+			"width": 100,
 			"fixed": "right",
 			"field": {
 				"editable": false
