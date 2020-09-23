@@ -1,6 +1,5 @@
 .table:not(:last-child),
 .table-container:not(:last-child) {
-	margin-bottom: 1.5rem;
 	margin-top: 1.5rem;
 }
 
@@ -28,13 +27,44 @@ table th {
 	color: #363636;
 }
 
+/* Customizing border */
+
 .table td,
 .table th {
-	border: 1px solid #dbdbdb;
+	border-left: 1px solid #dbdbdb;
 	border-width: 0 0 1px;
 	padding: 0.5em 0.75em;
 	vertical-align: top;
 }
+
+.table tr {
+	border-top: 1px solid #dbdbdb;
+}
+
+.table tbody tr:first-child {
+	border-top: none;
+}
+.table tr:last-child {
+	border-bottom: 1px solid #dbdbdb;
+}
+
+.table td:last-child,
+.table th:last-child {
+	border-right: 1px solid #dbdbdb;
+}
+
+/* End customizing border */
+
+/* Truncate */
+
+.table td {
+	position: relative;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+/* End truncate */
 
 .table td.is-white,
 .table th.is-white {
@@ -221,6 +251,10 @@ table th {
 .table-container {
 	-webkit-overflow-scrolling: touch;
 	overflow: auto;
-	overflow-y: hidden;
 	max-width: 100%;
+	max-height: 79vh;
+}
+
+.table-bvc-pagination {
+	margin: 1.5rem 0;
 }

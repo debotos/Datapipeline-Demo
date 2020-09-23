@@ -99,8 +99,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 
 	handleSave = (row: any) => {
 		// console.log(row)
-		const copy = clone(this.state.data)
-		const update = copy.map((x: any) => {
+		const update = this.state.data.map((x: any) => {
 			if (x.id === row.id) return row
 			return x
 		})
@@ -115,8 +114,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 	}
 
 	handleDelete = (id: string) => {
-		const copy = clone(this.state.data)
-		const update = copy.filter((x: any) => x.id !== id)
+		const update = this.state.data.filter((x: any) => x.id !== id)
 		this.setState({ data: update }, this.performGlobalSearchAgain)
 		message.info('Successfully deleted the record!', 1.5)
 	}
@@ -164,19 +162,6 @@ export class TableBVC extends Component<tableProps, tableState> {
 		if (globalSearchText) {
 			this.performGlobalSearch(globalSearchText)
 		}
-	}
-
-	handleColumnSearch = (selectedKeys: any, confirm: any, dataIndex: any) => {
-		confirm()
-		this.setState({
-			localSearchText: selectedKeys[0],
-			searchedColumn: dataIndex,
-		})
-	}
-
-	resetColumnSearch = (clearFilters: any) => {
-		clearFilters()
-		this.setState({ localSearchText: '' })
 	}
 
 	getData = () => {
@@ -252,7 +237,10 @@ export class TableBVC extends Component<tableProps, tableState> {
 		}
 
 		return (
-			<div style={{ pointerEvents: actionInProgress ? 'none' : 'auto', opacity: actionInProgress ? 0.5 : 1 }}>
+			<Wrapper
+				className='hide-native-scrollbar '
+				style={{ pointerEvents: actionInProgress ? 'none' : 'auto', opacity: actionInProgress ? 0.5 : 1 }}
+			>
 				{capabilities.add.enable && (
 					<div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
 						<Button type='primary' size='small' onClick={this.openAddFormDrawer}>
@@ -457,7 +445,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 						handleDelete={this.handleDelete}
 					/>
 				)}
-			</div>
+			</Wrapper>
 		)
 	}
 }
@@ -466,6 +454,13 @@ const NotFound = () => <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
 
 export default TableBVC
 
+const Wrapper = styled.div`
+	width: 100%;
+	height: 100%;
+	min-height: 100vh;
+	padding: 20px;
+	padding-bottom: 0;
+`
 const Container = styled.div`
 	margin-bottom: 5px;
 	border-bottom: 5px solid #000000a8;

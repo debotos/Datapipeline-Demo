@@ -41,13 +41,13 @@ export class App extends Component<any, CState> {
 		}
 
 		return (
-			<div className='App'>
+			<>
 				<Router history={history}>
 					<Switch>
 						<Route exact path='/' render={(props) => <Table meta={META} data={this.state.data} {...props} />} />
 					</Switch>
 				</Router>
-			</div>
+			</>
 		)
 	}
 }

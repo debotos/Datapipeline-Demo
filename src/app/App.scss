@@ -1,7 +1,40 @@
 @import '~antd/dist/antd.css';
 
-.App {
-	padding: 20px;
+body {
+	margin: 0;
+	padding: 0;
+	font-family: 'Fira Sans', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Droid Sans', 'Helvetica Neue';
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	background-color: #fff;
+	scrollbar-width: none; /* Firefox 64 */
+	-ms-overflow-style: none; /* Internet Explorer 11 */
+	&::-webkit-scrollbar {
+		/** WebKit */
+		display: none;
+	}
+	/* IE 10+ */
+	-ms-overflow-style: none;
+}
+
+/* Custom */
+
+.icon-btn {
+	font-size: 20px;
+	padding: 1px 5px;
+	cursor: pointer;
+	&:hover {
+		opacity: 0.6;
+	}
+}
+
+.hide-native-scrollbar {
+	scrollbar-width: none; /* Firefox 64 */
+	-ms-overflow-style: none; /* Internet Explorer 11 */
+	&::-webkit-scrollbar {
+		/** WebKit */
+		display: none;
+	}
 }
 
 /* antd Overrides */
@@ -39,13 +72,13 @@
 	font-size: 9px;
 	padding-top: 2px;
 }
-/* Custom */
 
-.icon-btn {
-	font-size: 20px;
-	padding: 1px 5px;
-	cursor: pointer;
-	&:hover {
-		opacity: 0.6;
-	}
+.ant-pagination-item-link .anticon {
+	vertical-align: baseline !important;
+}
+
+/* antd Overrides using custom class name */
+
+.table-bvc-pagination .ant-pagination-options-quick-jumper input {
+	margin-right: 0 !important;
 }

@@ -49,7 +49,6 @@
 		{
 			"headerName": "First Name",
 			"dataIndex": "first_name",
-			"width": 150,
 			"fixed": "left",
 			"searchable": true,
 			"sortable": true,
@@ -68,7 +67,6 @@
 		{
 			"headerName": "Last Name",
 			"dataIndex": "last_name",
-			"width": 150,
 			"searchable": true,
 			"sortable": true,
 			"field": {
@@ -84,6 +82,97 @@
 			}
 		},
 		{
+			"headerName": "Age",
+			"dataIndex": "age",
+			"sortable": true,
+			"searchable": true,
+			"field": {
+				"editable": true,
+				"type": "number",
+				"placeholder": "Age",
+				"hasFeedback": true,
+				"validation": [
+					{ "required": true, "message": "Age is required" },
+					{ "type": "integer", "message": "Only integer number allowed!" },
+					{
+						"type": "number",
+						"min": 20,
+						"max": 100,
+						"message": "Age have to be between 20 and 100"
+					}
+				]
+			}
+		},
+		{
+			"headerName": "Company",
+			"dataIndex": "company",
+			"searchable": true,
+			"sortable": true,
+			"field": {
+				"editable": true,
+				"type": "text",
+				"placeholder": "Company",
+				"hasFeedback": true,
+				"validation": [
+					{ "whitespace": true, "required": true, "message": "Company is required" },
+					{ "min": 2, "message": "Minimum length is 2" },
+					{ "max": 10, "message": "Max value length is 10" }
+				]
+			}
+		},
+		{
+			"headerName": "Country",
+			"dataIndex": "country",
+			"searchable": true,
+			"sortable": true,
+			"field": {
+				"editable": true,
+				"type": "text",
+				"placeholder": "Country",
+				"hasFeedback": true,
+				"validation": [
+					{ "whitespace": true, "required": true, "message": "Country is required" },
+					{ "min": 2, "message": "Minimum length is 2" },
+					{ "max": 10, "message": "Max value length is 10" }
+				]
+			}
+		},
+		{
+			"headerName": "State",
+			"dataIndex": "state",
+			"searchable": true,
+			"sortable": true,
+			"field": {
+				"editable": true,
+				"type": "text",
+				"placeholder": "State",
+				"hasFeedback": true,
+				"validation": [
+					{ "whitespace": true, "required": true, "message": "State is required" },
+					{ "min": 2, "message": "Minimum length is 2" },
+					{ "max": 10, "message": "Max value length is 10" }
+				]
+			}
+		},
+		{
+			"headerName": "City",
+			"dataIndex": "city",
+			"searchable": true,
+			"sortable": true,
+			"field": {
+				"editable": true,
+				"type": "text",
+				"placeholder": "City",
+				"hasFeedback": true,
+				"validation": [
+					{ "whitespace": true, "required": true, "message": "City is required" },
+					{ "min": 2, "message": "Minimum length is 2" },
+					{ "max": 10, "message": "Max value length is 10" }
+				]
+			}
+		},
+		{
+			"width": 200,
 			"headerName": "Address",
 			"dataIndex": "address",
 			"searchable": true,
@@ -101,9 +190,21 @@
 			}
 		},
 		{
+			"headerName": "Balance",
+			"dataIndex": "balance",
+			"searchable": true,
+			"field": {
+				"editable": true,
+				"type": "number",
+				"placeholder": "Balance",
+				"hasFeedback": true,
+				"validation": [{ "whitespace": true, "required": true, "message": "Balance is required" }]
+			}
+		},
+		{
+			"width": 350,
 			"headerName": "Email",
 			"dataIndex": "email",
-			"width": 250,
 			"searchable": true,
 			"sortable": true,
 			"field": {
@@ -117,18 +218,10 @@
 				]
 			}
 		},
-		{
-			"headerName": "IP",
-			"dataIndex": "ip_address",
-			"searchable": true,
-			"field": {
-				"editable": false
-			}
-		},
+
 		{
 			"headerName": "Gender",
 			"dataIndex": "gender",
-			"width": 120,
 			"field": {
 				"editable": true,
 				"type": "radio",
@@ -142,9 +235,49 @@
 			"filter": true
 		},
 		{
+			"headerName": "Phone",
+			"dataIndex": "phone",
+			"searchable": true,
+			"sortable": true,
+			"field": {
+				"editable": true,
+				"type": "text",
+				"placeholder": "Phone",
+				"hasFeedback": true,
+				"validation": [
+					{ "whitespace": true, "required": true, "message": "Phone is required" },
+					{ "min": 6, "message": "Minimum length is 6" },
+					{ "max": 15, "message": "Max value length is 15" }
+				]
+			}
+		},
+		{
+			"headerName": "IP",
+			"dataIndex": "ip_address",
+			"searchable": true,
+			"field": {
+				"editable": false
+			}
+		},
+		{
+			"headerName": "Role",
+			"dataIndex": "role",
+			"field": {
+				"editable": true,
+				"type": "checkbox",
+				"placeholder": "Role",
+				"options": [
+					{ "label": "Admin", "value": "admin", "disabled": false },
+					{ "label": "Partner", "value": "partner", "disabled": false },
+					{ "label": "User", "value": "user", "disabled": false }
+				],
+				"validation": [{ "type": "array", "required": true, "message": "Role is required" }]
+			},
+			"filter": true
+		},
+		{
 			"headerName": "Permission",
 			"dataIndex": "permission",
-			"width": 170,
 			"field": {
 				"editable": true,
 				"type": "checkbox",
@@ -162,7 +295,6 @@
 		{
 			"headerName": "Active",
 			"dataIndex": "active",
-			"width": 100,
 			"align": "center",
 			"field": {
 				"editable": true,
@@ -176,10 +308,25 @@
 			"filter": true
 		},
 		{
+			"headerName": "Status",
+			"dataIndex": "status",
+			"field": {
+				"editable": true,
+				"type": "checkbox",
+				"placeholder": "Status",
+				"options": [
+					{ "label": "Working", "value": "Working", "disabled": false },
+					{ "label": "Sleeping", "value": "Sleeping", "disabled": false },
+					{ "label": "Busy", "value": "Busy", "disabled": false }
+				],
+				"validation": [{ "type": "array", "required": true, "message": "Status is required" }]
+			},
+			"filter": true
+		},
+		{
 			"headerName": "Action",
 			"dataIndex": "action",
 			"fixed": "right",
-			"width": 130,
 			"field": {
 				"editable": false
 			}
