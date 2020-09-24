@@ -113,11 +113,7 @@
 				"type": "text",
 				"placeholder": "Company",
 				"hasFeedback": true,
-				"validation": [
-					{ "whitespace": true, "required": true, "message": "Company is required" },
-					{ "min": 2, "message": "Minimum length is 2" },
-					{ "max": 10, "message": "Max value length is 10" }
-				]
+				"validation": []
 			}
 		},
 		{
@@ -134,7 +130,7 @@
 				"validation": [
 					{ "whitespace": true, "required": true, "message": "Country is required" },
 					{ "min": 2, "message": "Minimum length is 2" },
-					{ "max": 10, "message": "Max value length is 10" }
+					{ "max": 30, "message": "Max value length is 30" }
 				]
 			}
 		},
@@ -151,7 +147,7 @@
 				"validation": [
 					{ "whitespace": true, "required": true, "message": "State is required" },
 					{ "min": 2, "message": "Minimum length is 2" },
-					{ "max": 10, "message": "Max value length is 10" }
+					{ "max": 30, "message": "Max value length is 30" }
 				]
 			}
 		},
@@ -168,7 +164,7 @@
 				"validation": [
 					{ "whitespace": true, "required": true, "message": "City is required" },
 					{ "min": 2, "message": "Minimum length is 2" },
-					{ "max": 10, "message": "Max value length is 10" }
+					{ "max": 30, "message": "Max value length is 30" }
 				]
 			}
 		},

@@ -41,7 +41,7 @@ export default function EditForm(props: CProps) {
 			{fields.map((field: string, index: number) => {
 				const info = columns.find((x: any) => x.dataIndex === field)
 				if (!info) return null
-				return getFormField(info, form, initialValues, index + 1 === fields.length)
+				return getFormField('edit', info, form, initialValues, index + 1 === fields.length)
 			})}
 			<Form.Item shouldUpdate={true} style={{ marginTop: 20 }}>
 				{() => {

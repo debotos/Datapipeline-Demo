@@ -77,6 +77,14 @@ body {
 	vertical-align: baseline !important;
 }
 
+.ant-form-item-explain,
+.ant-form-item-extra {
+	line-height: 1.1;
+	font-size: 10px;
+	padding-top: 4px;
+	min-height: 12px !important;
+}
+
 /* antd Overrides using custom class name */
 
 .table-bvc-pagination .ant-pagination-options-quick-jumper input {

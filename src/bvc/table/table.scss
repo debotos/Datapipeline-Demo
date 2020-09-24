@@ -70,16 +70,6 @@ table th {
 
 /* End customizing border */
 
-/* Truncate */
-
-.table td div {
-	text-overflow: ellipsis;
-	overflow: hidden;
-	white-space: nowrap;
-}
-
-/* End truncate */
-
 .table td.is-white,
 .table th.is-white {
 	background-color: white;
@@ -255,10 +245,6 @@ table th {
 
 .table.is-narrow td {
 	padding: 0;
-}
-
-.table.is-narrow td div {
-	padding: 0.25em 0.5em;
 }
 
 .table.is-narrow th {

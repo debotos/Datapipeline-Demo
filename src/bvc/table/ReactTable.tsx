@@ -1,12 +1,14 @@
-import React from 'react'
+import React, { useEffect } from 'react'
+import moment from 'moment'
 import { isArray } from 'lodash'
 import styled from 'styled-components'
 import { useSticky } from 'react-table-sticky'
-import { Button, Input, Pagination, Popconfirm, Row, Tooltip } from 'antd'
+import { Form, Button, Pagination, Popconfirm, Row, Tooltip } from 'antd'
 import { useTable, usePagination, useSortBy, useBlockLayout, useResizeColumns } from 'react-table'
 import { DeleteOutlined, EditOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons'
 
-import { isEmpty } from '../../utils/helpers'
+import { isEmpty, sleep } from '../../utils/helpers'
+import { getFormField } from '../../utils/getFormField'
 
 function ReactTable(props: any) {
 	const { meta, data, tableSettings, handleSave } = props
@@ -237,51 +239,110 @@ const ResizingElement = styled.span`
 
 // Create an editable cell renderer
 const EditableCell = (cellProps: any) => {
-	const {
-		value: initialValue,
-		row,
-		column,
-		handleSave, // This is a custom function that we supplied to our table instance
-	} = cellProps
-	// We need to keep and update the state of the cell normally
-	const [value, setValue] = React.useState(initialValue)
+	// 'handleSave' is the custom function that we supplied to our table instance
+	const { value, row, column, handleSave } = cellProps
+	const { dataIndex, field } = column
+	// We need to keep and update the state of the cell
 	const [editing, setEditing] = React.useState(false)
+	const [form] = Form.useForm()
+	const inputRef = React.useRef<any>()
+	const _isMounted = React.useRef(false)
+	let tableCellFormElement: any
 
-	const toggleEditing = () => setEditing(!editing)
+	useEffect(() => {
+		_isMounted.current = true
+		return () => {
+			_isMounted.current = false
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [])
 
-	const onChange = (e: any) => {
-		setValue(e.target.value)
+	const handleCellLeave = (e: any) => {
+		if (!tableCellFormElement || !field) return
+		const { type, editable } = field
+		var isInsideClick = tableCellFormElement.contains(e.target)
+		if (!isInsideClick) {
+			// Click occurred outside the 'cell from element', so do something
+			if (editable && (type === 'radio' || type === 'checkbox' || type === 'boolean')) {
+				save()
+			}
+		}
 	}
+
+	React.useEffect(() => {
+		if (editing) {
+			inputRef?.current?.focus?.()
+		}
+		// Subscribe to listen 'click' event
+		document.addEventListener('click', handleCellLeave)
+		return () => {
+			// Unsubscribe event
+			document.removeEventListener('click', handleCellLeave)
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [editing])
+
+	const handleCellClick = () => {
+		_isMounted.current && setEditing(true)
+	}
+
+	const checkFieldsError = () => !!form.getFieldsError().filter(({ errors }) => errors.length).length
+	const toggleEdit = () => _isMounted.current && setEditing(!editing)
 
 	// We'll only update the external data when the input is blurred
-	const onFinished = () => {
-		const identical = checkIsIdentical(value, initialValue)
-		if (identical) return toggleEditing()
-		const { dataIndex } = column
+	const onFinish = async (values: any) => {
+		console.log('Cell edit finished: ', values)
+		const newValue = values[dataIndex]
+		const identical = checkIsIdentical(value, newValue, column)
+		if (identical) return toggleEdit()
 		const { id } = row.original
-		handleSave({ id, [dataIndex]: value })
-		setEditing(false)
+		handleSave({ id, [dataIndex]: newValue })
+		await sleep(300) // Just for visual
+		_isMounted.current && setEditing(false)
 	}
 
-	// If the initialValue is changed external, sync it up with our state
-	React.useEffect(() => {
-		setValue(initialValue)
-	}, [initialValue])
-
-	const handleDoubleClick = () => {
-		setEditing(true)
+	const save = () => {
+		form.submit()
 	}
+
+	const initialValues = { [dataIndex]: value }
 
 	return editing ? (
-		<Input placeholder='Basic usage' value={value} onChange={onChange} onBlur={onFinished} />
+		<TableCellFrom ref={(el) => (tableCellFormElement = el)}>
+			<Form form={form} component={false} onFinish={onFinish}>
+				{getFormField('inline-edit', column, form, initialValues, true, inputRef, save, toggleEdit)}
+			</Form>
+		</TableCellFrom>
 	) : (
-		<div onDoubleClick={handleDoubleClick} style={{ minHeight: 15, height: '100%' }}>
-			{transformValueToDisplay(cellProps)}
-		</div>
+		<TableCellData onClick={handleCellClick}>{transformValueToDisplay(cellProps)}</TableCellData>
 	)
 }
 
-const checkIsIdentical = (newVal: any, oldVal: any) => {
+const TableCellData = styled.div`
+	min-width: 100%;
+	min-height: 100%;
+	padding: 0.25em 0.5em;
+	/* Truncate */
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	/* End truncate */
+`
+const TableCellFrom = styled.div`
+	min-width: 100%;
+	min-height: 100%;
+	padding: 0.25em 0.5em;
+	.ant-input-number {
+		width: 100%;
+	}
+`
+
+const checkIsIdentical = (newVal: any, oldVal: any, column: any) => {
+	const { type } = column.field
+	if (type === 'date' && oldVal) {
+		// If value is not null and field type is date
+		oldVal = moment(oldVal).format('YYYY-MM-DD')
+	}
 	if (newVal !== oldVal) {
 		return false // Something changed
 	}
