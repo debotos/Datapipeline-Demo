@@ -265,19 +265,18 @@ const EditableCell = (cellProps: any) => {
 		if (isInsideClick === null) return // It have to be either true or false
 
 		if (!isInsideClick) {
-			const { type, editable } = field
 			// Click occurred outside the 'cell from element'
-			// So do something for radio, checkbox, boolean field
-			// As they don't have 'onBlur' event as like 'text' field
-			if (editable && (type === 'radio' || type === 'checkbox' || type === 'boolean')) {
-				const haveFieldError = checkFieldsError()
-				if (haveFieldError) {
-					// If field error exist just toggle 'edit mode' to 'view mode' to discard changes
-					toggleEdit()
-					form.resetFields()
-					message.warning('Changes discarded due to field error.')
-				} else {
-					// Else save the changes
+			const haveFieldError = checkFieldsError()
+			if (haveFieldError) {
+				// If field error exist just toggle 'edit mode' to 'view mode' to discard changes
+				toggleEdit()
+				form.resetFields()
+				message.warning('Changes discarded due to field error.')
+			} else {
+				// Else trigger 'save' for radio, checkbox, boolean field
+				// As they don't have 'onBlur' or 'onKeyboardEnter' event as like 'text' field
+				const { type, editable } = field
+				if (editable && (type === 'radio' || type === 'checkbox' || type === 'boolean')) {
 					save()
 				}
 			}

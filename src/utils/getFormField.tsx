@@ -19,7 +19,7 @@ export const getFormField = (
 
 	const validations = field.validation || []
 	const styles: CSSProperties = {}
-	const otherFormItemProps: Record<string, any> = {}
+	const otherFormItemProps: Record<string, any> = { key: dataIndex }
 	const otherInputFieldProps: Record<string, any> = {}
 
 	if (from === 'inline-edit' || from === 'inline-add') {
@@ -79,7 +79,6 @@ export const getFormField = (
 			const { input } = field
 			return (
 				<Form.Item
-					key={dataIndex}
 					name={dataIndex}
 					validateFirst
 					valuePropName={'checked'}
@@ -105,9 +104,8 @@ export const getFormField = (
 			// means checkbox group, single checkbox categorized under 'boolean'
 			const { options } = field
 			return (
-				<>
+				<React.Fragment key={dataIndex}>
 					<Form.Item
-						key={dataIndex}
 						name={dataIndex}
 						validateFirst
 						rules={[...validations]}
@@ -117,14 +115,16 @@ export const getFormField = (
 					>
 						<Checkbox.Group options={options} ref={inputRef} {...otherInputFieldProps} />
 					</Form.Item>
-					<Row justify='center'>
-						<Form.Item style={{ marginBottom: 0 }}>
-							<Button size='small' type='primary' ghost onClick={save}>
-								Save
-							</Button>
-						</Form.Item>
-					</Row>
-				</>
+					{(from === 'inline-edit' || from === 'inline-add') && (
+						<Row justify='center'>
+							<Form.Item style={{ marginBottom: 0 }}>
+								<Button size='small' type='primary' ghost onClick={save}>
+									Okay
+								</Button>
+							</Form.Item>
+						</Row>
+					)}
+				</React.Fragment>
 			)
 		}
 
@@ -132,7 +132,6 @@ export const getFormField = (
 			const { options } = field
 			return (
 				<Form.Item
-					key={dataIndex}
 					name={dataIndex}
 					validateFirst
 					rules={[...validations]}
@@ -149,7 +148,6 @@ export const getFormField = (
 			const { placeholder, options } = field
 			return (
 				<Form.Item
-					key={dataIndex}
 					name={dataIndex}
 					validateFirst
 					rules={[...validations]}
@@ -180,7 +178,6 @@ export const getFormField = (
 		case 'textarea': {
 			return (
 				<Form.Item
-					key={dataIndex}
 					name={dataIndex}
 					validateFirst
 					rules={[...validations]}
@@ -201,7 +198,6 @@ export const getFormField = (
 		case 'number': {
 			return (
 				<Form.Item
-					key={dataIndex}
 					name={dataIndex}
 					validateFirst
 					rules={[...validations]}
@@ -217,7 +213,6 @@ export const getFormField = (
 		default: {
 			return (
 				<Form.Item
-					key={dataIndex}
 					name={dataIndex}
 					labelCol={{ span: 24 }}
 					rules={[...validations]}
