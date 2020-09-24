@@ -3,7 +3,7 @@ import moment from 'moment'
 import { isArray } from 'lodash'
 import styled from 'styled-components'
 import { useSticky } from 'react-table-sticky'
-import { Form, Button, Pagination, Popconfirm, Row, Tooltip } from 'antd'
+import { Form, Button, Pagination, Popconfirm, Row, Tooltip, message } from 'antd'
 import { useTable, usePagination, useSortBy, useBlockLayout, useResizeColumns } from 'react-table'
 import { DeleteOutlined, EditOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons'
 
@@ -247,7 +247,7 @@ const EditableCell = (cellProps: any) => {
 	const [form] = Form.useForm()
 	const inputRef = React.useRef<any>()
 	const _isMounted = React.useRef(false)
-	let tableCellFormElement: any
+	const tableCellWrapperRef = React.useRef<any>()
 
 	useEffect(() => {
 		_isMounted.current = true
@@ -257,14 +257,29 @@ const EditableCell = (cellProps: any) => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
-	const handleCellLeave = (e: any) => {
-		if (!tableCellFormElement || !field) return
-		const { type, editable } = field
-		var isInsideClick = tableCellFormElement.contains(e.target)
+	const handleCellLeave = (event: any) => {
+		if (!editing) return // Only listed when editing
+		if (!tableCellWrapperRef || !field) return
+
+		var isInsideClick = tableCellWrapperRef?.current?.contains?.(event.target)
+		if (isInsideClick === null) return // It have to be either true or false
+
 		if (!isInsideClick) {
-			// Click occurred outside the 'cell from element', so do something
+			const { type, editable } = field
+			// Click occurred outside the 'cell from element'
+			// So do something for radio, checkbox, boolean field
+			// As they don't have 'onBlur' event as like 'text' field
 			if (editable && (type === 'radio' || type === 'checkbox' || type === 'boolean')) {
-				save()
+				const haveFieldError = checkFieldsError()
+				if (haveFieldError) {
+					// If field error exist just toggle 'edit mode' to 'view mode' to discard changes
+					toggleEdit()
+					form.resetFields()
+					message.warning('Changes discarded due to field error.')
+				} else {
+					// Else save the changes
+					save()
+				}
 			}
 		}
 	}
@@ -296,9 +311,9 @@ const EditableCell = (cellProps: any) => {
 		const identical = checkIsIdentical(value, newValue, column)
 		if (identical) return toggleEdit()
 		const { id } = row.original
-		handleSave({ id, [dataIndex]: newValue })
-		await sleep(300) // Just for visual
+		await sleep(200) // Just for visual
 		_isMounted.current && setEditing(false)
+		handleSave({ id, [dataIndex]: newValue })
 	}
 
 	const save = () => {
@@ -307,8 +322,8 @@ const EditableCell = (cellProps: any) => {
 
 	const initialValues = { [dataIndex]: value }
 
-	return editing ? (
-		<TableCellFrom ref={(el) => (tableCellFormElement = el)}>
+	const tableCellContent = editing ? (
+		<TableCellFrom>
 			<Form form={form} component={false} onFinish={onFinish}>
 				{getFormField('inline-edit', column, form, initialValues, true, inputRef, save, toggleEdit)}
 			</Form>
@@ -316,8 +331,14 @@ const EditableCell = (cellProps: any) => {
 	) : (
 		<TableCellData onClick={handleCellClick}>{transformValueToDisplay(cellProps)}</TableCellData>
 	)
+
+	return <TableCellWrapper ref={tableCellWrapperRef}>{tableCellContent}</TableCellWrapper>
 }
 
+const TableCellWrapper = styled.div`
+	min-width: 100%;
+	min-height: 100%;
+`
 const TableCellData = styled.div`
 	min-width: 100%;
 	min-height: 100%;
