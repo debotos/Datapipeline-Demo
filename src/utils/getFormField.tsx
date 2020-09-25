@@ -14,6 +14,7 @@ export const getFormField = (
 	toggleEdit?: () => void // Only for inline editing form
 ) => {
 	if (!info) return null
+
 	const { headerName, dataIndex, field } = info
 	const { type, placeholder, hasFeedback } = field
 

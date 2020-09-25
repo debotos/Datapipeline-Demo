@@ -1,8 +1,10 @@
 import React, { Component, Suspense } from 'react'
-import { Input, Drawer, Button, Empty, Spin, Modal, Divider, Checkbox, Row, Col, message } from 'antd'
+import { clone } from 'ramda'
+import shortid from 'shortid'
+import { isArray } from 'lodash'
+import { Input, Drawer, Button, Empty, Spin, Modal, Divider, Checkbox, Row, Col, message, Tooltip } from 'antd'
 import { PlusOutlined, SearchOutlined, DownloadOutlined, FilterOutlined, SettingOutlined, SyncOutlined } from '@ant-design/icons'
 import styled from 'styled-components'
-import { clone } from 'ramda'
 import debounce from 'lodash/debounce'
 import matchSorter from 'match-sorter'
 
@@ -16,6 +18,7 @@ import ReactTable from './ReactTable'
 type tableProps = { meta: any; data: any }
 type tableState = {
 	data: any
+	localItemsToAdd: any[]
 	loadingData: boolean
 	globalSearchText: string
 	globalSearchResults: any
@@ -56,7 +59,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 		const { data, meta } = this.props
 		const { capabilities } = meta
 		const { setting } = capabilities
-		this.setState({ data: data, tableSettings: setting.props }, () => this.setState({ loadingData: false }))
+		this.setState({ data: data || [], tableSettings: setting.props }, () => this.setState({ loadingData: false }))
 	}
 
 	componentWillUnmount() {
@@ -67,6 +70,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 		super(props)
 		this.state = {
 			data: [], // For view purpose
+			localItemsToAdd: [], // For inline bulk add
 			loadingData: true,
 			globalSearchText: '',
 			globalSearchResults: [],
@@ -99,12 +103,22 @@ export class TableBVC extends Component<tableProps, tableState> {
 
 	handleSave = (row: any) => {
 		// console.log(row)
+		/* If it is local */
+		if (row.__isItLocalTableRow) {
+			const update = this.state.localItemsToAdd.map((x: any) => {
+				if (x.id === row.id) return { ...x, ...row }
+				return x
+			})
+			this.setState({ localItemsToAdd: update })
+			return
+		}
+		/* If it is not local */
 		const update = this.state.data.map((x: any) => {
 			if (x.id === row.id) return { ...x, ...row }
 			return x
 		})
 		this.setState({ data: update }, this.performGlobalSearchAgain)
-		message.success('Successfully saved the record!', 1.5)
+		// message.success('Successfully saved the record!', 1.5)
 	}
 
 	handleAdd = (row: any) => {
@@ -113,7 +127,15 @@ export class TableBVC extends Component<tableProps, tableState> {
 		message.success('Successfully added the record!', 1.5)
 	}
 
-	handleDelete = (id: string) => {
+	handleDelete = (row: any) => {
+		const { __isItLocalTableRow, id } = row
+		if (__isItLocalTableRow) {
+			/* If it is local */
+			const update = this.state.localItemsToAdd.filter((x: any) => x.id !== id)
+			this.setState({ localItemsToAdd: update })
+			return
+		}
+		/* If it is not local */
 		const update = this.state.data.filter((x: any) => x.id !== id)
 		this.setState({ data: update }, this.performGlobalSearchAgain)
 		message.info('Successfully deleted the record!', 1.5)
@@ -213,6 +235,27 @@ export class TableBVC extends Component<tableProps, tableState> {
 		)
 	}
 
+	handleInlineAdd = () => {
+		const { capabilities, columns } = this.props.meta
+		const { add } = capabilities
+		const { fields: fieldsValue, initialValues = {} } = add
+
+		let fields: string[] = []
+		if (typeof fieldsValue === 'string' && fieldsValue.toLowerCase() === 'all') {
+			fields = columns.map((col: any) => col.dataIndex).filter((dataIndex: string) => dataIndex !== 'action')
+		} else if (isArray(fieldsValue)) {
+			fields = fieldsValue
+		}
+
+		const row: Record<string, any> = { id: shortid.generate(), __isItLocalTableRow: true }
+		for (let index = 0; index < fields.length; index++) {
+			const field: string = fields[index]
+			row[field] = initialValues[field]
+		}
+
+		this.setState({ localItemsToAdd: [row, ...this.state.localItemsToAdd] })
+	}
+
 	render() {
 		const {
 			presentationDrawerData,
@@ -221,7 +264,9 @@ export class TableBVC extends Component<tableProps, tableState> {
 			masterFilterCriteria,
 			tableSettings,
 			loadingData,
+			localItemsToAdd,
 		} = this.state
+
 		const { meta } = this.props
 		const { capabilities } = meta
 		const actionInProgress = globalSearchLoading || loadingData
@@ -243,13 +288,25 @@ export class TableBVC extends Component<tableProps, tableState> {
 			>
 				{capabilities.add.enable && (
 					<div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
-						<Button type='primary' size='small' onClick={this.openAddFormDrawer}>
+						<Button type='dashed' size='small' onClick={this.openAddFormDrawer}>
 							<PlusOutlined /> {capabilities.add.label}
 						</Button>
 					</div>
 				)}
 				<Container>
-					<h1 style={{ margin: 0 }}>{meta.heading}</h1>
+					<h1 style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
+						{meta.heading}
+						<Tooltip placement='top' title={capabilities.add.label}>
+							<Button
+								type='dashed'
+								shape='circle'
+								icon={<PlusOutlined />}
+								size='small'
+								style={{ marginLeft: 10 }}
+								onClick={this.handleInlineAdd}
+							/>
+						</Tooltip>
+					</h1>
 					{/* Search, Download, Filters, Settings, Refresh */}
 					<div style={{ display: 'flex', alignItems: 'center' }}>
 						{capabilities.search.enable && (
@@ -439,7 +496,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 				) : (
 					<ReactTable
 						meta={meta}
-						data={tableData}
+						data={localItemsToAdd.concat(tableData)}
 						tableSettings={tableSettings}
 						openEditFormDrawer={this.openEditFormDrawer}
 						handleDelete={this.handleDelete}

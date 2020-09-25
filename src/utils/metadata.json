@@ -9,7 +9,7 @@
 		"add": {
 			"enable": true,
 			"label": "Add a new user",
-			"fields": ["first_name", "last_name", "email", "address", "gender", "permission", "active"],
+			"fields": "all",
 			"initialValues": {
 				"gender": "male",
 				"permission": ["read"],
@@ -18,7 +18,7 @@
 		},
 		"search": {
 			"enable": true,
-			"fields": ["first_name", "last_name", "email", "ip_address"]
+			"fields": ["first_name", "last_name", "email", "company", "address"]
 		},
 		"download": {
 			"enable": true,
@@ -52,6 +52,7 @@
 			"searchable": true,
 			"sortable": true,
 			"field": {
+				"required": true,
 				"editable": true,
 				"type": "text",
 				"placeholder": "First Name",
@@ -86,6 +87,7 @@
 			"sortable": true,
 			"searchable": true,
 			"field": {
+				"required": true,
 				"editable": true,
 				"type": "number",
 				"placeholder": "Age",
@@ -123,6 +125,7 @@
 			"searchable": true,
 			"sortable": true,
 			"field": {
+				"required": true,
 				"editable": true,
 				"type": "text",
 				"placeholder": "Country",
@@ -140,6 +143,7 @@
 			"searchable": true,
 			"sortable": true,
 			"field": {
+				"required": true,
 				"editable": true,
 				"type": "text",
 				"placeholder": "State",
@@ -157,6 +161,7 @@
 			"searchable": true,
 			"sortable": true,
 			"field": {
+				"required": true,
 				"editable": true,
 				"type": "text",
 				"placeholder": "City",
@@ -175,6 +180,7 @@
 			"searchable": true,
 			"resizable": true,
 			"field": {
+				"required": true,
 				"editable": true,
 				"type": "textarea",
 				"rows": 2,
@@ -192,6 +198,7 @@
 			"dataIndex": "balance",
 			"searchable": true,
 			"field": {
+				"required": true,
 				"editable": true,
 				"type": "number",
 				"placeholder": "Balance",
@@ -207,6 +214,7 @@
 			"sortable": true,
 			"resizable": true,
 			"field": {
+				"required": true,
 				"editable": true,
 				"type": "email",
 				"placeholder": "Email",
@@ -221,6 +229,7 @@
 			"headerName": "Gender",
 			"dataIndex": "gender",
 			"field": {
+				"required": true,
 				"editable": true,
 				"type": "radio",
 				"placeholder": "Gender",
@@ -238,6 +247,7 @@
 			"searchable": true,
 			"sortable": true,
 			"field": {
+				"required": true,
 				"editable": true,
 				"type": "text",
 				"placeholder": "Phone",
@@ -253,14 +263,13 @@
 			"headerName": "IP",
 			"dataIndex": "ip_address",
 			"searchable": true,
-			"field": {
-				"editable": false
-			}
+			"field": { "required": false, "editable": false }
 		},
 		{
 			"headerName": "Role",
 			"dataIndex": "role",
 			"field": {
+				"required": true,
 				"editable": true,
 				"type": "checkbox",
 				"placeholder": "Role",
@@ -277,6 +286,7 @@
 			"headerName": "Permission",
 			"dataIndex": "permission",
 			"field": {
+				"required": true,
 				"editable": true,
 				"type": "checkbox",
 				"placeholder": "Permission",
@@ -295,6 +305,7 @@
 			"dataIndex": "active",
 			"align": "center",
 			"field": {
+				"required": true,
 				"editable": true,
 				"type": "boolean",
 				"input": "switch",
@@ -310,6 +321,7 @@
 			"headerName": "Status",
 			"dataIndex": "status",
 			"field": {
+				"required": true,
 				"editable": true,
 				"type": "select",
 				"placeholder": "Status",

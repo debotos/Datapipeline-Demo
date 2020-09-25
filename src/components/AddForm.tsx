@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { isArray } from 'lodash'
 import { Form, Button } from 'antd'
 
 import { getFormField } from '../utils/getFormField'
@@ -21,9 +22,15 @@ export default function AddForm(props: CProps) {
 	const { metadata } = props
 	const { columns, capabilities } = metadata
 	const { add } = capabilities
-	const { label, fields, initialValues } = add
+	const { label, fields: fieldsValue, initialValues } = add
 
 	const initialValuesArray = Object.keys(initialValues || {})
+	let fields: string[] = []
+	if (typeof fieldsValue === 'string' && fieldsValue.toLowerCase() === 'all') {
+		fields = columns.map((col: any) => col.dataIndex).filter((dataIndex: string) => dataIndex !== 'action')
+	} else if (isArray(fieldsValue)) {
+		fields = fieldsValue
+	}
 
 	return (
 		<Form
