@@ -1,7 +1,8 @@
 import React, { CSSProperties } from 'react'
 import moment from 'moment'
-import { Form, Input, Radio, Select, Checkbox, Switch, InputNumber, Button, Row } from 'antd'
+import { Form, Input, Radio, Select, Checkbox, Switch, InputNumber } from 'antd'
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons'
+import shortid from 'shortid'
 
 export const getFormField = (
 	from: 'add' | 'edit' | 'inline-add' | 'inline-edit',
@@ -21,17 +22,18 @@ export const getFormField = (
 	const validations = field.validation || []
 	const styles: CSSProperties = {}
 	const otherFormItemProps: Record<string, any> = { key: dataIndex }
-	const otherInputFieldProps: Record<string, any> = {}
+	const otherInputFieldProps: Record<string, any> = { autoComplete: 'nope' }
 
 	if (from === 'inline-edit' || from === 'inline-add') {
-		if (from !== 'inline-add') {
-			// This block for only inline edit
-			if (type === 'date' && initialValues[dataIndex]) {
-				// If value is not null and field type is date
-				otherFormItemProps.initialValue = moment(initialValues[dataIndex]).format('YYYY-MM-DD')
-			} else {
-				otherFormItemProps.initialValue = initialValues[dataIndex]
-			}
+		if (from === 'inline-add') {
+			otherInputFieldProps.id = dataIndex + '_' + shortid.generate() // In bulk add to prevent same DOM id
+		}
+
+		if (type === 'date' && initialValues[dataIndex]) {
+			// If value is not null and field type is date
+			otherFormItemProps.initialValue = moment(initialValues[dataIndex]).format('YYYY-MM-DD')
+		} else {
+			otherFormItemProps.initialValue = initialValues[dataIndex]
 		}
 
 		styles.margin = 0
@@ -49,7 +51,11 @@ export const getFormField = (
 
 		if (type === 'checkbox') {
 			// means checkbox group
-			// There will be a save button to manually trigger save
+			// For 'inline-edit' the 'save' will happen through window listener
+			if (from === 'inline-add') {
+				// For 'inline-add'
+				otherInputFieldProps.onChange = save
+			}
 		}
 
 		if (
@@ -116,7 +122,7 @@ export const getFormField = (
 					>
 						<Checkbox.Group options={options} ref={inputRef} {...otherInputFieldProps} />
 					</Form.Item>
-					{(from === 'inline-edit' || from === 'inline-add') && (
+					{/* {(from === 'inline-edit' || from === 'inline-add') && (
 						<Row justify='center'>
 							<Form.Item style={{ marginBottom: 0 }}>
 								<Button size='small' type='primary' ghost onClick={save}>
@@ -124,7 +130,7 @@ export const getFormField = (
 								</Button>
 							</Form.Item>
 						</Row>
-					)}
+					)} */}
 				</React.Fragment>
 			)
 		}

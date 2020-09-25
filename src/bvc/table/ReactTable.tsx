@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import moment from 'moment'
 import { isArray } from 'lodash'
 import styled from 'styled-components'
@@ -75,7 +75,7 @@ function ReactTable(props: any) {
 	const defaultColumn = { minWidth: 100, maxWidth: 400, Cell: EditableCell }
 	const columns = React.useMemo(getColumnsDef, [tableSettings?.hide])
 	const tableInstance = useTable(
-		{ columns, data, defaultColumn, handleSave },
+		{ columns, data, defaultColumn, handleSave, dataSetCount: data.length },
 		useBlockLayout,
 		useSticky,
 		useResizeColumns,
@@ -241,19 +241,21 @@ const ResizingElement = styled.span`
 // Create an editable cell renderer
 const EditableCell = (cellProps: any) => {
 	// 'handleSave' is the custom function that we supplied to our table instance
-	const { value, row, column, handleSave } = cellProps
+	const { value: initialValue, row, column, handleSave } = cellProps
 	const { __isItLocalTableRow = false } = row.original
-	const { dataIndex } = column
-	// We need to keep and update the state of the cell
-	const [editing, setEditing] = React.useState(false)
-	// To keep track is local cell rendered or not | Use '_setLocalCellRendered' instead of 'setLocalCellRendered' to update
-	const [_localCellRendered, setLocalCellRendered] = React.useState(false)
-
+	const { dataIndex, field } = column
+	const [form] = Form.useForm()
+	const inputRef = React.useRef<any>()
 	const _isMounted = React.useRef(false)
 	const tableCellWrapperRef = React.useRef<any>()
+	// We need to keep and update the editing state of the cell
+	const [editing, setEditing] = React.useState(__isItLocalTableRow)
+	// We need to keep and update the value of the cell
+	const [value, setValue] = React.useState(initialValue)
 
-	useEffect(() => {
+	React.useEffect(() => {
 		_isMounted.current = true
+
 		return () => {
 			_isMounted.current = false
 		}
@@ -261,82 +263,53 @@ const EditableCell = (cellProps: any) => {
 	}, [])
 
 	React.useEffect(() => {
+		setValue(initialValue)
+	}, [initialValue])
+
+	React.useEffect(() => {
 		setEditing(__isItLocalTableRow)
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [__isItLocalTableRow])
 
-	const handleCellClick = () => {
-		// Set a manual confirmation that local cell is rendered and form submit can be triggered now
-		_setLocalCellRendered()
-		_isMounted.current && !editing && setEditing(true)
-	}
-
-	const toggleEdit = () => _isMounted.current && setEditing(!editing)
-
-	const _setLocalCellRendered = () => {
-		if (__isItLocalTableRow && !_localCellRendered) {
-			// If it's a local table row & '_localCellRendered' value is not updated yet
-			_isMounted.current && setLocalCellRendered(true)
+	React.useEffect(() => {
+		if (editing && !__isItLocalTableRow) {
+			// If 'editing' is 'true' and it's not a local row then focus the input field
+			inputRef?.current?.focus?.()
+			// Subscribe to listen 'click' event
+			document.addEventListener('click', handleCellLeave)
 		}
-	}
 
-	// We'll only update the external data when the input is blurred
+		return () => {
+			// Unsubscribe event
+			document.removeEventListener('click', handleCellLeave)
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [editing])
+
+	const handleCellClick = () => _isMounted.current && !editing && setEditing(true)
+	const toggleEdit = () => _isMounted.current && setEditing(!editing)
+	const checkFieldsError = () => !!form.getFieldsError().filter(({ errors }) => errors.length).length
+
+	// If form has no error then this function will trigger
 	const onFinish = async (values: any) => {
-		console.log('Cell edit finished: ', values)
+		// console.log('Cell edit finished: ', values)
 		const newValue = values[dataIndex]
 		const identical = checkIsIdentical(value, newValue, column)
-		if (identical) return toggleEdit()
+		if (identical) {
+			if (__isItLocalTableRow) return
+			return toggleEdit()
+		}
 		const { id } = row.original
 		handleSave({ id, __isItLocalTableRow, [dataIndex]: newValue })
 		await sleep(200) // Just for visual
-		_isMounted.current && setEditing(false)
+		_isMounted.current && !__isItLocalTableRow && setEditing(false)
 	}
 
-	const tableCellContent = editing ? (
-		<TableCellFrom
-			editing={editing}
-			__isItLocalTableRow={__isItLocalTableRow}
-			_localCellRendered={_localCellRendered}
-			value={value}
-			column={column}
-			onFinish={onFinish}
-			toggleEdit={toggleEdit}
-			tableCellWrapperRef={tableCellWrapperRef}
-		/>
-	) : (
-		<TableCellData>{transformValueToDisplay(cellProps)}</TableCellData>
-	)
-
-	return (
-		<TableCellWrapper ref={tableCellWrapperRef} onClick={handleCellClick}>
-			{tableCellContent}
-		</TableCellWrapper>
-	)
-}
-
-function TableCellFrom(props: any) {
-	const { editing, value, column, onFinish, toggleEdit, tableCellWrapperRef, __isItLocalTableRow, _localCellRendered } = props
-	const { dataIndex, field } = column
-	const [form] = Form.useForm()
-	const inputRef = React.useRef<any>()
-	const _isMounted = React.useRef(false)
-
-	const checkFieldsError = () => !!form.getFieldsError().filter(({ errors }) => errors.length).length
-
-	useEffect(() => {
-		_isMounted.current = true
-		return () => {
-			_isMounted.current = false
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
-
 	const handleCellLeave = (event: any) => {
-		if (!editing) return // Only listed when editing
+		if (!editing) return // Only continue if editing
 		if (!tableCellWrapperRef || !field) return
 
 		var isInsideClick = tableCellWrapperRef?.current?.contains?.(event.target)
-		console.log('-----I am triggered-------', column.headerName, _localCellRendered, tableCellWrapperRef, isInsideClick)
 		if (isInsideClick === null) return // It have to be either true or false
 
 		if (!isInsideClick) {
@@ -349,9 +322,11 @@ function TableCellFrom(props: any) {
 				form.resetFields()
 				message.warning('Changes discarded due to field error.')
 			} else {
+				const { type, editable } = field
 				// Else trigger 'save' for radio, checkbox, boolean field
 				// As they don't have 'onBlur' or 'onKeyboardEnter' event as like 'text' field
-				const { type, editable } = field
+				// This condition will also prevent triggering save() twice for some specific field like 'text', 'date', 'email' etc.
+				// One trigger from here another from onBlur/onChange/onKeyboardEnter
 				if (editable && (type === 'radio' || type === 'checkbox' || type === 'boolean')) {
 					save()
 				}
@@ -359,44 +334,28 @@ function TableCellFrom(props: any) {
 		}
 	}
 
-	React.useEffect(() => {
-		if (editing && !__isItLocalTableRow) {
-			// If 'editing' is 'true' and it's not a local cell then focus the input field
-			inputRef?.current?.focus?.()
-		}
-		// Subscribe to listen 'click' event
-		document.addEventListener('click', handleCellLeave)
-		return () => {
-			// Unsubscribe event
-			document.removeEventListener('click', handleCellLeave)
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [editing])
-
 	const save = () => {
-		// console.log({ __isItLocalTableRow, _localCellRendered })
-		if (__isItLocalTableRow) {
-			if (_localCellRendered || !field?.required || !isEmpty(value)) {
-				// We can call submit if user,
-				// - clicked on the cell(simply _localCellRendered = true)
-				// - or it's a non required field
-				// - or field already has initial value
-				// So that, At the very first time it will not trigger submit and show all the errors
-				form.submit()
-			}
-		} else {
-			form.submit()
-		}
+		console.log('Submit got called!')
+		form.submit()
 	}
 
 	const initialValues = { [dataIndex]: value }
+	const formType = __isItLocalTableRow ? 'inline-add' : 'inline-edit'
+
+	const tableCellContent = editing ? (
+		<TableCellFrom>
+			<Form form={form} component={false} onFinish={onFinish}>
+				{getFormField(formType, column, form, initialValues, true, inputRef, save, toggleEdit)}
+			</Form>
+		</TableCellFrom>
+	) : (
+		<TableCellData>{transformValueToDisplay(cellProps)}</TableCellData>
+	)
 
 	return (
-		<TableCellFromWrapper>
-			<Form form={form} component={false} onFinish={onFinish}>
-				{getFormField('inline-edit', column, form, initialValues, true, inputRef, save, toggleEdit)}
-			</Form>
-		</TableCellFromWrapper>
+		<TableCellWrapper ref={tableCellWrapperRef} onClick={handleCellClick}>
+			{tableCellContent}
+		</TableCellWrapper>
 	)
 }
 
@@ -416,7 +375,7 @@ const TableCellData: any = styled.div`
 	white-space: nowrap;
 	/* End truncate */
 `
-const TableCellFromWrapper = styled.div`
+const TableCellFrom = styled.div`
 	min-width: 100%;
 	min-height: 100%;
 	padding: 0.25em 0.5em;

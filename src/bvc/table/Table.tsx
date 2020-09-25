@@ -35,6 +35,7 @@ type tableState = {
 	masterFilterCriteria: any
 	settingModal: boolean
 	tableSettings: any
+	tableReRenderer?: string
 }
 
 export class TableBVC extends Component<tableProps, tableState> {
@@ -87,6 +88,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 			masterFilterCriteria: null,
 			settingModal: false,
 			tableSettings: null,
+			tableReRenderer: shortid.generate(),
 		}
 	}
 
@@ -235,7 +237,8 @@ export class TableBVC extends Component<tableProps, tableState> {
 		)
 	}
 
-	handleInlineAdd = () => {
+	handleInlineAdd = (event: any) => {
+		event.stopPropagation()
 		const { capabilities, columns } = this.props.meta
 		const { add } = capabilities
 		const { fields: fieldsValue, initialValues = {} } = add
@@ -253,7 +256,11 @@ export class TableBVC extends Component<tableProps, tableState> {
 			row[field] = initialValues[field]
 		}
 
-		this.setState({ localItemsToAdd: [row, ...this.state.localItemsToAdd] })
+		let rows = this.state.localItemsToAdd
+		rows.unshift(row)
+		console.log(rows)
+
+		this.setState({ tableReRenderer: null }, () => this.setState({ tableReRenderer: shortid.generate(), localItemsToAdd: rows }))
 	}
 
 	render() {
@@ -271,6 +278,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 		const { capabilities } = meta
 		const actionInProgress = globalSearchLoading || loadingData
 		const tableData = this.getData()
+		const finalTableData = localItemsToAdd.concat(tableData)
 		let BVCComponent
 
 		if (presentationDrawerData && presentationDrawerData.bvc) {
@@ -491,17 +499,19 @@ export class TableBVC extends Component<tableProps, tableState> {
 				</Drawer>
 
 				{/* Actual Table */}
-				{isEmpty(tableData) ? (
+				{isEmpty(finalTableData) ? (
 					<NotFound />
 				) : (
-					<ReactTable
-						meta={meta}
-						data={localItemsToAdd.concat(tableData)}
-						tableSettings={tableSettings}
-						openEditFormDrawer={this.openEditFormDrawer}
-						handleDelete={this.handleDelete}
-						handleSave={this.handleSave}
-					/>
+					this.state.tableReRenderer && (
+						<ReactTable
+							meta={meta}
+							data={finalTableData}
+							tableSettings={tableSettings}
+							openEditFormDrawer={this.openEditFormDrawer}
+							handleDelete={this.handleDelete}
+							handleSave={this.handleSave}
+						/>
+					)
 				)}
 			</Wrapper>
 		)
