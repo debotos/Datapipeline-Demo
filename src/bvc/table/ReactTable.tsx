@@ -1,6 +1,6 @@
 import React from 'react'
 import moment from 'moment'
-import { isArray } from 'lodash'
+import { isArray, uniq } from 'lodash'
 import styled from 'styled-components'
 import { useSticky } from 'react-table-sticky'
 import { Form, Button, Pagination, Popconfirm, Row, Tooltip, message } from 'antd'
@@ -242,7 +242,7 @@ const ResizingElement = styled.span`
 const EditableCell = (cellProps: any) => {
 	// 'handleSave' is the custom function that we supplied to our table instance
 	const { value: initialValue, row, column, handleSave } = cellProps
-	const { __isItLocalTableRow = false } = row.original
+	const { __isItLocalTableRow = false, __dirtyLocalCells = [] } = row.original
 	const { dataIndex, field } = column
 	const [form] = Form.useForm()
 	const inputRef = React.useRef<any>()
@@ -252,6 +252,8 @@ const EditableCell = (cellProps: any) => {
 	const [editing, setEditing] = React.useState(__isItLocalTableRow)
 	// We need to keep and update the value of the cell
 	const [value, setValue] = React.useState(initialValue)
+	// Keep track of edited or not
+	const [isThisCellDirty, setIsThisCellDirty] = React.useState(__dirtyLocalCells.includes(dataIndex))
 
 	React.useEffect(() => {
 		_isMounted.current = true
@@ -265,6 +267,10 @@ const EditableCell = (cellProps: any) => {
 	React.useEffect(() => {
 		setValue(initialValue)
 	}, [initialValue])
+
+	React.useEffect(() => {
+		setIsThisCellDirty(__dirtyLocalCells.includes(dataIndex))
+	}, [__dirtyLocalCells, dataIndex])
 
 	React.useEffect(() => {
 		setEditing(__isItLocalTableRow)
@@ -300,7 +306,10 @@ const EditableCell = (cellProps: any) => {
 			return toggleEdit()
 		}
 		const { id } = row.original
-		handleSave({ id, __isItLocalTableRow, [dataIndex]: newValue })
+		handleSave(
+			{ id, [dataIndex]: newValue, __isItLocalTableRow, __dirtyLocalCells: uniq([dataIndex, ...__dirtyLocalCells]) },
+			'inline'
+		)
 		await sleep(200) // Just for visual
 		_isMounted.current && !__isItLocalTableRow && setEditing(false)
 	}
@@ -353,7 +362,7 @@ const EditableCell = (cellProps: any) => {
 	)
 
 	return (
-		<TableCellWrapper ref={tableCellWrapperRef} onClick={handleCellClick}>
+		<TableCellWrapper ref={tableCellWrapperRef} onClick={handleCellClick} style={{ background: isThisCellDirty && 'lightcyan' }}>
 			{tableCellContent}
 		</TableCellWrapper>
 	)

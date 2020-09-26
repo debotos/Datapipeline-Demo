@@ -1,9 +1,16 @@
 import React, { Component, Suspense } from 'react'
 import { clone } from 'ramda'
 import shortid from 'shortid'
-import { isArray } from 'lodash'
 import { Input, Drawer, Button, Empty, Spin, Modal, Divider, Checkbox, Row, Col, message, Tooltip } from 'antd'
-import { PlusOutlined, SearchOutlined, DownloadOutlined, FilterOutlined, SettingOutlined, SyncOutlined } from '@ant-design/icons'
+import {
+	PlusOutlined,
+	SearchOutlined,
+	DownloadOutlined,
+	FilterOutlined,
+	SettingOutlined,
+	SyncOutlined,
+	SaveOutlined,
+} from '@ant-design/icons'
 import styled from 'styled-components'
 import debounce from 'lodash/debounce'
 import matchSorter from 'match-sorter'
@@ -12,7 +19,7 @@ import './table.scss'
 import generateExcel from '../../utils/generateExcel'
 import EditForm from '../../components/EditForm'
 import AddForm from '../../components/AddForm'
-import { sleep, isEmpty } from '../../utils/helpers'
+import { sleep, isEmpty, parseFields } from '../../utils/helpers'
 import ReactTable from './ReactTable'
 
 type tableProps = { meta: any; data: any }
@@ -20,6 +27,7 @@ type tableState = {
 	data: any
 	localItemsToAdd: any[]
 	loadingData: boolean
+	savingData: boolean
 	globalSearchText: string
 	globalSearchResults: any
 	globalSearchLoading: boolean
@@ -73,6 +81,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 			data: [], // For view purpose
 			localItemsToAdd: [], // For inline bulk add
 			loadingData: true,
+			savingData: false,
 			globalSearchText: '',
 			globalSearchResults: [],
 			globalSearchLoading: false,
@@ -103,7 +112,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 	openPresentationDrawer = (record: any) => this.setState({ presentationDrawerData: record, presentationDrawer: true })
 	closePresentationDrawer = () => this.setState({ presentationDrawer: false, presentationDrawerData: null })
 
-	handleSave = (row: any) => {
+	handleSave = (row: any, origin = 'normal') => {
 		// console.log(row)
 		/* If it is local */
 		if (row.__isItLocalTableRow) {
@@ -237,18 +246,71 @@ export class TableBVC extends Component<tableProps, tableState> {
 		)
 	}
 
+	handleSaveInlineRecords = async () => {
+		const { capabilities, columns } = this.props.meta
+		const { add } = capabilities
+		const { fields: fieldsValue } = add
+		const rows = clone(this.state.localItemsToAdd)
+		const fields: any[] = parseFields(columns, fieldsValue)
+			.map((key: any) => {
+				return columns.find((col: any) => col.dataIndex === key)
+			})
+			.filter((field: any) => !!field)
+		const requiredFields: any[] = fields.filter((item: any) => !!item?.field?.required)
+		const requiredFieldsKeyList: string[] = requiredFields.map((field: any) => field.dataIndex)
+		const keyLabelMap: Record<string, string> = {}
+		for (let index = 0; index < requiredFields.length; index++) {
+			const field = requiredFields[index]
+			keyLabelMap[field.dataIndex] = field.headerName
+		}
+
+		const postData = []
+		let haveError = false
+		let errorMsg = ''
+
+		for (let index = 0; index < rows.length; index++) {
+			const row = rows[index]
+			// Make some adjustment for postData
+			delete row.__isItLocalTableRow
+			postData.push(row)
+			const rowKeys = Object.keys(row)
+
+			for (let i = 0; i < rowKeys.length; i++) {
+				const rowKey = rowKeys[i]
+				const rowVal = row[rowKey]
+
+				if (requiredFieldsKeyList.includes(rowKey) && isEmpty(rowVal)) {
+					console.log('Error for:', { rowKey, rowVal })
+					haveError = true
+					errorMsg = `Required field '${keyLabelMap[rowKey]}' missing at row ${index + 1}.`
+					break
+				}
+			}
+
+			if (haveError) break
+		}
+
+		if (haveError) {
+			message.error(errorMsg)
+			return
+		}
+
+		// Now everything is good to execute an ajax req with postData to save
+		// console.log(postData)
+		this.setState({ savingData: true })
+		const hide = message.loading('Saving...', 0)
+		await sleep(4000)
+		this.setState({ savingData: false, data: postData.concat(this.state.data), localItemsToAdd: [] })
+		hide()
+	}
+
 	handleInlineAdd = (event: any) => {
 		event.stopPropagation()
 		const { capabilities, columns } = this.props.meta
 		const { add } = capabilities
 		const { fields: fieldsValue, initialValues = {} } = add
 
-		let fields: string[] = []
-		if (typeof fieldsValue === 'string' && fieldsValue.toLowerCase() === 'all') {
-			fields = columns.map((col: any) => col.dataIndex).filter((dataIndex: string) => dataIndex !== 'action')
-		} else if (isArray(fieldsValue)) {
-			fields = fieldsValue
-		}
+		let fields: string[] = parseFields(columns, fieldsValue)
 
 		const row: Record<string, any> = { id: shortid.generate(), __isItLocalTableRow: true }
 		for (let index = 0; index < fields.length; index++) {
@@ -258,7 +320,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 
 		let rows = this.state.localItemsToAdd
 		rows.unshift(row)
-		console.log(rows)
+		// console.log(rows)
 
 		this.setState({ tableReRenderer: null }, () => this.setState({ tableReRenderer: shortid.generate(), localItemsToAdd: rows }))
 	}
@@ -271,17 +333,18 @@ export class TableBVC extends Component<tableProps, tableState> {
 			masterFilterCriteria,
 			tableSettings,
 			loadingData,
+			savingData,
 			localItemsToAdd,
 		} = this.state
 
 		const { meta } = this.props
 		const { capabilities } = meta
-		const actionInProgress = globalSearchLoading || loadingData
+		const actionInProgress = globalSearchLoading || loadingData || savingData
 		const tableData = this.getData()
 		const finalTableData = localItemsToAdd.concat(tableData)
 		let BVCComponent
 
-		if (presentationDrawerData && presentationDrawerData.bvc) {
+		if (presentationDrawerData?.bvc) {
 			BVCComponent = React.lazy(() =>
 				import(`./${presentationDrawerData.bvc}`).catch(() => ({
 					default: () => <NotFound />,
@@ -309,11 +372,23 @@ export class TableBVC extends Component<tableProps, tableState> {
 								type='dashed'
 								shape='circle'
 								icon={<PlusOutlined />}
-								size='small'
 								style={{ marginLeft: 10 }}
 								onClick={this.handleInlineAdd}
 							/>
 						</Tooltip>
+
+						{!isEmpty(localItemsToAdd) && (
+							<Tooltip placement='top' title={'Save new records'}>
+								<Button
+									type='dashed'
+									shape='circle'
+									icon={<SaveOutlined />}
+									style={{ marginLeft: 10 }}
+									onClick={this.handleSaveInlineRecords}
+									loading={savingData}
+								/>
+							</Tooltip>
+						)}
 					</h1>
 					{/* Search, Download, Filters, Settings, Refresh */}
 					<div style={{ display: 'flex', alignItems: 'center' }}>
@@ -348,7 +423,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 								}}
 							/>
 						)}
-						{capabilities.refresh && <SyncOutlined className='icon-btn' spin={actionInProgress} onClick={this.handleRefresh} />}
+						{capabilities.refresh && <SyncOutlined className='icon-btn' spin={loadingData} onClick={this.handleRefresh} />}
 					</div>
 				</Container>
 

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { isArray } from 'lodash'
 import { Form, Button } from 'antd'
 
 import { getFormField } from '../utils/getFormField'
+import { parseFields } from '../utils/helpers'
 
 type CProps = { metadata: any; handleAdd(row: any): void; closeDrawer(): void }
 
@@ -25,12 +25,7 @@ export default function AddForm(props: CProps) {
 	const { label, fields: fieldsValue, initialValues } = add
 
 	const initialValuesArray = Object.keys(initialValues || {})
-	let fields: string[] = []
-	if (typeof fieldsValue === 'string' && fieldsValue.toLowerCase() === 'all') {
-		fields = columns.map((col: any) => col.dataIndex).filter((dataIndex: string) => dataIndex !== 'action')
-	} else if (isArray(fieldsValue)) {
-		fields = fieldsValue
-	}
+	let fields: string[] = parseFields(columns, fieldsValue)
 
 	return (
 		<Form
