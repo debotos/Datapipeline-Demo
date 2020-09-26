@@ -3,7 +3,12 @@ import { Form, Button } from 'antd'
 
 import { getFormField } from '../utils/getFormField'
 
-type CProps = { metadata: any; initialValues: any; handleSave(row: any): void; closeDrawer(): void }
+type CProps = {
+	metadata: any
+	initialValues: any
+	handleSave(row: any, origin: 'inline-add' | 'inline-edit' | 'side-drawer-edit'): void
+	closeDrawer(): void
+}
 
 export default function EditForm(props: CProps) {
 	const [form] = Form.useForm()
@@ -18,7 +23,7 @@ export default function EditForm(props: CProps) {
 
 	const onFinish = (values: any) => {
 		console.log('Finish:', values)
-		props.handleSave({ ...initialValues, ...values })
+		props.handleSave({ ...initialValues, ...values }, 'side-drawer-edit')
 		props.closeDrawer()
 	}
 

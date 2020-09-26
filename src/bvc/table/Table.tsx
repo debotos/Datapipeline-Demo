@@ -13,6 +13,7 @@ import {
 } from '@ant-design/icons'
 import styled from 'styled-components'
 import debounce from 'lodash/debounce'
+import { unionBy } from 'lodash'
 import matchSorter from 'match-sorter'
 
 import './table.scss'
@@ -25,9 +26,12 @@ import ReactTable from './ReactTable'
 type tableProps = { meta: any; data: any }
 type tableState = {
 	data: any
+	dataBackup: any
 	localItemsToAdd: any[]
+	localItemsToUpdate: Record<string, any>
 	loadingData: boolean
 	savingData: boolean
+	updatingData: boolean
 	globalSearchText: string
 	globalSearchResults: any
 	globalSearchLoading: boolean
@@ -68,7 +72,14 @@ export class TableBVC extends Component<tableProps, tableState> {
 		const { data, meta } = this.props
 		const { capabilities } = meta
 		const { setting } = capabilities
-		this.setState({ data: data || [], tableSettings: setting.props }, () => this.setState({ loadingData: false }))
+		this.setState(
+			{
+				data: data || [],
+				dataBackup: data || [],
+				tableSettings: setting.props,
+			},
+			() => this.setState({ loadingData: false })
+		)
 	}
 
 	componentWillUnmount() {
@@ -78,10 +89,13 @@ export class TableBVC extends Component<tableProps, tableState> {
 	constructor(props: tableProps) {
 		super(props)
 		this.state = {
-			data: [], // For view purpose
+			data: [], // For view/edit purpose
+			dataBackup: [], // For reset purpose
 			localItemsToAdd: [], // For inline bulk add
+			localItemsToUpdate: {}, // For inline bulk edit
 			loadingData: true,
 			savingData: false,
+			updatingData: false,
 			globalSearchText: '',
 			globalSearchResults: [],
 			globalSearchLoading: false,
@@ -112,8 +126,37 @@ export class TableBVC extends Component<tableProps, tableState> {
 	openPresentationDrawer = (record: any) => this.setState({ presentationDrawerData: record, presentationDrawer: true })
 	closePresentationDrawer = () => this.setState({ presentationDrawer: false, presentationDrawerData: null })
 
-	handleSave = (row: any, origin = 'normal') => {
-		// console.log(row)
+	handleCommitInlineChanges = async (e: any) => {
+		e.persist()
+		e.stopPropagation()
+		const hide = message.loading('Action in progress...', 0)
+		this.setState({ updatingData: true })
+
+		const rows = clone(this.state.localItemsToUpdate)
+		const ids = Object.keys(rows)
+		const postData = []
+
+		for (let index = 0; index < ids.length; index++) {
+			const id = ids[index]
+			const row = rows[id]
+			delete row.__dirtyLocalCells
+			delete row.__isItLocalTableRow
+			postData.push(row)
+		}
+
+		const updatedData = unionBy(postData, this.state.data, 'id') // Ref: https://stackoverflow.com/a/39127782/8465770
+
+		// Now all set. Make ajax call with postData to save
+		await sleep(3000)
+		this.setState({ localItemsToUpdate: {}, data: updatedData, dataBackup: updatedData, updatingData: false }, () => {
+			hide()
+			message.success('Changes save successfully!')
+			this.performGlobalSearchAgain()
+		})
+	}
+
+	handleSave = (row: any, origin: 'inline-add' | 'inline-edit' | 'side-drawer-edit') => {
+		// console.log(row, origin)
 		/* If it is local */
 		if (row.__isItLocalTableRow) {
 			const update = this.state.localItemsToAdd.map((x: any) => {
@@ -123,18 +166,42 @@ export class TableBVC extends Component<tableProps, tableState> {
 			this.setState({ localItemsToAdd: update })
 			return
 		}
+
 		/* If it is not local */
-		const update = this.state.data.map((x: any) => {
-			if (x.id === row.id) return { ...x, ...row }
+		const data = this.state.data.map((x: any) => {
+			if (x.id === row.id) {
+				if (origin === 'inline-edit') {
+					this.handleSavePostScript(row, x)
+				}
+				return { ...x, ...row }
+			}
 			return x
 		})
-		this.setState({ data: update }, this.performGlobalSearchAgain)
-		// message.success('Successfully saved the record!', 1.5)
+
+		if (origin === 'side-drawer-edit') {
+			const dataBackup = this.state.dataBackup.map((x: any) => {
+				if (x.id === row.id) return { ...x, ...row }
+				return x
+			})
+			this.setState({ dataBackup })
+		}
+
+		this.setState({ data }, this.performGlobalSearchAgain)
+		message.info('Changes staged for commit!', 1.5)
+	}
+
+	handleSavePostScript = (row: any, originalData: any) => {
+		if (row.hasOwnProperty('__dirtyLocalCells')) {
+			const localItemsToUpdate = clone(this.state.localItemsToUpdate)
+			localItemsToUpdate[row.id] = { ...originalData, ...row }
+			this.setState({ localItemsToUpdate })
+		}
 	}
 
 	handleAdd = (row: any) => {
 		// console.log(row)
-		this.setState({ data: [row, ...this.state.data] }, this.performGlobalSearchAgain)
+		const { data, dataBackup } = this.state
+		this.setState({ data: [row, ...data], dataBackup: [row, ...dataBackup] }, this.performGlobalSearchAgain)
 		message.success('Successfully added the record!', 1.5)
 	}
 
@@ -147,8 +214,9 @@ export class TableBVC extends Component<tableProps, tableState> {
 			return
 		}
 		/* If it is not local */
-		const update = this.state.data.filter((x: any) => x.id !== id)
-		this.setState({ data: update }, this.performGlobalSearchAgain)
+		const data = this.state.data.filter((x: any) => x.id !== id)
+		const dataBackup = this.state.dataBackup.filter((x: any) => x.id !== id)
+		this.setState({ data, dataBackup }, this.performGlobalSearchAgain)
 		message.info('Successfully deleted the record!', 1.5)
 	}
 
@@ -237,10 +305,20 @@ export class TableBVC extends Component<tableProps, tableState> {
 		await sleep(2000)
 		const node = this.globalSearchInput.current
 		node && node.handleReset(e)
+
 		this.setState(
-			{ data: this.props.data, globalSearchResults: [], globalSearchText: '', showSearchBox: false, masterFilterCriteria: null },
+			{
+				tableReRenderer: null,
+				data: this.state.dataBackup,
+				globalSearchResults: [],
+				localItemsToAdd: [],
+				localItemsToUpdate: {},
+				globalSearchText: '',
+				showSearchBox: false,
+				masterFilterCriteria: null,
+			},
 			() => {
-				this.setState({ loadingData: false })
+				this.setState({ tableReRenderer: shortid.generate(), loadingData: false })
 				hide()
 			}
 		)
@@ -300,8 +378,12 @@ export class TableBVC extends Component<tableProps, tableState> {
 		this.setState({ savingData: true })
 		const hide = message.loading('Saving...', 0)
 		await sleep(4000)
-		this.setState({ savingData: false, data: postData.concat(this.state.data), localItemsToAdd: [] })
-		hide()
+		const updatedData = postData.concat(this.state.data)
+		this.setState({ savingData: false, data: updatedData, dataBackup: updatedData, localItemsToAdd: [] }, () => {
+			hide()
+			this.performGlobalSearchAgain()
+			message.success('New records saved successfully!')
+		})
 	}
 
 	handleInlineAdd = (event: any) => {
@@ -334,12 +416,16 @@ export class TableBVC extends Component<tableProps, tableState> {
 			tableSettings,
 			loadingData,
 			savingData,
+			updatingData,
 			localItemsToAdd,
+			localItemsToUpdate,
 		} = this.state
 
 		const { meta } = this.props
 		const { capabilities } = meta
-		const actionInProgress = globalSearchLoading || loadingData || savingData
+		const actionInProgress = globalSearchLoading || loadingData || savingData || updatingData
+		const commonDisableCase = !isEmpty(localItemsToAdd)
+		const commonDisableCaseAsStr = commonDisableCase.toString()
 		const tableData = this.getData()
 		const finalTableData = localItemsToAdd.concat(tableData)
 		let BVCComponent
@@ -351,6 +437,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 				}))
 			)
 		}
+		console.log(commonDisableCase, commonDisableCaseAsStr)
 
 		return (
 			<Wrapper
@@ -359,7 +446,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 			>
 				{capabilities.add.enable && (
 					<div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
-						<Button type='dashed' size='small' onClick={this.openAddFormDrawer}>
+						<Button type='dashed' size='small' onClick={this.openAddFormDrawer} disabled={commonDisableCase}>
 							<PlusOutlined /> {capabilities.add.label}
 						</Button>
 					</div>
@@ -391,7 +478,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 						)}
 					</h1>
 					{/* Search, Download, Filters, Settings, Refresh */}
-					<div style={{ display: 'flex', alignItems: 'center' }}>
+					<CapabilitiesContainer isDisabled={commonDisableCaseAsStr}>
 						{capabilities.search.enable && (
 							<div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
 								<SearchBox
@@ -424,7 +511,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 							/>
 						)}
 						{capabilities.refresh && <SyncOutlined className='icon-btn' spin={loadingData} onClick={this.handleRefresh} />}
-					</div>
+					</CapabilitiesContainer>
 				</Container>
 
 				{capabilities.filter.enable && (
@@ -585,6 +672,10 @@ export class TableBVC extends Component<tableProps, tableState> {
 							openEditFormDrawer={this.openEditFormDrawer}
 							handleDelete={this.handleDelete}
 							handleSave={this.handleSave}
+							bulkAddIsRunning={!isEmpty(localItemsToAdd)}
+							showCommitChangesButton={!isEmpty(localItemsToUpdate)}
+							updatingData={updatingData}
+							handleCommitInlineChanges={this.handleCommitInlineChanges}
 						/>
 					)
 				)}
@@ -610,6 +701,12 @@ const Container = styled.div`
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+`
+const CapabilitiesContainer: any = styled.div`
+	display: flex;
+	align-items: center;
+	opacity: ${(props: any) => (props.isDisabled === 'true' ? 0.4 : 1)};
+	pointer-events: ${(props: any) => (props.isDisabled === 'true' ? 'none' : 'auto')};
 `
 const SearchBox = styled(Input)`
 	margin-right: 10px;

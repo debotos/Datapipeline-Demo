@@ -5,13 +5,14 @@ import styled from 'styled-components'
 import { useSticky } from 'react-table-sticky'
 import { Form, Button, Pagination, Popconfirm, Row, Tooltip, message } from 'antd'
 import { useTable, usePagination, useSortBy, useBlockLayout, useResizeColumns } from 'react-table'
-import { DeleteOutlined, EditOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, SaveOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons'
 
 import { isEmpty, sleep } from '../../utils/helpers'
 import { getFormField } from '../../utils/getFormField'
 
 function ReactTable(props: any) {
-	const { meta, data, tableSettings, handleSave } = props
+	const { meta, data, tableSettings, bulkAddIsRunning, handleSave } = props
+	const { showCommitChangesButton, updatingData, handleCommitInlineChanges } = props
 	const { capabilities } = meta
 	const { pagination } = capabilities
 
@@ -75,7 +76,7 @@ function ReactTable(props: any) {
 	const defaultColumn = { minWidth: 100, maxWidth: 400, Cell: EditableCell }
 	const columns = React.useMemo(getColumnsDef, [tableSettings?.hide])
 	const tableInstance = useTable(
-		{ columns, data, defaultColumn, handleSave, dataSetCount: data.length },
+		{ columns, data, defaultColumn, handleSave, disableSortBy: bulkAddIsRunning },
 		useBlockLayout,
 		useSticky,
 		useResizeColumns,
@@ -145,7 +146,7 @@ function ReactTable(props: any) {
 												}
 											}
 
-											return sortable ? (
+											return sortable && !bulkAddIsRunning ? (
 												<Tooltip key={index} placement='top' title={tooltip}>
 													{tableHeaderElement}
 												</Tooltip>
@@ -184,7 +185,20 @@ function ReactTable(props: any) {
 				</table>
 			</div>
 			{pagination && pagination.enable && (
-				<Row justify='end'>
+				<Row justify='space-between' align='middle'>
+					{showCommitChangesButton ? (
+						<CommitChangesBtn
+							id='table-bvc-commit-inline-changes-btn'
+							style={{ pointerEvents: updatingData ? 'none' : 'auto' }}
+							onClick={handleCommitInlineChanges}
+						>
+							<Button style={{ zIndex: -1 }} type='dashed' icon={<SaveOutlined />} loading={updatingData}>
+								Commit changes
+							</Button>
+						</CommitChangesBtn>
+					) : (
+						<div />
+					)}
 					<div className='table-bvc-pagination'>
 						<Pagination
 							total={data.length}
@@ -237,6 +251,14 @@ const ResizingElement = styled.span`
 		/* background: red; */
 	}
 `
+const CommitChangesBtn = styled.div`
+	z-index: 10;
+	cursor: pointer !important;
+	&:hover button {
+		color: blue;
+		border-color: blue;
+	}
+`
 
 // Create an editable cell renderer
 const EditableCell = (cellProps: any) => {
@@ -281,7 +303,7 @@ const EditableCell = (cellProps: any) => {
 		if (editing && !__isItLocalTableRow) {
 			// If 'editing' is 'true' and it's not a local row then focus the input field
 			inputRef?.current?.focus?.()
-			// Subscribe to listen 'click' event
+			// And subscribe to listen 'click' event
 			document.addEventListener('click', handleCellLeave)
 		}
 
@@ -305,17 +327,24 @@ const EditableCell = (cellProps: any) => {
 			if (__isItLocalTableRow) return
 			return toggleEdit()
 		}
+
 		const { id } = row.original
-		handleSave(
-			{ id, [dataIndex]: newValue, __isItLocalTableRow, __dirtyLocalCells: uniq([dataIndex, ...__dirtyLocalCells]) },
-			'inline'
-		)
+		const updates: Record<string, any> = { id, [dataIndex]: newValue, __isItLocalTableRow }
+		if (!__isItLocalTableRow) {
+			// dirty concept is not available for local record that is a part of bulk add
+			updates['__dirtyLocalCells'] = uniq([dataIndex, ...__dirtyLocalCells])
+		}
+
+		const handleSaveFuncOrigin = __isItLocalTableRow ? 'inline-add' : 'inline-edit'
+		handleSave(updates, handleSaveFuncOrigin)
 		await sleep(200) // Just for visual
 		_isMounted.current && !__isItLocalTableRow && setEditing(false)
 	}
 
 	const handleCellLeave = (event: any) => {
 		if (!editing) return // Only continue if editing
+		// If it is a commit changes button click then just leave executing
+		if (['table-bvc-commit-inline-changes-btn'].includes(event?.target?.id)) return toggleEdit()
 		if (!tableCellWrapperRef || !field) return
 
 		var isInsideClick = tableCellWrapperRef?.current?.contains?.(event.target)
@@ -324,7 +353,7 @@ const EditableCell = (cellProps: any) => {
 		if (!isInsideClick) {
 			// Click occurred outside the 'cell from element'
 			const haveFieldError = checkFieldsError()
-			if (haveFieldError && !__isItLocalTableRow) {
+			if (haveFieldError) {
 				// If field error exist just toggle 'edit mode' to 'view mode' to discard changes
 				// Don't apply if it's a local field
 				toggleEdit()

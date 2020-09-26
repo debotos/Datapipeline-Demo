@@ -1,6 +1,6 @@
 import React, { CSSProperties } from 'react'
 import moment from 'moment'
-import { Form, Input, Radio, Select, Checkbox, Switch, InputNumber } from 'antd'
+import { Form, Input, Radio, Select, Checkbox, Switch, InputNumber, Row, Button } from 'antd'
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import shortid from 'shortid'
 
@@ -122,7 +122,7 @@ export const getFormField = (
 					>
 						<Checkbox.Group options={options} ref={inputRef} {...otherInputFieldProps} />
 					</Form.Item>
-					{/* {(from === 'inline-edit' || from === 'inline-add') && (
+					{from === 'inline-edit' && (
 						<Row justify='center'>
 							<Form.Item style={{ marginBottom: 0 }}>
 								<Button size='small' type='primary' ghost onClick={save}>
@@ -130,7 +130,7 @@ export const getFormField = (
 								</Button>
 							</Form.Item>
 						</Row>
-					)} */}
+					)}
 				</React.Fragment>
 			)
 		}
