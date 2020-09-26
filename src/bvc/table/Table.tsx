@@ -437,7 +437,6 @@ export class TableBVC extends Component<tableProps, tableState> {
 				}))
 			)
 		}
-		console.log(commonDisableCase, commonDisableCaseAsStr)
 
 		return (
 			<Wrapper
