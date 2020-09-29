@@ -5,14 +5,13 @@ import styled from 'styled-components'
 import { useSticky } from 'react-table-sticky'
 import { Form, Button, Pagination, Popconfirm, Row, Tooltip, message } from 'antd'
 import { useTable, usePagination, useSortBy, useBlockLayout, useResizeColumns } from 'react-table'
-import { DeleteOutlined, EditOutlined, SaveOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons'
 
 import { isEmpty, sleep } from '../../utils/helpers'
 import { getFormField } from '../../utils/getFormField'
 
 function ReactTable(props: any) {
 	const { meta, data, tableSettings, bulkAddIsRunning, handleSave } = props
-	const { showCommitChangesButton, updatingData, handleCommitInlineChanges } = props
 	const { capabilities } = meta
 	const { pagination } = capabilities
 
@@ -75,8 +74,10 @@ function ReactTable(props: any) {
 	// Set our editable cell renderer as the default Cell renderer
 	const defaultColumn = { minWidth: 100, maxWidth: 400, Cell: EditableCell }
 	const columns = React.useMemo(getColumnsDef, [tableSettings?.hide])
+	const tableData = React.useMemo(() => data, [data])
+
 	const tableInstance = useTable(
-		{ columns, data, defaultColumn, handleSave, disableSortBy: bulkAddIsRunning },
+		{ columns, data: tableData, defaultColumn, handleSave, disableSortBy: bulkAddIsRunning },
 		useBlockLayout,
 		useSticky,
 		useResizeColumns,
@@ -89,6 +90,10 @@ function ReactTable(props: any) {
 		setPageSize,
 		state: { pageIndex },
 	} = tableInstance // For pagination
+
+	React.useEffect(() => {
+		console.log(`Rendering due to changes...`, props)
+	})
 
 	return (
 		// apply the table props
@@ -185,20 +190,7 @@ function ReactTable(props: any) {
 				</table>
 			</div>
 			{pagination && pagination.enable && (
-				<Row justify='space-between' align='middle'>
-					{showCommitChangesButton ? (
-						<CommitChangesBtn
-							id='table-bvc-commit-inline-changes-btn'
-							style={{ pointerEvents: updatingData ? 'none' : 'auto' }}
-							onClick={handleCommitInlineChanges}
-						>
-							<Button style={{ zIndex: -1 }} type='dashed' icon={<SaveOutlined />} loading={updatingData}>
-								Commit changes
-							</Button>
-						</CommitChangesBtn>
-					) : (
-						<div />
-					)}
+				<Row justify='end' align='middle'>
 					<div className='table-bvc-pagination'>
 						<Pagination
 							total={data.length}
@@ -220,7 +212,10 @@ function ReactTable(props: any) {
 	)
 }
 
-export default ReactTable
+// true = Not update
+// false = Update
+// (prevState: any, nextState: any) => { return false }
+export default React.memo(ReactTable)
 
 const ActionContainer = styled.div`
 	display: flex;
@@ -249,14 +244,6 @@ const ResizingElement = styled.span`
 	touch-action: none; /* prevents from scrolling while dragging on touch devices */
 	&.isResizing {
 		/* background: red; */
-	}
-`
-const CommitChangesBtn = styled.div`
-	z-index: 10;
-	cursor: pointer !important;
-	&:hover button {
-		color: blue;
-		border-color: blue;
 	}
 `
 

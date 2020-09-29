@@ -20,17 +20,16 @@ import './table.scss'
 import generateExcel from '../../utils/generateExcel'
 import EditForm from '../../components/EditForm'
 import AddForm from '../../components/AddForm'
-import { sleep, isEmpty, parseFields } from '../../utils/helpers'
+import { sleep, isEmpty } from '../../utils/helpers'
 import ReactTable from './ReactTable'
+import BulkAddTable from './BulkAddTable'
 
 type tableProps = { meta: any; data: any }
 type tableState = {
 	data: any
 	dataBackup: any
-	localItemsToAdd: any[]
 	localItemsToUpdate: Record<string, any>
 	loadingData: boolean
-	savingData: boolean
 	updatingData: boolean
 	globalSearchText: string
 	globalSearchResults: any
@@ -48,6 +47,7 @@ type tableState = {
 	settingModal: boolean
 	tableSettings: any
 	tableReRenderer?: string
+	bulkAddModal: boolean
 }
 
 export class TableBVC extends Component<tableProps, tableState> {
@@ -91,10 +91,8 @@ export class TableBVC extends Component<tableProps, tableState> {
 		this.state = {
 			data: [], // For view/edit purpose
 			dataBackup: [], // For reset purpose
-			localItemsToAdd: [], // For inline bulk add
 			localItemsToUpdate: {}, // For inline bulk edit
 			loadingData: true,
-			savingData: false,
 			updatingData: false,
 			globalSearchText: '',
 			globalSearchResults: [],
@@ -110,6 +108,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 			filterModal: false,
 			masterFilterCriteria: null,
 			settingModal: false,
+			bulkAddModal: false,
 			tableSettings: null,
 			tableReRenderer: shortid.generate(),
 		}
@@ -140,7 +139,6 @@ export class TableBVC extends Component<tableProps, tableState> {
 			const id = ids[index]
 			const row = rows[id]
 			delete row.__dirtyLocalCells
-			delete row.__isItLocalTableRow
 			postData.push(row)
 		}
 
@@ -157,17 +155,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 
 	handleSave = (row: any, origin: 'inline-add' | 'inline-edit' | 'side-drawer-edit') => {
 		// console.log(row, origin)
-		/* If it is local */
-		if (row.__isItLocalTableRow) {
-			const update = this.state.localItemsToAdd.map((x: any) => {
-				if (x.id === row.id) return { ...x, ...row }
-				return x
-			})
-			this.setState({ localItemsToAdd: update })
-			return
-		}
 
-		/* If it is not local */
 		const data = this.state.data.map((x: any) => {
 			if (x.id === row.id) {
 				if (origin === 'inline-edit') {
@@ -206,13 +194,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 	}
 
 	handleDelete = (row: any) => {
-		const { __isItLocalTableRow, id } = row
-		if (__isItLocalTableRow) {
-			/* If it is local */
-			const update = this.state.localItemsToAdd.filter((x: any) => x.id !== id)
-			this.setState({ localItemsToAdd: update })
-			return
-		}
+		const { id } = row
 		/* If it is not local */
 		const data = this.state.data.filter((x: any) => x.id !== id)
 		const dataBackup = this.state.dataBackup.filter((x: any) => x.id !== id)
@@ -311,7 +293,6 @@ export class TableBVC extends Component<tableProps, tableState> {
 				tableReRenderer: null,
 				data: this.state.dataBackup,
 				globalSearchResults: [],
-				localItemsToAdd: [],
 				localItemsToUpdate: {},
 				globalSearchText: '',
 				showSearchBox: false,
@@ -324,89 +305,6 @@ export class TableBVC extends Component<tableProps, tableState> {
 		)
 	}
 
-	handleSaveInlineRecords = async () => {
-		const { capabilities, columns } = this.props.meta
-		const { add } = capabilities
-		const { fields: fieldsValue } = add
-		const rows = clone(this.state.localItemsToAdd)
-		const fields: any[] = parseFields(columns, fieldsValue)
-			.map((key: any) => {
-				return columns.find((col: any) => col.dataIndex === key)
-			})
-			.filter((field: any) => !!field)
-		const requiredFields: any[] = fields.filter((item: any) => !!item?.field?.required)
-		const requiredFieldsKeyList: string[] = requiredFields.map((field: any) => field.dataIndex)
-		const keyLabelMap: Record<string, string> = {}
-		for (let index = 0; index < requiredFields.length; index++) {
-			const field = requiredFields[index]
-			keyLabelMap[field.dataIndex] = field.headerName
-		}
-
-		const postData = []
-		let haveError = false
-		let errorMsg = ''
-
-		for (let index = 0; index < rows.length; index++) {
-			const row = rows[index]
-			// Make some adjustment for postData
-			delete row.__isItLocalTableRow
-			postData.push(row)
-			const rowKeys = Object.keys(row)
-
-			for (let i = 0; i < rowKeys.length; i++) {
-				const rowKey = rowKeys[i]
-				const rowVal = row[rowKey]
-
-				if (requiredFieldsKeyList.includes(rowKey) && isEmpty(rowVal)) {
-					console.log('Error for:', { rowKey, rowVal })
-					haveError = true
-					errorMsg = `Required field '${keyLabelMap[rowKey]}' missing at row ${index + 1}.`
-					break
-				}
-			}
-
-			if (haveError) break
-		}
-
-		if (haveError) {
-			message.error(errorMsg)
-			return
-		}
-
-		// Now everything is good to execute an ajax req with postData to save
-		// console.log(postData)
-		this.setState({ savingData: true })
-		const hide = message.loading('Saving...', 0)
-		await sleep(4000)
-		const updatedData = postData.concat(this.state.data)
-		this.setState({ savingData: false, data: updatedData, dataBackup: updatedData, localItemsToAdd: [] }, () => {
-			hide()
-			this.performGlobalSearchAgain()
-			message.success('New records saved successfully!')
-		})
-	}
-
-	handleInlineAdd = (event: any) => {
-		event.stopPropagation()
-		const { capabilities, columns } = this.props.meta
-		const { add } = capabilities
-		const { fields: fieldsValue, initialValues = {} } = add
-
-		let fields: string[] = parseFields(columns, fieldsValue)
-
-		const row: Record<string, any> = { id: shortid.generate(), __isItLocalTableRow: true }
-		for (let index = 0; index < fields.length; index++) {
-			const field: string = fields[index]
-			row[field] = initialValues[field]
-		}
-
-		let rows = this.state.localItemsToAdd
-		rows.unshift(row)
-		// console.log(rows)
-
-		this.setState({ tableReRenderer: null }, () => this.setState({ tableReRenderer: shortid.generate(), localItemsToAdd: rows }))
-	}
-
 	render() {
 		const {
 			presentationDrawerData,
@@ -415,19 +313,16 @@ export class TableBVC extends Component<tableProps, tableState> {
 			masterFilterCriteria,
 			tableSettings,
 			loadingData,
-			savingData,
 			updatingData,
-			localItemsToAdd,
 			localItemsToUpdate,
 		} = this.state
 
 		const { meta } = this.props
 		const { capabilities } = meta
-		const actionInProgress = globalSearchLoading || loadingData || savingData || updatingData
-		const commonDisableCase = !isEmpty(localItemsToAdd)
+		const actionInProgress = globalSearchLoading || loadingData || updatingData
+		const commonDisableCase = false // Put logical calculation
 		const commonDisableCaseAsStr = commonDisableCase.toString()
 		const tableData = this.getData()
-		const finalTableData = localItemsToAdd.concat(tableData)
 		let BVCComponent
 
 		if (presentationDrawerData?.bvc) {
@@ -453,27 +348,46 @@ export class TableBVC extends Component<tableProps, tableState> {
 				<Container>
 					<h1 style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
 						{meta.heading}
-						<Tooltip placement='top' title={capabilities.add.label}>
-							<Button
-								type='dashed'
-								shape='circle'
-								icon={<PlusOutlined />}
-								style={{ marginLeft: 10 }}
-								onClick={this.handleInlineAdd}
-							/>
-						</Tooltip>
 
-						{!isEmpty(localItemsToAdd) && (
-							<Tooltip placement='top' title={'Save new records'}>
-								<Button
-									type='dashed'
-									shape='circle'
-									icon={<SaveOutlined />}
-									style={{ marginLeft: 10 }}
-									onClick={this.handleSaveInlineRecords}
-									loading={savingData}
-								/>
-							</Tooltip>
+						{capabilities.add?.bulk?.enable && (
+							<>
+								<Tooltip placement='top' title={capabilities.add?.bulk?.label || 'Add multiple records'}>
+									<Button
+										type='dashed'
+										shape='circle'
+										icon={<PlusOutlined />}
+										style={{ marginLeft: 10 }}
+										onClick={() => this.setState({ bulkAddModal: true })}
+									/>
+								</Tooltip>
+								<Modal
+									title={capabilities.add?.bulk?.label || 'Add multiple records'}
+									visible={this.state.bulkAddModal}
+									onOk={this.closeFilterModal}
+									onCancel={() => this.setState({ bulkAddModal: false })}
+									destroyOnClose={true}
+									closable={true}
+									maskClosable={false}
+									keyboard={false}
+									centered={true}
+									width={'95vw'}
+									bodyStyle={{ height: '83vh', overflow: 'scroll' }}
+								>
+									<BulkAddTable meta={meta} />
+								</Modal>
+							</>
+						)}
+
+						{!isEmpty(localItemsToUpdate) && (
+							<CommitChangesBtn
+								id='table-bvc-commit-inline-changes-btn'
+								style={{ pointerEvents: updatingData ? 'none' : 'auto' }}
+								onClick={this.handleCommitInlineChanges}
+							>
+								<Button style={{ zIndex: -1 }} type='dashed' icon={<SaveOutlined />} loading={updatingData}>
+									Commit changes
+								</Button>
+							</CommitChangesBtn>
 						)}
 					</h1>
 					{/* Search, Download, Filters, Settings, Refresh */}
@@ -660,21 +574,17 @@ export class TableBVC extends Component<tableProps, tableState> {
 				</Drawer>
 
 				{/* Actual Table */}
-				{isEmpty(finalTableData) ? (
+				{isEmpty(tableData) ? (
 					<NotFound />
 				) : (
 					this.state.tableReRenderer && (
 						<ReactTable
 							meta={meta}
-							data={finalTableData}
+							data={tableData}
 							tableSettings={tableSettings}
 							openEditFormDrawer={this.openEditFormDrawer}
 							handleDelete={this.handleDelete}
 							handleSave={this.handleSave}
-							bulkAddIsRunning={!isEmpty(localItemsToAdd)}
-							showCommitChangesButton={!isEmpty(localItemsToUpdate)}
-							updatingData={updatingData}
-							handleCommitInlineChanges={this.handleCommitInlineChanges}
 						/>
 					)
 				)}
@@ -710,4 +620,15 @@ const CapabilitiesContainer: any = styled.div`
 const SearchBox = styled(Input)`
 	margin-right: 10px;
 	transition: all 0.5s ease;
+`
+const CommitChangesBtn = styled.div`
+	z-index: 10;
+	cursor: pointer !important;
+	margin-left: 20px;
+	display: flex;
+	align-items: center;
+	&:hover button {
+		color: blue;
+		border-color: blue;
+	}
 `
