@@ -409,7 +409,7 @@ const TableCellFrom = styled.div`
 	}
 `
 
-const checkIsIdentical = (newVal: any, oldVal: any, column: any) => {
+export const checkIsIdentical = (newVal: any, oldVal: any, column: any) => {
 	const { type } = column.field
 	if (type === 'date' && oldVal) {
 		// If value is not null and field type is date

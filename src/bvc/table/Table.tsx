@@ -363,7 +363,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 								<Modal
 									title={capabilities.add?.bulk?.label || 'Add multiple records'}
 									visible={this.state.bulkAddModal}
-									onOk={this.closeFilterModal}
+									footer={null}
 									onCancel={() => this.setState({ bulkAddModal: false })}
 									destroyOnClose={true}
 									closable={true}
@@ -371,7 +371,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 									keyboard={false}
 									centered={true}
 									width={'95vw'}
-									bodyStyle={{ height: '83vh', overflow: 'scroll' }}
+									bodyStyle={{ height: '83vh', overflowY: 'scroll' }}
 								>
 									<BulkAddTable meta={meta} />
 								</Modal>
