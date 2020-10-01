@@ -8,7 +8,7 @@ import { isEmpty, parseFields, sleep } from '../../utils/helpers'
 import { getFormField } from '../../utils/getFormField'
 import { checkIsIdentical } from './ReactTable'
 
-type CProps = { meta: any }
+type CProps = { meta: any; handleAddNewRecords: (newRecords: any[]) => void; closeModal: () => void }
 
 const BulkAddTable = (props: CProps) => {
 	const meta = React.useMemo(() => props.meta, [props.meta])
@@ -36,7 +36,7 @@ const BulkAddTable = (props: CProps) => {
 	}, [])
 
 	const handleSave = async () => {
-		console.log('Final save call -> ', rows)
+		// console.log('Final save call -> ', rows)
 		const requiredFields: any[] = fieldsWithInfo.filter((item: any) => !!item?.field?.required)
 		const requiredFieldsKeyList: string[] = requiredFields.map((field: any) => field.dataIndex)
 		const keyLabelMap: Record<string, string> = {}
@@ -75,13 +75,16 @@ const BulkAddTable = (props: CProps) => {
 			return
 		}
 
-		// Now everything is good to execute an ajax req with postData to save
-		console.log(postData)
 		setSaving(true)
 		const hide = message.loading('Saving...', 0)
-		await sleep(4000)
-		setSaving(false)
+		// Now everything is good to execute an ajax req with postData to save
+		console.log({ postData })
+		await sleep(3000) // simulating ajax
 		hide()
+		props.handleAddNewRecords(postData)
+		await sleep(300) // So that table update happen at background
+		setSaving(false)
+		props.closeModal()
 	}
 
 	const handleAdd = async () => {
@@ -101,11 +104,11 @@ const BulkAddTable = (props: CProps) => {
 	}
 
 	const handleUpdate = React.useCallback((updates: any, rowIndex: number) => {
-		console.log('Field update called ->', updates)
+		// console.log('Field update called ->', updates)
 		setRows((prevRows: any[]) => {
-			console.log('Working on Rows:->', prevRows)
+			// console.log('Working on Rows:->', prevRows)
 			prevRows[rowIndex] = { ...prevRows[rowIndex], ...updates }
-			console.log('Finished Row Update:->', prevRows)
+			// console.log('Finished Row Update:->', prevRows)
 			return [...prevRows]
 		})
 	}, [])
@@ -119,10 +122,10 @@ const BulkAddTable = (props: CProps) => {
 
 	const handleCopy = (rowIndex: number) => {
 		setRows((prevRows: any[]) => {
-			console.log('Working on Rows:->', prevRows)
+			// console.log('Working on Rows:->', prevRows)
 			const rowToCopy = { ...prevRows[rowIndex], id: shortid.generate() }
 			prevRows.splice(prevRows.length, 0, rowToCopy)
-			console.log('Finished Row Copy:->', prevRows)
+			// console.log('Finished Row Copy:->', prevRows)
 			return [...prevRows]
 		})
 	}
@@ -191,7 +194,7 @@ const BulkAddTable = (props: CProps) => {
 	)
 }
 
-export default React.memo(BulkAddTable)
+export default BulkAddTable
 
 interface CellProps {
 	value: any
@@ -219,13 +222,10 @@ const Cell = React.memo(
 			props.handleUpdate(updates, rowIndex)
 		}
 
-		const save = () => {
-			console.log('Form submit called!')
-			form.submit()
-		}
+		const save = () => form.submit()
 
 		const initialValues = { [dataIndex]: value }
-		console.log('Rendering Cell Component...')
+
 		return (
 			<TableCellFrom>
 				<Form form={form} component={false} onFinish={onFinish}>

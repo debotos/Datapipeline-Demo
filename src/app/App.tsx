@@ -2,11 +2,11 @@ import React, { Component } from 'react'
 import { Router, Switch, Route } from 'react-router-dom'
 import axios from 'axios'
 import { Spin } from 'antd'
-import { Provider } from 'react-redux'
+// import { Provider } from 'react-redux'
 import { createBrowserHistory as createHistory } from 'history'
 
 import './App.scss'
-import store from '../redux/store'
+// import store from '../redux/store'
 import META from '../utils/metadata.json'
 import Table from '../bvc/table/Table'
 
@@ -44,13 +44,13 @@ export class App extends Component<any, CState> {
 
 		return (
 			<>
-				<Provider store={store}>
-					<Router history={history}>
-						<Switch>
-							<Route exact path='/' render={(props) => <Table meta={META} data={this.state.data} {...props} />} />
-						</Switch>
-					</Router>
-				</Provider>
+				{/* <Provider store={store}> */}
+				<Router history={history}>
+					<Switch>
+						<Route exact path='/' render={(props) => <Table meta={META} data={this.state.data} {...props} />} />
+					</Switch>
+				</Router>
+				{/* </Provider> */}
 			</>
 		)
 	}

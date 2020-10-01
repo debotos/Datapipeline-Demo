@@ -38,6 +38,7 @@ type tableState = {
 	searchedColumn: string
 	addFormDrawer: boolean
 	editFormDrawer: boolean
+	editingItemIndex?: number
 	editingItemData: any
 	presentationDrawer: boolean
 	presentationDrawerData: any
@@ -101,6 +102,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 			searchedColumn: '',
 			addFormDrawer: false,
 			editFormDrawer: false,
+			editingItemIndex: null,
 			editingItemData: null,
 			presentationDrawer: false,
 			presentationDrawerData: null,
@@ -120,8 +122,9 @@ export class TableBVC extends Component<tableProps, tableState> {
 	closeSettingModal = () => this.setState({ settingModal: false })
 	openAddFormDrawer = () => this.setState({ addFormDrawer: true })
 	closeAddFormDrawer = () => this.setState({ addFormDrawer: false })
-	openEditFormDrawer = (record: any) => this.setState({ editingItemData: record, editFormDrawer: true })
-	closeEditFormDrawer = () => this.setState({ editFormDrawer: false, editingItemData: null })
+	openEditFormDrawer = (rowIndex: number, record: any) =>
+		this.setState({ editingItemIndex: rowIndex, editingItemData: record, editFormDrawer: true })
+	closeEditFormDrawer = () => this.setState({ editingItemIndex: null, editFormDrawer: false, editingItemData: null })
 	openPresentationDrawer = (record: any) => this.setState({ presentationDrawerData: record, presentationDrawer: true })
 	closePresentationDrawer = () => this.setState({ presentationDrawer: false, presentationDrawerData: null })
 
@@ -153,52 +156,70 @@ export class TableBVC extends Component<tableProps, tableState> {
 		})
 	}
 
-	handleSave = (row: any, origin: 'inline-add' | 'inline-edit' | 'side-drawer-edit') => {
-		// console.log(row, origin)
-
-		const data = this.state.data.map((x: any) => {
-			if (x.id === row.id) {
-				if (origin === 'inline-edit') {
-					this.handleSavePostScript(row, x)
-				}
-				return { ...x, ...row }
-			}
-			return x
-		})
+	handleSave = (rowIndex: number, updates: any, origin: 'inline-edit' | 'side-drawer-edit') => {
+		// console.log(rowIndex, row, origin)
 
 		if (origin === 'side-drawer-edit') {
-			const dataBackup = this.state.dataBackup.map((x: any) => {
-				if (x.id === row.id) return { ...x, ...row }
-				return x
+			// update the 'dataBackup' manually for side drawer
+			this.setState((prevState) => {
+				const dataBackup = prevState.dataBackup
+				dataBackup[rowIndex] = { ...dataBackup[rowIndex], ...updates }
+				return { dataBackup: [...dataBackup] }
 			})
-			this.setState({ dataBackup })
 		}
 
-		this.setState({ data }, this.performGlobalSearchAgain)
+		const localItemsChanges: Record<string, any> = {}
+
+		this.setState((prevState) => {
+			const data = prevState.data
+			const originalData = data[rowIndex]
+			if (origin === 'inline-edit') {
+				localItemsChanges[updates.id] = { ...originalData, ...updates }
+			}
+			data[rowIndex] = { ...originalData, ...updates }
+
+			return { data: [...data] }
+		}, this.performGlobalSearchAgain)
+
+		this.setState({ localItemsToUpdate: { ...this.state.localItemsToUpdate, ...localItemsChanges } })
+
 		message.info('Changes staged for commit!', 1.5)
 	}
 
-	handleSavePostScript = (row: any, originalData: any) => {
-		if (row.hasOwnProperty('__dirtyLocalCells')) {
-			const localItemsToUpdate = clone(this.state.localItemsToUpdate)
-			localItemsToUpdate[row.id] = { ...originalData, ...row }
-			this.setState({ localItemsToUpdate })
-		}
-	}
-
-	handleAdd = (row: any) => {
+	handleAddSingleRecord = (row: any) => {
 		// console.log(row)
 		const { data, dataBackup } = this.state
+		// Ajax call here
 		this.setState({ data: [row, ...data], dataBackup: [row, ...dataBackup] }, this.performGlobalSearchAgain)
 		message.success('Successfully added the record!', 1.5)
 	}
 
-	handleDelete = (row: any) => {
-		const { id } = row
-		/* If it is not local */
-		const data = this.state.data.filter((x: any) => x.id !== id)
-		const dataBackup = this.state.dataBackup.filter((x: any) => x.id !== id)
-		this.setState({ data, dataBackup }, this.performGlobalSearchAgain)
+	handleAddNewRecords = (newRecords: any[]) => {
+		if (isEmpty(newRecords)) return
+		const updatedData = newRecords.concat(this.state.data)
+		this.setState({ data: updatedData, dataBackup: updatedData }, () => {
+			this.performGlobalSearchAgain()
+			message.success('New records saved successfully!')
+		})
+	}
+
+	handleDelete = (rowIndex: number) => {
+		this.setState(
+			(prevState) => {
+				const data = prevState.data
+				data.splice(rowIndex, 1)
+				return { data: [...data] }
+			},
+			() => {
+				this.performGlobalSearchAgain()
+				this.setState((prevState) => {
+					const dataBackup = prevState.dataBackup
+					dataBackup.splice(rowIndex, 1)
+					return { dataBackup: [...dataBackup] }
+				})
+			}
+		)
+
 		message.info('Successfully deleted the record!', 1.5)
 	}
 
@@ -373,7 +394,11 @@ export class TableBVC extends Component<tableProps, tableState> {
 									width={'95vw'}
 									bodyStyle={{ height: '83vh', overflowY: 'scroll' }}
 								>
-									<BulkAddTable meta={meta} />
+									<BulkAddTable
+										meta={meta}
+										handleAddNewRecords={this.handleAddNewRecords}
+										closeModal={() => this.setState({ bulkAddModal: false })}
+									/>
 								</Modal>
 							</>
 						)}
@@ -540,7 +565,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 					visible={this.state.addFormDrawer}
 					onClose={this.closeAddFormDrawer}
 				>
-					<AddForm metadata={meta} handleAdd={this.handleAdd} closeDrawer={this.closeAddFormDrawer} />
+					<AddForm metadata={meta} handleAdd={this.handleAddSingleRecord} closeDrawer={this.closeAddFormDrawer} />
 				</Drawer>
 
 				{/* Edit Form Drawer */}
@@ -555,6 +580,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 					>
 						<EditForm
 							metadata={meta}
+							editingItemIndex={this.state.editingItemIndex}
 							initialValues={this.state.editingItemData}
 							handleSave={this.handleSave}
 							closeDrawer={this.closeEditFormDrawer}

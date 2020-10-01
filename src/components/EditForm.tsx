@@ -5,8 +5,9 @@ import { getFormField } from '../utils/getFormField'
 
 type CProps = {
 	metadata: any
+	editingItemIndex?: number
 	initialValues: any
-	handleSave(row: any, origin: 'inline-add' | 'inline-edit' | 'side-drawer-edit'): void
+	handleSave(rowIndex: number, row: any, origin: 'inline-edit' | 'side-drawer-edit'): void
 	closeDrawer(): void
 }
 
@@ -17,13 +18,13 @@ export default function EditForm(props: CProps) {
 	// To disable submit button at the beginning.
 	useEffect(() => forceUpdate({}), [])
 
-	const { metadata, initialValues } = props
+	const { metadata, editingItemIndex, initialValues } = props
 	const { columns, capabilities } = metadata
 	const { label } = capabilities.edit
 
 	const onFinish = (values: any) => {
 		console.log('Finish:', values)
-		props.handleSave({ ...initialValues, ...values }, 'side-drawer-edit')
+		props.handleSave(editingItemIndex, { ...initialValues, ...values }, 'side-drawer-edit')
 		props.closeDrawer()
 	}
 

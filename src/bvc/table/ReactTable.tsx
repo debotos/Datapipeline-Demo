@@ -1,6 +1,6 @@
 import React from 'react'
 import moment from 'moment'
-import { isArray, uniq } from 'lodash'
+import { isArray, isEqual, uniq } from 'lodash'
 import styled from 'styled-components'
 import { useSticky } from 'react-table-sticky'
 import { Form, Button, Pagination, Popconfirm, Row, Tooltip, message } from 'antd'
@@ -11,8 +11,9 @@ import { isEmpty, sleep } from '../../utils/helpers'
 import { getFormField } from '../../utils/getFormField'
 
 function ReactTable(props: any) {
-	const { meta, data, tableSettings, bulkAddIsRunning, handleSave } = props
-	const { capabilities } = meta
+	const { data, tableSettings } = props
+	const meta = React.useMemo(() => props.meta, [props.meta])
+	const capabilities = React.useMemo(() => meta.capabilities, [meta.capabilities])
 	const { pagination } = capabilities
 
 	const getColumnsDef = () => {
@@ -34,16 +35,15 @@ function ReactTable(props: any) {
 						headerClassName: 'sticky',
 						Cell: (args: any) => {
 							const { row } = args
-							const local = row?.original?.__isItLocalTableRow
 							return (
 								<ActionContainer>
-									{capabilities.edit?.enable && !local && (
-										<Button type='link' size='small' onClick={() => openEditFormDrawer(row.original)}>
+									{capabilities.edit?.enable && (
+										<Button type='link' size='small' onClick={() => openEditFormDrawer(row.index, row.original)}>
 											<EditOutlined />
 										</Button>
 									)}
 									{capabilities.delete && (
-										<Popconfirm title='Sure to delete?' placement='left' onConfirm={() => handleDelete(row.original)}>
+										<Popconfirm title='Sure to delete?' placement='left' onConfirm={() => handleDelete(row.index)}>
 											<Button type='link' size='small' style={{ color: 'tomato' }} icon={<DeleteOutlined />} />
 										</Popconfirm>
 									)}
@@ -71,13 +71,30 @@ function ReactTable(props: any) {
 		return value
 	}
 
+	const handleSave = React.useCallback((...args) => {
+		props.handleSave(...args)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [])
+
 	// Set our editable cell renderer as the default Cell renderer
 	const defaultColumn = { minWidth: 100, maxWidth: 400, Cell: EditableCell }
 	const columns = React.useMemo(getColumnsDef, [tableSettings?.hide])
 	const tableData = React.useMemo(() => data, [data])
+	const pageSize = React.useMemo(() => {
+		const val = localStorage.getItem('PAGINATION_PAGE_SIZE') || capabilities?.pagination?.defaultPageSize
+		if (isNaN(val)) return capabilities?.pagination?.pageSizeOptions?.[0] || 15
+		return val
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [])
 
 	const tableInstance = useTable(
-		{ columns, data: tableData, defaultColumn, handleSave, disableSortBy: bulkAddIsRunning },
+		{
+			columns,
+			data: tableData,
+			defaultColumn,
+			initialState: { pageSize },
+			handleSave,
+		},
 		useBlockLayout,
 		useSticky,
 		useResizeColumns,
@@ -92,7 +109,7 @@ function ReactTable(props: any) {
 	} = tableInstance // For pagination
 
 	React.useEffect(() => {
-		console.log(`Rendering due to changes...`, props)
+		console.log(`ReactTable Rendering...`)
 	})
 
 	return (
@@ -151,7 +168,7 @@ function ReactTable(props: any) {
 												}
 											}
 
-											return sortable && !bulkAddIsRunning ? (
+											return sortable ? (
 												<Tooltip key={index} placement='top' title={tooltip}>
 													{tableHeaderElement}
 												</Tooltip>
@@ -200,6 +217,7 @@ function ReactTable(props: any) {
 							onChange={(page) => gotoPage(page - 1)}
 							onShowSizeChange={(current, size) => {
 								setPageSize(size)
+								localStorage.setItem('PAGINATION_PAGE_SIZE', '' + size)
 								gotoPage(current)
 							}}
 							showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
@@ -212,10 +230,25 @@ function ReactTable(props: any) {
 	)
 }
 
-// true = Not update
-// false = Update
-// (prevState: any, nextState: any) => { return false }
-export default React.memo(ReactTable)
+export default React.memo(ReactTable, (prevProps: any, nextProps: any) => {
+	const { data: prevData } = prevProps
+	const { data: nextData } = nextProps
+
+	const { tableSettings: prevTableSettings } = prevProps
+	const { tableSettings: nextTableSettings } = nextProps
+
+	const dataSetIsSame = prevData.length === nextData.length
+	const tableSettingsIsSame = isEqual(prevTableSettings, nextTableSettings)
+	console.log(prevData.length, nextData.length)
+	// true -> props are equal
+	// false -> props are not equal -> update the component
+	const propsAreSame = dataSetIsSame && tableSettingsIsSame
+	// if (!propsAreSame) {
+	// 	console.log('Re-rendering EditableCell!')
+	// }
+
+	return propsAreSame
+})
 
 const ActionContainer = styled.div`
 	display: flex;
@@ -248,141 +281,162 @@ const ResizingElement = styled.span`
 `
 
 // Create an editable cell renderer
-const EditableCell = (cellProps: any) => {
-	// 'handleSave' is the custom function that we supplied to our table instance
-	const { value: initialValue, row, column, handleSave } = cellProps
-	const { __isItLocalTableRow = false, __dirtyLocalCells = [] } = row.original
-	const { dataIndex, field } = column
-	const [form] = Form.useForm()
-	const inputRef = React.useRef<any>()
-	const _isMounted = React.useRef(false)
-	const tableCellWrapperRef = React.useRef<any>()
-	// We need to keep and update the editing state of the cell
-	const [editing, setEditing] = React.useState(__isItLocalTableRow)
-	// We need to keep and update the value of the cell
-	const [value, setValue] = React.useState(initialValue)
-	// Keep track of edited or not
-	const [isThisCellDirty, setIsThisCellDirty] = React.useState(__dirtyLocalCells.includes(dataIndex))
+const EditableCell = React.memo(
+	(cellProps: any) => {
+		// 'handleSave' is the custom function that we supplied to our table instance
+		const { value: initialValue, row, column, handleSave } = cellProps
+		const { __dirtyLocalCells = [] } = row.original
+		const { dataIndex, field } = column
+		const [form] = Form.useForm()
+		const inputRef = React.useRef<any>()
+		const _isMounted = React.useRef(false)
+		const tableCellWrapperRef = React.useRef<any>()
+		// We need to keep and update the editing state of the cell
+		const [editing, setEditing] = React.useState(false)
+		// We need to keep and update the value of the cell
+		const [value, setValue] = React.useState(initialValue)
+		// Keep track of edited or not
+		const [isThisCellDirty, setIsThisCellDirty] = React.useState(__dirtyLocalCells.includes(dataIndex))
 
-	React.useEffect(() => {
-		_isMounted.current = true
+		React.useEffect(() => {
+			console.log(`EditableCell Rendering...`)
+		})
 
-		return () => {
-			_isMounted.current = false
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
+		React.useEffect(() => {
+			_isMounted.current = true
+			_isMounted.current && setIsThisCellDirty(__dirtyLocalCells.includes(dataIndex))
+			_isMounted.current && setValue(initialValue)
 
-	React.useEffect(() => {
-		setValue(initialValue)
-	}, [initialValue])
+			return () => {
+				_isMounted.current = false
+			}
+			// eslint-disable-next-line react-hooks/exhaustive-deps
+		}, [])
 
-	React.useEffect(() => {
-		setIsThisCellDirty(__dirtyLocalCells.includes(dataIndex))
-	}, [__dirtyLocalCells, dataIndex])
+		React.useEffect(() => {
+			if (editing) {
+				// If 'editing' is 'true'
+				inputRef?.current?.focus?.()
+				// And subscribe to listen 'click' event
+				document.addEventListener('click', handleCellLeave)
+			}
 
-	React.useEffect(() => {
-		setEditing(__isItLocalTableRow)
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [__isItLocalTableRow])
+			return () => {
+				// Unsubscribe event
+				document.removeEventListener('click', handleCellLeave)
+			}
+			// eslint-disable-next-line react-hooks/exhaustive-deps
+		}, [editing])
 
-	React.useEffect(() => {
-		if (editing && !__isItLocalTableRow) {
-			// If 'editing' is 'true' and it's not a local row then focus the input field
-			inputRef?.current?.focus?.()
-			// And subscribe to listen 'click' event
-			document.addEventListener('click', handleCellLeave)
-		}
+		React.useEffect(() => {
+			_isMounted.current && setIsThisCellDirty(__dirtyLocalCells.includes(dataIndex))
+			_isMounted.current && setValue(initialValue)
+		}, [row.id, dataIndex, initialValue, __dirtyLocalCells])
 
-		return () => {
-			// Unsubscribe event
-			document.removeEventListener('click', handleCellLeave)
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [editing])
+		const handleCellClick = () => _isMounted.current && !editing && setEditing(true)
+		const toggleEdit = () => _isMounted.current && setEditing(!editing)
+		const checkFieldsError = () => !!form.getFieldsError().filter(({ errors }) => errors.length).length
 
-	const handleCellClick = () => _isMounted.current && !editing && setEditing(true)
-	const toggleEdit = () => _isMounted.current && setEditing(!editing)
-	const checkFieldsError = () => !!form.getFieldsError().filter(({ errors }) => errors.length).length
+		// If form has no error then this function will trigger
+		const onFinish = async (values: any) => {
+			// console.log('Cell edit finished: ', values)
+			const newValue = values[dataIndex]
+			const identical = checkIsIdentical(value, newValue, column)
+			if (identical) return toggleEdit()
 
-	// If form has no error then this function will trigger
-	const onFinish = async (values: any) => {
-		// console.log('Cell edit finished: ', values)
-		const newValue = values[dataIndex]
-		const identical = checkIsIdentical(value, newValue, column)
-		if (identical) {
-			if (__isItLocalTableRow) return
-			return toggleEdit()
-		}
-
-		const { id } = row.original
-		const updates: Record<string, any> = { id, [dataIndex]: newValue, __isItLocalTableRow }
-		if (!__isItLocalTableRow) {
-			// dirty concept is not available for local record that is a part of bulk add
+			const { id } = row.original
+			const updates: Record<string, any> = { id, [dataIndex]: newValue }
+			// dirty concept
 			updates['__dirtyLocalCells'] = uniq([dataIndex, ...__dirtyLocalCells])
+
+			handleSave(row.index, updates, 'inline-edit')
+			_isMounted.current && setValue(newValue)
+			_isMounted.current && setIsThisCellDirty(true)
+			await sleep(200) // Just for visual
+			_isMounted.current && setEditing(false)
 		}
 
-		const handleSaveFuncOrigin = __isItLocalTableRow ? 'inline-add' : 'inline-edit'
-		handleSave(updates, handleSaveFuncOrigin)
-		await sleep(200) // Just for visual
-		_isMounted.current && !__isItLocalTableRow && setEditing(false)
-	}
+		const handleCellLeave = (event: any) => {
+			if (!editing) return // Only continue if editing
+			// If it is a commit changes button click then just leave executing
+			if (['table-bvc-commit-inline-changes-btn'].includes(event?.target?.id)) return toggleEdit()
+			if (!tableCellWrapperRef || !field) return
 
-	const handleCellLeave = (event: any) => {
-		if (!editing) return // Only continue if editing
-		// If it is a commit changes button click then just leave executing
-		if (['table-bvc-commit-inline-changes-btn'].includes(event?.target?.id)) return toggleEdit()
-		if (!tableCellWrapperRef || !field) return
+			var isInsideClick = tableCellWrapperRef?.current?.contains?.(event.target)
+			if (isInsideClick === null) return // It have to be either true or false
 
-		var isInsideClick = tableCellWrapperRef?.current?.contains?.(event.target)
-		if (isInsideClick === null) return // It have to be either true or false
-
-		if (!isInsideClick) {
-			// Click occurred outside the 'cell from element'
-			const haveFieldError = checkFieldsError()
-			if (haveFieldError) {
-				// If field error exist just toggle 'edit mode' to 'view mode' to discard changes
-				// Don't apply if it's a local field
-				toggleEdit()
-				form.resetFields()
-				message.warning('Changes discarded due to field error.')
-			} else {
-				const { type, editable } = field
-				// Else trigger 'save' for radio, checkbox, boolean field
-				// As they don't have 'onBlur' or 'onKeyboardEnter' event as like 'text' field
-				// This condition will also prevent triggering save() twice for some specific field like 'text', 'date', 'email' etc.
-				// One trigger from here another from onBlur/onChange/onKeyboardEnter
-				if (editable && (type === 'radio' || type === 'checkbox' || type === 'boolean')) {
-					save()
+			if (!isInsideClick) {
+				// Click occurred outside the 'cell from element'
+				const haveFieldError = checkFieldsError()
+				if (haveFieldError) {
+					// If field error exist just toggle 'edit mode' to 'view mode' to discard changes
+					toggleEdit()
+					form.resetFields()
+					message.warning('Changes discarded due to field error.')
+				} else {
+					const { type, editable } = field
+					// Else trigger 'save' for radio, checkbox, boolean field
+					// As they don't have 'onBlur' or 'onKeyboardEnter' event as like 'text' field
+					// This condition will also prevent triggering save() twice for some specific field like 'text', 'date', 'email' etc.
+					// One trigger from here another from onBlur/onChange/onKeyboardEnter
+					if (editable && (type === 'radio' || type === 'checkbox' || type === 'boolean')) {
+						save()
+					}
 				}
 			}
 		}
+
+		const save = () => {
+			console.log('Submit got called!')
+			form.submit()
+		}
+
+		const initialValues = { [dataIndex]: value }
+
+		const tableCellContent = editing ? (
+			<TableCellFrom>
+				<Form form={form} component={false} onFinish={onFinish}>
+					{getFormField('inline-edit', column, form, initialValues, true, inputRef, save, toggleEdit)}
+				</Form>
+			</TableCellFrom>
+		) : (
+			<TableCellData>{transformValueToDisplay(cellProps)}</TableCellData>
+		)
+
+		return (
+			<TableCellWrapper
+				ref={tableCellWrapperRef}
+				onClick={handleCellClick}
+				style={{ background: isThisCellDirty && 'lightcyan' }}
+			>
+				{tableCellContent}
+			</TableCellWrapper>
+		)
+	},
+	(prevProps: any, nextProps: any) => {
+		const { id: prevRowID } = prevProps.row.original
+		const { id: nextRowID } = nextProps.row.original
+
+		const { dataIndex: prevDataIndex } = prevProps.column
+		const { dataIndex: nextDataIndex } = nextProps.column
+
+		const { value: prevValue } = prevProps
+		const { value: nextValue } = nextProps
+
+		const rowIsSame = prevRowID === nextRowID
+		const dataIndexIsSame = prevDataIndex === nextDataIndex
+		const valueIsSame = prevValue === nextValue
+
+		// true -> props are equal
+		// false -> props are not equal -> update the component
+		const propsAreSame = rowIsSame && dataIndexIsSame && valueIsSame
+		// if (!propsAreSame) {
+		// 	console.log('Re-rendering EditableCell!')
+		// }
+
+		return propsAreSame
 	}
-
-	const save = () => {
-		console.log('Submit got called!')
-		form.submit()
-	}
-
-	const initialValues = { [dataIndex]: value }
-	const formType = __isItLocalTableRow ? 'inline-add' : 'inline-edit'
-
-	const tableCellContent = editing ? (
-		<TableCellFrom>
-			<Form form={form} component={false} onFinish={onFinish}>
-				{getFormField(formType, column, form, initialValues, true, inputRef, save, toggleEdit)}
-			</Form>
-		</TableCellFrom>
-	) : (
-		<TableCellData>{transformValueToDisplay(cellProps)}</TableCellData>
-	)
-
-	return (
-		<TableCellWrapper ref={tableCellWrapperRef} onClick={handleCellClick} style={{ background: isThisCellDirty && 'lightcyan' }}>
-			{tableCellContent}
-		</TableCellWrapper>
-	)
-}
+)
 
 const TableCellWrapper = styled.div`
 	min-width: 100%;
@@ -393,7 +447,6 @@ const TableCellData: any = styled.div`
 	height: 100%;
 	min-height: 29px;
 	padding: 0.25em 0.5em;
-	/* background: ${(props: any) => props.local === true && 'lightcyan'}; */
 	/* Truncate */
 	text-overflow: ellipsis;
 	overflow: hidden;
