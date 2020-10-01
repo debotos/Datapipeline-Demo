@@ -1,18 +1,21 @@
 import React from 'react'
 import { clone } from 'ramda'
 import shortid from 'shortid'
-import { isEqual } from 'lodash'
 import styled from 'styled-components'
+import { useSelector, useDispatch } from 'react-redux'
 import { Button, Form, message, Popconfirm, Row, Tooltip } from 'antd'
 import { CopyOutlined, DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
 
 import { isEmpty, parseFields, sleep } from '../../utils/helpers'
+import { setBulkAddRows } from '../../redux/slices/tableBulkAddSlice'
+import { AppDispatch, RootState } from '../../redux/store'
 import { getFormField } from '../../utils/getFormField'
 import { checkIsIdentical } from './ReactTable'
 
 type CProps = { meta: any }
 
 const BulkAddTable = (props: CProps) => {
+	const dispatch: AppDispatch = useDispatch()
 	const meta = React.useMemo(() => props.meta, [props.meta])
 	const initialValues = React.useMemo(() => meta.capabilities.add.initialValues || {}, [meta.capabilities.add.initialValues])
 	const addFormFields = React.useMemo(() => meta.capabilities.add.fields, [meta.capabilities.add.fields])
@@ -28,7 +31,7 @@ const BulkAddTable = (props: CProps) => {
 				.filter((field: any) => !!field),
 		[fields, columns]
 	)
-	const [rows, setRows] = React.useState<any[]>([])
+	const rows = useSelector((state: RootState) => state.tableBulkAddRows)
 	const [saving, setSaving] = React.useState<boolean>(false)
 	const [adding, setAdding] = React.useState<boolean>(false)
 
@@ -94,33 +97,33 @@ const BulkAddTable = (props: CProps) => {
 			row[field] = initialValues[field]
 		}
 
-		const newRows = [row, ...rows]
-		setRows(newRows)
+		const newRows = [...rows, row]
+		dispatch(setBulkAddRows(newRows))
 		await sleep(500)
 		setAdding(false)
 	}
 
-	const handleUpdate = (updates: any, rowIndex: number) => {
+	const handleUpdate = React.useCallback((updates: any, rowIndex: number) => {
 		console.log('Field update called ->', updates)
-		console.log('Working on Rows:->', rows)
 		const rowsCopy = clone(rows)
-		const affectedRow = rowsCopy[rowIndex]
-		const updatedRow = { ...affectedRow, ...updates }
-		rowsCopy.splice(rowIndex, 1, updatedRow)
-		setRows(rowsCopy)
-	}
+		console.log('Working on Rows:->', rowsCopy)
+		rowsCopy[rowIndex] = updates
+		console.log('Finished Row Update:->', rowsCopy)
+		dispatch(setBulkAddRows(rowsCopy))
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [])
 
 	const handleDelete = (rowIndex: number) => {
 		const rowsCopy = clone(rows)
 		rowsCopy.splice(rowIndex, 1)
-		setRows(rowsCopy)
+		dispatch(setBulkAddRows(rowsCopy))
 	}
 
 	const handleCopy = (rowIndex: number) => {
 		const rowsCopy = clone(rows)
 		const rowToCopy = { ...rowsCopy[rowIndex], id: shortid.generate() }
 		rowsCopy.splice(rowIndex + 1, 0, rowToCopy)
-		setRows(rowsCopy)
+		dispatch(setBulkAddRows(rowsCopy))
 	}
 
 	return (
@@ -212,7 +215,7 @@ const Cell = React.memo(
 
 			const { id } = row
 			const updates: Record<string, any> = { id, [dataIndex]: newValue }
-			props.handleUpdate(updates, rowIndex)
+			props.handleUpdate({ ...row, ...updates }, rowIndex)
 		}
 
 		const save = () => {
@@ -231,17 +234,18 @@ const Cell = React.memo(
 		)
 	},
 	(prevProps: CellProps, nextProps: CellProps) => {
+		const { id: prevRowID } = prevProps.row
+		const { id: nextRowID } = nextProps.row
+
 		const { dataIndex: prevDataIndex } = prevProps.column
 		const { dataIndex: nextDataIndex } = nextProps.column
 
 		const { value: prevValue } = prevProps
 		const { value: nextValue } = nextProps
 
-		const rowDataIsSame = isEqual(prevProps.row, nextProps.row)
-		console.log({ rowDataIsSame })
 		// true -> props are equal
 		// false -> props are not equal -> update the component
-		const propsAreSame = rowDataIsSame && prevDataIndex === nextDataIndex && prevValue === nextValue
+		const propsAreSame = prevRowID === nextRowID && prevDataIndex === nextDataIndex && prevValue === nextValue
 		// if (!propsAreSame) {
 		// 	console.log('Re-rendering bulk add cell!')
 		// }
