@@ -561,7 +561,18 @@ export class TableBVC extends Component<tableProps, tableState> {
 					<Modal
 						title='Master Filter'
 						visible={this.state.filterModal}
-						onOk={this.closeFilterModal}
+						okButtonProps={{ loading: working }}
+						onOk={async () => {
+							const hide = message.loading('Filtering data...', 0)
+							await sleep(200)
+							this.setState({ working: true, tableRowsReRender: true }, () => {
+								this.reRenderTable()
+								this.setState({ working: false, tableRowsReRender: false }, () => {
+									this.closeFilterModal()
+									hide()
+								})
+							})
+						}}
 						onCancel={() => {
 							this.setState({ masterFilterCriteria: null, tableRowsReRender: true }, () => {
 								this.reRenderTable()
@@ -610,10 +621,6 @@ export class TableBVC extends Component<tableProps, tableState> {
 												delete update[dataIndex]
 												this.setState({ masterFilterCriteria: update })
 											}
-											this.setState({ tableRowsReRender: true }, () => {
-												this.reRenderTable()
-												this.setState({ tableRowsReRender: false })
-											})
 										}}
 										className='table-bvc-master-filter-input-group'
 									/>
@@ -627,8 +634,24 @@ export class TableBVC extends Component<tableProps, tableState> {
 					<Modal
 						title='Settings'
 						visible={this.state.settingModal}
-						onOk={this.closeSettingModal}
-						onCancel={this.closeSettingModal}
+						onOk={async () => {
+							const hide = message.loading('Processing column...', 0)
+							await sleep(200)
+							this.setState({ working: true, tableRowsReRender: true }, () => {
+								this.reRenderTable()
+								this.setState({ working: false, tableRowsReRender: false }, () => {
+									this.closeSettingModal()
+									hide()
+								})
+							})
+						}}
+						onCancel={() => {
+							this.setState({ tableSettings: meta.capabilities?.setting?.props, tableRowsReRender: true }, () => {
+								this.reRenderTable()
+								this.setState({ tableRowsReRender: false })
+							})
+							this.closeSettingModal()
+						}}
 						destroyOnClose={true}
 						style={{ top: 25 }}
 						bodyStyle={{ height: '80vh', overflow: 'scroll' }}

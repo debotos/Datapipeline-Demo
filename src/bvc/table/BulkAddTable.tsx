@@ -1,5 +1,6 @@
 import React from 'react'
 import shortid from 'shortid'
+import { isEqual } from 'lodash'
 import styled from 'styled-components'
 import { Button, Form, message, Popconfirm, Row, Tooltip } from 'antd'
 import { CopyOutlined, DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
@@ -246,7 +247,7 @@ const Cell = React.memo(
 
 		// true -> props are equal
 		// false -> props are not equal -> update the component
-		const propsAreSame = prevRowID === nextRowID && prevDataIndex === nextDataIndex && prevValue === nextValue
+		const propsAreSame = prevRowID === nextRowID && prevDataIndex === nextDataIndex && isEqual(prevValue, nextValue)
 		// if (!propsAreSame) {
 		// 	console.log('Re-rendering bulk add cell!')
 		// }

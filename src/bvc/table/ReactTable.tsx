@@ -14,9 +14,10 @@ import { getFormField } from '../../utils/getFormField'
 const { KEY_BVC_TABLE_PAGINATION_PAGE_SIZE, KEY_BVC_TABLE_PAGINATION_CURRENT_PAGE } = keys
 
 function ReactTable(props: any) {
-	const { data, tableSettings, handleSave } = props
+	const { data, handleSave } = props
 	const meta = React.useMemo(() => props.meta, [props.meta])
 	const capabilities = React.useMemo(() => meta.capabilities, [meta.capabilities])
+	const tableSettings = React.useMemo(() => props.tableSettings, [props.tableSettings])
 	const { pagination } = capabilities
 
 	const getColumnsDef = () => {
@@ -76,7 +77,7 @@ function ReactTable(props: any) {
 
 	// Set our editable cell renderer as the default Cell renderer
 	const defaultColumn = { minWidth: 100, maxWidth: 400, Cell: EditableCell }
-	const columns = React.useMemo(getColumnsDef, [tableSettings?.hide])
+	const columns = React.useMemo(getColumnsDef, [])
 	const tableData = React.useMemo(() => data, [data])
 	const initPageSize = React.useMemo(() => {
 		const val = localStorage.getItem(KEY_BVC_TABLE_PAGINATION_PAGE_SIZE) || capabilities?.pagination?.defaultPageSize
@@ -241,14 +242,9 @@ function ReactTable(props: any) {
 }
 
 export default React.memo(ReactTable, (prevProps: any, nextProps: any) => {
-	const { tableSettings: prevTableSettings } = prevProps
-	const { tableSettings: nextTableSettings } = nextProps
-
-	const tableSettingsIsSame = isEqual(prevTableSettings, nextTableSettings)
-
 	// true -> props are equal
 	// false -> props are not equal -> update the component
-	const propsAreSame = tableSettingsIsSame && nextProps.tableRowsReRender !== true // If 'nextProps.tableRowsReRender' is true, I want a reRender
+	const propsAreSame = nextProps.tableRowsReRender !== true // If 'nextProps.tableRowsReRender' is true, I want a reRender
 	if (!propsAreSame) {
 		console.log('Re-rendering ReactTable!')
 	}
@@ -418,10 +414,11 @@ const EditableCell = React.memo(
 
 		const rowIsSame = prevRowID === nextRowID
 		const dataIndexIsSame = prevDataIndex === nextDataIndex
-		const valueIsSame = prevValue === nextValue
+		const valueIsSame = isEqual(prevValue, nextValue)
 
 		// true -> props are equal
 		// false -> props are not equal -> update the component
+
 		const propsAreSame = rowIsSame && dataIndexIsSame && valueIsSame
 		if (!propsAreSame) {
 			console.log('Re-rendering EditableCell!')
@@ -461,10 +458,7 @@ export const checkIsIdentical = (newVal: any, oldVal: any, column: any) => {
 		// If value is not null and field type is date
 		oldVal = moment(oldVal).format('YYYY-MM-DD')
 	}
-	if (newVal !== oldVal) {
-		return false // Something changed
-	}
-	return true
+	return isEqual(newVal, oldVal)
 }
 
 const transformValueToDisplay = (cell: any, value: any) => {
