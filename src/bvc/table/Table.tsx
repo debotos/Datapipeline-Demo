@@ -80,8 +80,8 @@ export class TableBVC extends Component<tableProps, tableState> {
 		const { setting } = capabilities
 		this.setState(
 			{
-				data: data || [],
-				dataBackup: data || [],
+				data: !isEmpty(data) ? clone(data) : [],
+				dataBackup: !isEmpty(data) ? clone(data) : [],
 				tableSettings: setting.props,
 			},
 			() => this.setState({ loadingData: false })
@@ -165,7 +165,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 		this.setState({ localItemsToUpdate: {}, data: updatedData, dataBackup: updatedData, tableReRenderer: null }, () => {
 			this.setState({ tableReRenderer: shortid.generate(), updatingData: false }, this.performGlobalSearchAgain)
 			hide()
-			message.success('Changes save successfully!')
+			message.success('Successfully saved all changes!')
 		})
 	}
 
@@ -225,7 +225,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 				}
 				localItemsChanges[id] = updatedRowData
 				data[rowIndex] = updatedRowData
-				console.log('handleInlineUpdate() => ', updatedRowData)
+				// console.log('handleInlineUpdate() => ', updatedRowData)
 				return { data: [...data] }
 			},
 			() => {
