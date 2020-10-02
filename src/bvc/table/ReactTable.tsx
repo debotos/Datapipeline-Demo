@@ -1,6 +1,6 @@
 import React from 'react'
 import moment from 'moment'
-import { isArray, isEqual, uniq } from 'lodash'
+import { isArray, isEqual } from 'lodash'
 import styled from 'styled-components'
 import { useSticky } from 'react-table-sticky'
 import { Form, Button, Pagination, Popconfirm, Row, Tooltip, message } from 'antd'
@@ -279,6 +279,7 @@ const EditableCell = React.memo(
 	(cellProps: any) => {
 		// 'handleSave' is the custom function that we supplied to our table instance
 		const { value: initialValue, row, column, handleSave } = cellProps
+		const { __dirtyLocalCells = [], __dirtyLocalValues = {} } = row.original
 		const { dataIndex, field } = column
 		const [form] = Form.useForm()
 		const inputRef = React.useRef<any>()
@@ -286,16 +287,14 @@ const EditableCell = React.memo(
 		const tableCellWrapperRef = React.useRef<any>()
 		// We need to keep and update the editing state of the cell
 		const [editing, setEditing] = React.useState(false)
-		// Keep track of edited or not
-		const [__dirtyLocalCells, __setDirtyLocalCells] = React.useState(row.original.__dirtyLocalCells ?? [])
-		const [__dirtyLocalValues, __setDirtyLocalValues] = React.useState(row.original.__dirtyLocalValues ?? {})
-		const [isThisCellDirty, setIsThisCellDirty] = React.useState(__dirtyLocalCells.includes(dataIndex))
 		// We need to keep and update the value of the cell
 		const [value, setValue] = React.useState(__dirtyLocalValues[dataIndex] ?? initialValue)
+		// Keep track of edited or not
+		const [isThisCellDirty, setIsThisCellDirty] = React.useState(__dirtyLocalCells.includes(dataIndex))
 
-		// React.useEffect(() => {
-		// 	console.log(`EditableCell Rendering...`, row.index, dataIndex)
-		// })
+		React.useEffect(() => {
+			console.log(`EditableCell Rendering...`, dataIndex, row.original)
+		})
 
 		React.useEffect(() => {
 			// console.log(row.original)
@@ -322,10 +321,7 @@ const EditableCell = React.memo(
 			// eslint-disable-next-line react-hooks/exhaustive-deps
 		}, [editing])
 
-		const handleCellClick = () => {
-			console.log('row.original:', row.original)
-			_isMounted.current && !editing && setEditing(true)
-		}
+		const handleCellClick = () => _isMounted.current && !editing && setEditing(true)
 		const toggleEdit = () => _isMounted.current && setEditing(!editing)
 		const checkFieldsError = () => !!form.getFieldsError().filter(({ errors }) => errors.length).length
 
@@ -337,15 +333,7 @@ const EditableCell = React.memo(
 			if (identical) return toggleEdit()
 
 			const { id } = row.original
-			const updates: Record<string, any> = { id, [dataIndex]: newValue }
-
-			// dirty concept
-			const dirtyCells = uniq([dataIndex, ...__dirtyLocalCells])
-			updates['__dirtyLocalCells'] = dirtyCells
-			__setDirtyLocalCells(dirtyCells)
-			const dirtyValues = { ...__dirtyLocalValues, [dataIndex]: newValue }
-			updates['__dirtyLocalValues'] = dirtyValues
-			__setDirtyLocalValues(dirtyValues)
+			const updates: Record<string, any> = { id, changes: { [dataIndex]: newValue } }
 
 			handleSave(row.index, updates)
 			_isMounted.current && setValue(newValue)

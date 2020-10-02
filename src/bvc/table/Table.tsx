@@ -13,7 +13,7 @@ import {
 } from '@ant-design/icons'
 import styled from 'styled-components'
 import debounce from 'lodash/debounce'
-import { unionBy } from 'lodash'
+import { unionBy, uniq } from 'lodash'
 import matchSorter from 'match-sorter'
 
 import './table.scss'
@@ -199,16 +199,24 @@ export class TableBVC extends Component<tableProps, tableState> {
 		)
 	}
 
-	handleInlineUpdate = (rowIndex: number, updates: any) => {
-		// console.log(rowIndex, updates)
+	handleInlineUpdate = (rowIndex: number, update: any) => {
+		// console.log(rowIndex, update)
 		const localItemsChanges: Record<string, any> = {}
+		const { id, changes = {} } = update
 		this.setState(
 			(prevState) => {
 				const data = prevState.data
 				const originalRowData = data[rowIndex]
-				localItemsChanges[updates.id] = { ...originalRowData, ...updates }
-				data[rowIndex] = { ...originalRowData, ...updates }
-				console.log('handleInlineUpdate() => ', { ...originalRowData, ...updates })
+				const { __dirtyLocalCells = [], __dirtyLocalValues = {} } = originalRowData
+				const updatedRowData = {
+					...originalRowData,
+					...changes,
+					__dirtyLocalCells: uniq([...__dirtyLocalCells, ...Object.keys(changes)]),
+					__dirtyLocalValues: { ...__dirtyLocalValues, ...changes },
+				}
+				localItemsChanges[id] = updatedRowData
+				data[rowIndex] = updatedRowData
+				console.log('handleInlineUpdate() => ', updatedRowData)
 				return { data: [...data] }
 			},
 			() => {
