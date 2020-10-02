@@ -689,7 +689,11 @@ export class TableBVC extends Component<tableProps, tableState> {
 							handleDelete={this.handleDelete}
 							handleSave={this.handleInlineUpdate}
 							tableRowsReRender={this.state.tableRowsReRender}
-							setTableRowsReRender={(tableRowsReRender: boolean) => this.setState({ tableRowsReRender })}
+							reRenderTableRows={() => {
+								this.setState({ tableRowsReRender: true }, () => {
+									this.setState({ tableRowsReRender: false })
+								})
+							}}
 						/>
 					)
 				)}

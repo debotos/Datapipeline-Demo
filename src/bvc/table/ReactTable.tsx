@@ -14,17 +14,10 @@ import { getFormField } from '../../utils/getFormField'
 const { KEY_BVC_TABLE_PAGINATION_PAGE_SIZE, KEY_BVC_TABLE_PAGINATION_CURRENT_PAGE } = keys
 
 function ReactTable(props: any) {
-	const { data, tableSettings, tableRowsReRender, handleSave } = props
+	const { data, tableSettings, handleSave } = props
 	const meta = React.useMemo(() => props.meta, [props.meta])
 	const capabilities = React.useMemo(() => meta.capabilities, [meta.capabilities])
 	const { pagination } = capabilities
-
-	React.useEffect(() => {
-		if (tableRowsReRender) {
-			props.setTableRowsReRender(false)
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [tableRowsReRender])
 
 	const getColumnsDef = () => {
 		const { openEditFormDrawer, handleDelete } = props
@@ -229,13 +222,13 @@ function ReactTable(props: any) {
 								const pageIndex = page - 1
 								localStorage.setItem(KEY_BVC_TABLE_PAGINATION_CURRENT_PAGE, '' + pageIndex)
 								gotoPage(pageIndex)
-								props.setTableRowsReRender(true)
+								props.reRenderTableRows()
 							}}
 							onShowSizeChange={(current, size) => {
 								localStorage.setItem(KEY_BVC_TABLE_PAGINATION_PAGE_SIZE, '' + size)
 								setPageSize(size)
 								gotoPage(current)
-								props.setTableRowsReRender(true)
+								props.reRenderTableRows()
 							}}
 							showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
 							{...pagination}
@@ -255,7 +248,7 @@ export default React.memo(ReactTable, (prevProps: any, nextProps: any) => {
 
 	// true -> props are equal
 	// false -> props are not equal -> update the component
-	const propsAreSame = tableSettingsIsSame && prevProps.tableRowsReRender === nextProps.tableRowsReRender
+	const propsAreSame = tableSettingsIsSame && nextProps.tableRowsReRender !== true // If 'nextProps.tableRowsReRender' is true, I want a reRender
 	if (!propsAreSame) {
 		console.log('Re-rendering ReactTable!')
 	}
