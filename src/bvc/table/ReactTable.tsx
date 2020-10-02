@@ -7,16 +7,24 @@ import { Form, Button, Pagination, Popconfirm, Row, Tooltip, message } from 'ant
 import { useTable, usePagination, useSortBy, useBlockLayout, useResizeColumns } from 'react-table'
 import { DeleteOutlined, EditOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons'
 
+import keys from '../../config/keys'
 import { isEmpty, sleep } from '../../utils/helpers'
 import { getFormField } from '../../utils/getFormField'
 
-const KEY_PAGINATION_PAGE_SIZE = 'PAGINATION_PAGE_SIZE'
+const { KEY_BVC_TABLE_PAGINATION_PAGE_SIZE, KEY_BVC_TABLE_PAGINATION_CURRENT_PAGE } = keys
 
 function ReactTable(props: any) {
-	const { data, tableSettings, handleSave } = props
+	const { data, tableSettings, tableRowsReRender, handleSave } = props
 	const meta = React.useMemo(() => props.meta, [props.meta])
 	const capabilities = React.useMemo(() => meta.capabilities, [meta.capabilities])
 	const { pagination } = capabilities
+
+	React.useEffect(() => {
+		if (tableRowsReRender) {
+			props.setTableRowsReRender(false)
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [tableRowsReRender])
 
 	const getColumnsDef = () => {
 		const { openEditFormDrawer, handleDelete } = props
@@ -78,18 +86,23 @@ function ReactTable(props: any) {
 	const columns = React.useMemo(getColumnsDef, [tableSettings?.hide])
 	const tableData = React.useMemo(() => data, [data])
 	const initPageSize = React.useMemo(() => {
-		const val = localStorage.getItem(KEY_PAGINATION_PAGE_SIZE) || capabilities?.pagination?.defaultPageSize
-		if (isNaN(val)) return capabilities?.pagination?.pageSizeOptions?.[0] || 15
-		return val
+		const val = localStorage.getItem(KEY_BVC_TABLE_PAGINATION_PAGE_SIZE) || capabilities?.pagination?.defaultPageSize
+		if (val && !isNaN(val)) return parseInt(val)
+		return capabilities?.pagination?.pageSizeOptions?.[0] || 15
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
+	const getPageIndex = () => {
+		const val: any = localStorage.getItem(KEY_BVC_TABLE_PAGINATION_CURRENT_PAGE)
+		if (val && !isNaN(val)) return parseInt(val)
+		return 0
+	}
 
 	const tableInstance = useTable(
 		{
 			columns,
 			data: tableData,
 			defaultColumn,
-			initialState: { pageSize: initPageSize },
+			initialState: { pageIndex: getPageIndex(), pageSize: initPageSize },
 			handleSave,
 		},
 		useBlockLayout,
@@ -212,11 +225,17 @@ function ReactTable(props: any) {
 							showSizeChanger
 							showQuickJumper
 							current={pageIndex + 1}
-							onChange={(page) => gotoPage(page - 1)}
+							onChange={(page) => {
+								const pageIndex = page - 1
+								localStorage.setItem(KEY_BVC_TABLE_PAGINATION_CURRENT_PAGE, '' + pageIndex)
+								gotoPage(pageIndex)
+								props.setTableRowsReRender(true)
+							}}
 							onShowSizeChange={(current, size) => {
+								localStorage.setItem(KEY_BVC_TABLE_PAGINATION_PAGE_SIZE, '' + size)
 								setPageSize(size)
-								localStorage.setItem(KEY_PAGINATION_PAGE_SIZE, '' + size)
 								gotoPage(current)
+								props.setTableRowsReRender(true)
 							}}
 							showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
 							{...pagination}
@@ -236,10 +255,10 @@ export default React.memo(ReactTable, (prevProps: any, nextProps: any) => {
 
 	// true -> props are equal
 	// false -> props are not equal -> update the component
-	const propsAreSame = tableSettingsIsSame
-	// if (!propsAreSame) {
-	// 	console.log('Re-rendering EditableCell!')
-	// }
+	const propsAreSame = tableSettingsIsSame && prevProps.tableRowsReRender === nextProps.tableRowsReRender
+	if (!propsAreSame) {
+		console.log('Re-rendering ReactTable!')
+	}
 
 	return propsAreSame
 })
@@ -293,10 +312,6 @@ const EditableCell = React.memo(
 		const [isThisCellDirty, setIsThisCellDirty] = React.useState(__dirtyLocalCells.includes(dataIndex))
 
 		React.useEffect(() => {
-			console.log(`EditableCell Rendering...`, dataIndex, row.original)
-		})
-
-		React.useEffect(() => {
 			// console.log(row.original)
 			_isMounted.current = true
 
@@ -338,7 +353,7 @@ const EditableCell = React.memo(
 			handleSave(row.index, updates)
 			_isMounted.current && setValue(newValue)
 			_isMounted.current && setIsThisCellDirty(true)
-			await sleep(200) // Just for visual
+			await sleep(100) // Just for visual
 			_isMounted.current && setEditing(false)
 		}
 
@@ -415,9 +430,9 @@ const EditableCell = React.memo(
 		// true -> props are equal
 		// false -> props are not equal -> update the component
 		const propsAreSame = rowIsSame && dataIndexIsSame && valueIsSame
-		// if (!propsAreSame) {
-		// 	console.log('Re-rendering EditableCell!')
-		// }
+		if (!propsAreSame) {
+			console.log('Re-rendering EditableCell!')
+		}
 
 		return propsAreSame
 	}

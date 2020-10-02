@@ -17,12 +17,15 @@ import { unionBy, uniq } from 'lodash'
 import matchSorter from 'match-sorter'
 
 import './table.scss'
+import keys from '../../config/keys'
 import generateExcel from '../../utils/generateExcel'
 import EditForm from '../../components/EditForm'
 import AddForm from '../../components/AddForm'
 import { sleep, isEmpty } from '../../utils/helpers'
 import ReactTable from './ReactTable'
 import BulkAddTable from './BulkAddTable'
+
+const { KEY_BVC_TABLE_PAGINATION_CURRENT_PAGE } = keys
 
 type tableProps = { meta: any; data: any }
 type tableState = {
@@ -48,8 +51,9 @@ type tableState = {
 	masterFilterCriteria: any
 	settingModal: boolean
 	tableSettings: any
-	tableReRenderer?: string
 	bulkAddModal: boolean
+	tableReRenderer?: string
+	tableRowsReRender: boolean
 }
 
 export class TableBVC extends Component<tableProps, tableState> {
@@ -115,7 +119,9 @@ export class TableBVC extends Component<tableProps, tableState> {
 			bulkAddModal: false,
 			tableSettings: null,
 			tableReRenderer: shortid.generate(),
+			tableRowsReRender: false,
 		}
+		this.resetPagination()
 	}
 
 	openFilterModal = () => this.setState({ filterModal: true })
@@ -129,6 +135,9 @@ export class TableBVC extends Component<tableProps, tableState> {
 	closeEditFormDrawer = () => this.setState({ editingItemIndex: null, editFormDrawer: false, editingItemData: null })
 	openPresentationDrawer = (record: any) => this.setState({ presentationDrawerData: record, presentationDrawer: true })
 	closePresentationDrawer = () => this.setState({ presentationDrawer: false, presentationDrawerData: null })
+	resetPagination = () => {
+		localStorage.removeItem(KEY_BVC_TABLE_PAGINATION_CURRENT_PAGE)
+	}
 
 	handleCommitInlineChanges = async (e: any) => {
 		e.persist()
@@ -679,6 +688,8 @@ export class TableBVC extends Component<tableProps, tableState> {
 							openEditFormDrawer={this.openEditFormDrawer}
 							handleDelete={this.handleDelete}
 							handleSave={this.handleInlineUpdate}
+							tableRowsReRender={this.state.tableRowsReRender}
+							setTableRowsReRender={(tableRowsReRender: boolean) => this.setState({ tableRowsReRender })}
 						/>
 					)
 				)}
