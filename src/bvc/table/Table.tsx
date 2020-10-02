@@ -31,6 +31,7 @@ type tableState = {
 	localItemsToUpdate: Record<string, any>
 	loadingData: boolean
 	updatingData: boolean
+	working: boolean
 	globalSearchText: string
 	globalSearchResults: any
 	globalSearchLoading: boolean
@@ -95,6 +96,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 			localItemsToUpdate: {}, // For inline bulk edit
 			loadingData: true,
 			updatingData: false,
+			working: false,
 			globalSearchText: '',
 			globalSearchResults: [],
 			globalSearchLoading: false,
@@ -148,79 +150,134 @@ export class TableBVC extends Component<tableProps, tableState> {
 		const updatedData = unionBy(postData, this.state.data, 'id') // Ref: https://stackoverflow.com/a/39127782/8465770
 
 		// Now all set. Make ajax call with postData to save
+		console.log('PostData to commit changes:', postData)
 		await sleep(3000)
-		this.setState({ localItemsToUpdate: {}, data: updatedData, dataBackup: updatedData, updatingData: false }, () => {
+		this.setState({ localItemsToUpdate: {}, data: updatedData, dataBackup: updatedData, tableReRenderer: null }, () => {
+			this.setState({ tableReRenderer: shortid.generate(), updatingData: false }, this.performGlobalSearchAgain)
 			hide()
 			message.success('Changes save successfully!')
-			this.performGlobalSearchAgain()
 		})
 	}
 
-	handleSave = (rowIndex: number, updates: any, origin: 'inline-edit' | 'side-drawer-edit') => {
-		// console.log(rowIndex, row, origin)
+	handleSingleUpdate = async (rowIndex: number, updates: any) => {
+		// From side drawer
+		// console.log(rowIndex, updates)
+		const hide = message.loading('Update action in progress...', 0)
+		this.setState({ working: true })
 
-		if (origin === 'side-drawer-edit') {
-			// update the 'dataBackup' manually for side drawer
-			this.setState((prevState) => {
+		// Ajax req to update
+		await sleep(500)
+
+		this.setState(
+			(prevState) => {
+				const data = prevState.data
+				data[rowIndex] = { ...data[rowIndex], ...updates, __dirtyLocalCells: [] }
+
 				const dataBackup = prevState.dataBackup
-				dataBackup[rowIndex] = { ...dataBackup[rowIndex], ...updates }
-				return { dataBackup: [...dataBackup] }
-			})
-		}
+				dataBackup[rowIndex] = { ...dataBackup[rowIndex], ...updates, __dirtyLocalCells: [] }
 
-		const localItemsChanges: Record<string, any> = {}
-
-		this.setState((prevState) => {
-			const data = prevState.data
-			const originalData = data[rowIndex]
-			if (origin === 'inline-edit') {
-				localItemsChanges[updates.id] = { ...originalData, ...updates }
+				return { data: [...data], dataBackup: [...dataBackup], tableReRenderer: null }
+			},
+			() => {
+				const { localItemsToUpdate } = this.state
+				const rowID = updates.id
+				if (localItemsToUpdate && localItemsToUpdate.hasOwnProperty(rowID)) {
+					this.setState((prevState) => {
+						const localItems = prevState.localItemsToUpdate
+						delete localItems[rowID]
+						return { localItemsToUpdate: localItems }
+					})
+				}
+				this.setState({ tableReRenderer: shortid.generate() }, () => {
+					this.performGlobalSearchAgain()
+					this.setState({ working: false })
+					hide()
+					message.info('Successfully updated the record!', 1.5)
+				})
 			}
-			data[rowIndex] = { ...originalData, ...updates }
-
-			return { data: [...data] }
-		}, this.performGlobalSearchAgain)
-
-		this.setState({ localItemsToUpdate: { ...this.state.localItemsToUpdate, ...localItemsChanges } })
-
-		message.info('Changes staged for commit!', 1.5)
+		)
 	}
 
-	handleAddSingleRecord = (row: any) => {
+	handleInlineUpdate = (rowIndex: number, updates: any) => {
+		// console.log(rowIndex, updates)
+		const localItemsChanges: Record<string, any> = {}
+		this.setState(
+			(prevState) => {
+				const data = prevState.data
+				const originalRowData = data[rowIndex]
+				localItemsChanges[updates.id] = { ...originalRowData, ...updates }
+				data[rowIndex] = { ...originalRowData, ...updates }
+				return { data: [...data] }
+			},
+			() => {
+				this.setState({ localItemsToUpdate: { ...this.state.localItemsToUpdate, ...localItemsChanges } })
+				this.performGlobalSearchAgain()
+				message.info('Changes staged for commit!', 1.5)
+			}
+		)
+	}
+
+	handleAddSingleRecord = async (row: any) => {
 		// console.log(row)
-		const { data, dataBackup } = this.state
+		const hide = message.loading('Add action in progress...', 0)
+		this.setState({ working: true })
+
 		// Ajax call here
-		this.setState({ data: [row, ...data], dataBackup: [row, ...dataBackup] }, this.performGlobalSearchAgain)
-		message.success('Successfully added the record!', 1.5)
+		await sleep(500)
+
+		const { data, dataBackup } = this.state
+		this.setState({ data: [row, ...data], dataBackup: [row, ...dataBackup], tableReRenderer: null }, () => {
+			this.setState({ tableReRenderer: shortid.generate() }, () => {
+				this.performGlobalSearchAgain()
+				hide()
+				message.success('Successfully added the record!', 1.5)
+			})
+		})
 	}
 
 	handleAddNewRecords = (newRecords: any[]) => {
 		if (isEmpty(newRecords)) return
 		const updatedData = newRecords.concat(this.state.data)
-		this.setState({ data: updatedData, dataBackup: updatedData }, () => {
-			this.performGlobalSearchAgain()
-			message.success('New records saved successfully!')
+		this.setState({ data: updatedData, dataBackup: updatedData, tableReRenderer: null }, () => {
+			this.setState({ tableReRenderer: shortid.generate() }, this.performGlobalSearchAgain)
+			message.success('Successfully added the records!')
 		})
 	}
 
-	handleDelete = (rowIndex: number) => {
+	handleDelete = async (rowIndex: number, row: any) => {
+		const hide = message.loading('Delete action in progress...', 0)
+		this.setState({ working: true })
+
+		// Ajax req to delete here
+		await sleep(500)
+
 		this.setState(
 			(prevState) => {
 				const data = prevState.data
 				data.splice(rowIndex, 1)
-				return { data: [...data] }
+
+				const dataBackup = prevState.dataBackup
+				dataBackup.splice(rowIndex, 1)
+
+				return { data: [...data], dataBackup: [...dataBackup], tableReRenderer: null }
 			},
 			() => {
-				this.performGlobalSearchAgain()
-				this.setState((prevState) => {
-					const dataBackup = prevState.dataBackup
-					dataBackup.splice(rowIndex, 1)
-					return { dataBackup: [...dataBackup] }
+				const { localItemsToUpdate } = this.state
+				if (localItemsToUpdate && localItemsToUpdate.hasOwnProperty(row.id)) {
+					this.setState((prevState) => {
+						const localItems = prevState.localItemsToUpdate
+						delete localItems[row.id]
+						return { localItemsToUpdate: localItems }
+					})
+				}
+				this.setState({ tableReRenderer: shortid.generate() }, () => {
+					this.performGlobalSearchAgain()
+					this.setState({ working: false })
+					hide()
+					message.info('Successfully deleted the record!', 1.5)
 				})
 			}
 		)
-
-		message.info('Successfully deleted the record!', 1.5)
 	}
 
 	downloadExcel = () => {
@@ -335,12 +392,13 @@ export class TableBVC extends Component<tableProps, tableState> {
 			tableSettings,
 			loadingData,
 			updatingData,
+			working,
 			localItemsToUpdate,
 		} = this.state
 
 		const { meta } = this.props
 		const { capabilities } = meta
-		const actionInProgress = globalSearchLoading || loadingData || updatingData
+		const actionInProgress = globalSearchLoading || loadingData || updatingData || working
 		const commonDisableCase = false // Put logical calculation
 		const commonDisableCaseAsStr = commonDisableCase.toString()
 		const tableData = this.getData()
@@ -582,7 +640,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 							metadata={meta}
 							editingItemIndex={this.state.editingItemIndex}
 							initialValues={this.state.editingItemData}
-							handleSave={this.handleSave}
+							handleSave={this.handleSingleUpdate}
 							closeDrawer={this.closeEditFormDrawer}
 						/>
 					</Drawer>
@@ -610,7 +668,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 							tableSettings={tableSettings}
 							openEditFormDrawer={this.openEditFormDrawer}
 							handleDelete={this.handleDelete}
-							handleSave={this.handleSave}
+							handleSave={this.handleInlineUpdate}
 						/>
 					)
 				)}

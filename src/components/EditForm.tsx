@@ -7,7 +7,7 @@ type CProps = {
 	metadata: any
 	editingItemIndex?: number
 	initialValues: any
-	handleSave(rowIndex: number, row: any, origin: 'inline-edit' | 'side-drawer-edit'): void
+	handleSave(rowIndex: number, updates: any): void
 	closeDrawer(): void
 }
 
@@ -24,7 +24,7 @@ export default function EditForm(props: CProps) {
 
 	const onFinish = (values: any) => {
 		console.log('Finish:', values)
-		props.handleSave(editingItemIndex, { ...initialValues, ...values }, 'side-drawer-edit')
+		props.handleSave(editingItemIndex, { ...initialValues, ...values })
 		props.closeDrawer()
 	}
 

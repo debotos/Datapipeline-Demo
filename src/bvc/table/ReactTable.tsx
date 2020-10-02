@@ -43,7 +43,7 @@ function ReactTable(props: any) {
 										</Button>
 									)}
 									{capabilities.delete && (
-										<Popconfirm title='Sure to delete?' placement='left' onConfirm={() => handleDelete(row.index)}>
+										<Popconfirm title='Sure to delete?' placement='left' onConfirm={() => handleDelete(row.index, row.original)}>
 											<Button type='link' size='small' style={{ color: 'tomato' }} icon={<DeleteOutlined />} />
 										</Popconfirm>
 									)}
@@ -108,9 +108,9 @@ function ReactTable(props: any) {
 		state: { pageIndex },
 	} = tableInstance // For pagination
 
-	React.useEffect(() => {
-		console.log(`ReactTable Rendering...`)
-	})
+	// React.useEffect(() => {
+	// 	console.log(`ReactTable Rendering...`)
+	// })
 
 	return (
 		// apply the table props
@@ -231,18 +231,14 @@ function ReactTable(props: any) {
 }
 
 export default React.memo(ReactTable, (prevProps: any, nextProps: any) => {
-	const { data: prevData } = prevProps
-	const { data: nextData } = nextProps
-
 	const { tableSettings: prevTableSettings } = prevProps
 	const { tableSettings: nextTableSettings } = nextProps
 
-	const dataSetIsSame = prevData.length === nextData.length
 	const tableSettingsIsSame = isEqual(prevTableSettings, nextTableSettings)
-	console.log(prevData.length, nextData.length)
+
 	// true -> props are equal
 	// false -> props are not equal -> update the component
-	const propsAreSame = dataSetIsSame && tableSettingsIsSame
+	const propsAreSame = tableSettingsIsSame
 	// if (!propsAreSame) {
 	// 	console.log('Re-rendering EditableCell!')
 	// }
@@ -298,9 +294,9 @@ const EditableCell = React.memo(
 		// Keep track of edited or not
 		const [isThisCellDirty, setIsThisCellDirty] = React.useState(__dirtyLocalCells.includes(dataIndex))
 
-		React.useEffect(() => {
-			console.log(`EditableCell Rendering...`)
-		})
+		// React.useEffect(() => {
+		// 	console.log(`EditableCell Rendering...`, row.index, dataIndex)
+		// })
 
 		React.useEffect(() => {
 			_isMounted.current = true
@@ -328,11 +324,6 @@ const EditableCell = React.memo(
 			// eslint-disable-next-line react-hooks/exhaustive-deps
 		}, [editing])
 
-		React.useEffect(() => {
-			_isMounted.current && setIsThisCellDirty(__dirtyLocalCells.includes(dataIndex))
-			_isMounted.current && setValue(initialValue)
-		}, [row.id, dataIndex, initialValue, __dirtyLocalCells])
-
 		const handleCellClick = () => _isMounted.current && !editing && setEditing(true)
 		const toggleEdit = () => _isMounted.current && setEditing(!editing)
 		const checkFieldsError = () => !!form.getFieldsError().filter(({ errors }) => errors.length).length
@@ -349,7 +340,7 @@ const EditableCell = React.memo(
 			// dirty concept
 			updates['__dirtyLocalCells'] = uniq([dataIndex, ...__dirtyLocalCells])
 
-			handleSave(row.index, updates, 'inline-edit')
+			handleSave(row.index, updates)
 			_isMounted.current && setValue(newValue)
 			_isMounted.current && setIsThisCellDirty(true)
 			await sleep(200) // Just for visual
@@ -386,10 +377,7 @@ const EditableCell = React.memo(
 			}
 		}
 
-		const save = () => {
-			console.log('Submit got called!')
-			form.submit()
-		}
+		const save = () => form.submit()
 
 		const initialValues = { [dataIndex]: value }
 
@@ -400,7 +388,7 @@ const EditableCell = React.memo(
 				</Form>
 			</TableCellFrom>
 		) : (
-			<TableCellData>{transformValueToDisplay(cellProps)}</TableCellData>
+			<TableCellData>{transformValueToDisplay(cellProps, value)}</TableCellData>
 		)
 
 		return (
@@ -422,7 +410,8 @@ const EditableCell = React.memo(
 
 		const { value: prevValue } = prevProps
 		const { value: nextValue } = nextProps
-
+		console.log('I am running...')
+		console.log(prevRowID, nextRowID, prevDataIndex, nextDataIndex, prevValue, nextValue)
 		const rowIsSame = prevRowID === nextRowID
 		const dataIndexIsSame = prevDataIndex === nextDataIndex
 		const valueIsSame = prevValue === nextValue
@@ -474,8 +463,10 @@ export const checkIsIdentical = (newVal: any, oldVal: any, column: any) => {
 	return true
 }
 
-const transformValueToDisplay = (cell: any) => {
-	const { column, value = '' } = cell
+const transformValueToDisplay = (cell: any, value: any) => {
+	if (isEmpty(value)) return ''
+
+	const { column } = cell
 	const { field } = column
 	const { type, options } = field
 
@@ -496,7 +487,6 @@ const transformValueToDisplay = (cell: any) => {
 		}
 
 		case 'checkbox': {
-			if (isEmpty(value)) return ''
 			if (!isArray(value)) {
 				const option = options.find((x: any) => x.value === value)
 				if (option) {
