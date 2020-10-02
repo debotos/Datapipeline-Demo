@@ -144,6 +144,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 			const id = ids[index]
 			const row = rows[id]
 			delete row.__dirtyLocalCells
+			delete row.__dirtyLocalValues
 			postData.push(row)
 		}
 
@@ -171,10 +172,10 @@ export class TableBVC extends Component<tableProps, tableState> {
 		this.setState(
 			(prevState) => {
 				const data = prevState.data
-				data[rowIndex] = { ...data[rowIndex], ...updates, __dirtyLocalCells: [] }
+				data[rowIndex] = { ...data[rowIndex], ...updates, __dirtyLocalCells: [], __dirtyLocalValues: {} }
 
 				const dataBackup = prevState.dataBackup
-				dataBackup[rowIndex] = { ...dataBackup[rowIndex], ...updates, __dirtyLocalCells: [] }
+				dataBackup[rowIndex] = { ...dataBackup[rowIndex], ...updates, __dirtyLocalCells: [], __dirtyLocalValues: {} }
 
 				return { data: [...data], dataBackup: [...dataBackup], tableReRenderer: null }
 			},
@@ -207,6 +208,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 				const originalRowData = data[rowIndex]
 				localItemsChanges[updates.id] = { ...originalRowData, ...updates }
 				data[rowIndex] = { ...originalRowData, ...updates }
+				console.log('handleInlineUpdate() => ', { ...originalRowData, ...updates })
 				return { data: [...data] }
 			},
 			() => {

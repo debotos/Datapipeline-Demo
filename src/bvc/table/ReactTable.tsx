@@ -10,8 +10,10 @@ import { DeleteOutlined, EditOutlined, SortAscendingOutlined, SortDescendingOutl
 import { isEmpty, sleep } from '../../utils/helpers'
 import { getFormField } from '../../utils/getFormField'
 
+const KEY_PAGINATION_PAGE_SIZE = 'PAGINATION_PAGE_SIZE'
+
 function ReactTable(props: any) {
-	const { data, tableSettings } = props
+	const { data, tableSettings, handleSave } = props
 	const meta = React.useMemo(() => props.meta, [props.meta])
 	const capabilities = React.useMemo(() => meta.capabilities, [meta.capabilities])
 	const { pagination } = capabilities
@@ -71,17 +73,12 @@ function ReactTable(props: any) {
 		return value
 	}
 
-	const handleSave = React.useCallback((...args) => {
-		props.handleSave(...args)
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
-
 	// Set our editable cell renderer as the default Cell renderer
 	const defaultColumn = { minWidth: 100, maxWidth: 400, Cell: EditableCell }
 	const columns = React.useMemo(getColumnsDef, [tableSettings?.hide])
 	const tableData = React.useMemo(() => data, [data])
-	const pageSize = React.useMemo(() => {
-		const val = localStorage.getItem('PAGINATION_PAGE_SIZE') || capabilities?.pagination?.defaultPageSize
+	const initPageSize = React.useMemo(() => {
+		const val = localStorage.getItem(KEY_PAGINATION_PAGE_SIZE) || capabilities?.pagination?.defaultPageSize
 		if (isNaN(val)) return capabilities?.pagination?.pageSizeOptions?.[0] || 15
 		return val
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -92,7 +89,7 @@ function ReactTable(props: any) {
 			columns,
 			data: tableData,
 			defaultColumn,
-			initialState: { pageSize },
+			initialState: { pageSize: initPageSize },
 			handleSave,
 		},
 		useBlockLayout,
@@ -105,7 +102,7 @@ function ReactTable(props: any) {
 	const {
 		gotoPage,
 		setPageSize,
-		state: { pageIndex },
+		state: { pageSize, pageIndex },
 	} = tableInstance // For pagination
 
 	// React.useEffect(() => {
@@ -211,13 +208,14 @@ function ReactTable(props: any) {
 					<div className='table-bvc-pagination'>
 						<Pagination
 							total={data.length}
+							pageSize={pageSize}
 							showSizeChanger
 							showQuickJumper
 							current={pageIndex + 1}
 							onChange={(page) => gotoPage(page - 1)}
 							onShowSizeChange={(current, size) => {
 								setPageSize(size)
-								localStorage.setItem('PAGINATION_PAGE_SIZE', '' + size)
+								localStorage.setItem(KEY_PAGINATION_PAGE_SIZE, '' + size)
 								gotoPage(current)
 							}}
 							showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
@@ -281,7 +279,6 @@ const EditableCell = React.memo(
 	(cellProps: any) => {
 		// 'handleSave' is the custom function that we supplied to our table instance
 		const { value: initialValue, row, column, handleSave } = cellProps
-		const { __dirtyLocalCells = [] } = row.original
 		const { dataIndex, field } = column
 		const [form] = Form.useForm()
 		const inputRef = React.useRef<any>()
@@ -289,19 +286,20 @@ const EditableCell = React.memo(
 		const tableCellWrapperRef = React.useRef<any>()
 		// We need to keep and update the editing state of the cell
 		const [editing, setEditing] = React.useState(false)
-		// We need to keep and update the value of the cell
-		const [value, setValue] = React.useState(initialValue)
 		// Keep track of edited or not
+		const [__dirtyLocalCells, __setDirtyLocalCells] = React.useState(row.original.__dirtyLocalCells ?? [])
+		const [__dirtyLocalValues, __setDirtyLocalValues] = React.useState(row.original.__dirtyLocalValues ?? {})
 		const [isThisCellDirty, setIsThisCellDirty] = React.useState(__dirtyLocalCells.includes(dataIndex))
+		// We need to keep and update the value of the cell
+		const [value, setValue] = React.useState(__dirtyLocalValues[dataIndex] ?? initialValue)
 
 		// React.useEffect(() => {
 		// 	console.log(`EditableCell Rendering...`, row.index, dataIndex)
 		// })
 
 		React.useEffect(() => {
+			// console.log(row.original)
 			_isMounted.current = true
-			_isMounted.current && setIsThisCellDirty(__dirtyLocalCells.includes(dataIndex))
-			_isMounted.current && setValue(initialValue)
 
 			return () => {
 				_isMounted.current = false
@@ -324,7 +322,10 @@ const EditableCell = React.memo(
 			// eslint-disable-next-line react-hooks/exhaustive-deps
 		}, [editing])
 
-		const handleCellClick = () => _isMounted.current && !editing && setEditing(true)
+		const handleCellClick = () => {
+			console.log('row.original:', row.original)
+			_isMounted.current && !editing && setEditing(true)
+		}
 		const toggleEdit = () => _isMounted.current && setEditing(!editing)
 		const checkFieldsError = () => !!form.getFieldsError().filter(({ errors }) => errors.length).length
 
@@ -337,8 +338,14 @@ const EditableCell = React.memo(
 
 			const { id } = row.original
 			const updates: Record<string, any> = { id, [dataIndex]: newValue }
+
 			// dirty concept
-			updates['__dirtyLocalCells'] = uniq([dataIndex, ...__dirtyLocalCells])
+			const dirtyCells = uniq([dataIndex, ...__dirtyLocalCells])
+			updates['__dirtyLocalCells'] = dirtyCells
+			__setDirtyLocalCells(dirtyCells)
+			const dirtyValues = { ...__dirtyLocalValues, [dataIndex]: newValue }
+			updates['__dirtyLocalValues'] = dirtyValues
+			__setDirtyLocalValues(dirtyValues)
 
 			handleSave(row.index, updates)
 			_isMounted.current && setValue(newValue)
@@ -410,8 +417,9 @@ const EditableCell = React.memo(
 
 		const { value: prevValue } = prevProps
 		const { value: nextValue } = nextProps
-		console.log('I am running...')
-		console.log(prevRowID, nextRowID, prevDataIndex, nextDataIndex, prevValue, nextValue)
+
+		// console.log(prevRowID, nextRowID, prevDataIndex, nextDataIndex, prevValue, nextValue)
+
 		const rowIsSame = prevRowID === nextRowID
 		const dataIndexIsSame = prevDataIndex === nextDataIndex
 		const valueIsSame = prevValue === nextValue
