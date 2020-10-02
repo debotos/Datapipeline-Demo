@@ -138,6 +138,12 @@ export class TableBVC extends Component<tableProps, tableState> {
 	resetPagination = () => {
 		localStorage.removeItem(KEY_BVC_TABLE_PAGINATION_CURRENT_PAGE)
 	}
+	checkDataFilterPresent = () => {
+		const { globalSearchText, masterFilterCriteria } = this.state
+		if (isEmpty(globalSearchText) && isEmpty(masterFilterCriteria)) return false
+		return true
+	}
+	reRenderTable = () => this.setState({ tableReRenderer: null }, () => this.setState({ tableReRenderer: shortid.generate() }))
 
 	handleCommitInlineChanges = async (e: any) => {
 		e.persist()
@@ -178,6 +184,13 @@ export class TableBVC extends Component<tableProps, tableState> {
 		// Ajax req to update
 		await sleep(500)
 
+		const rowID = updates.id
+
+		if (this.checkDataFilterPresent()) {
+			// Then find the correct 'rowIndex'
+			rowIndex = this.state.data.findIndex((row: any) => row.id === rowID)
+		}
+
 		this.setState(
 			(prevState) => {
 				const data = prevState.data
@@ -190,7 +203,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 			},
 			() => {
 				const { localItemsToUpdate } = this.state
-				const rowID = updates.id
+
 				if (localItemsToUpdate && localItemsToUpdate.hasOwnProperty(rowID)) {
 					this.setState((prevState) => {
 						const localItems = prevState.localItemsToUpdate
@@ -198,6 +211,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 						return { localItemsToUpdate: localItems }
 					})
 				}
+
 				this.setState({ tableReRenderer: shortid.generate() }, () => {
 					this.performGlobalSearchAgain()
 					this.setState({ working: false })
@@ -212,6 +226,10 @@ export class TableBVC extends Component<tableProps, tableState> {
 		// console.log(rowIndex, update)
 		const localItemsChanges: Record<string, any> = {}
 		const { id, changes = {} } = update
+		if (this.checkDataFilterPresent()) {
+			// Then find the correct 'rowIndex'
+			rowIndex = this.state.data.findIndex((row: any) => row.id === id)
+		}
 		this.setState(
 			(prevState) => {
 				const data = prevState.data
@@ -270,6 +288,12 @@ export class TableBVC extends Component<tableProps, tableState> {
 		// Ajax req to delete here
 		await sleep(500)
 
+		const rowID = row.id
+		if (this.checkDataFilterPresent()) {
+			// Then find the correct 'rowIndex'
+			rowIndex = this.state.data.findIndex((row: any) => row.id === rowID)
+		}
+
 		this.setState(
 			(prevState) => {
 				const data = prevState.data
@@ -282,10 +306,10 @@ export class TableBVC extends Component<tableProps, tableState> {
 			},
 			() => {
 				const { localItemsToUpdate } = this.state
-				if (localItemsToUpdate && localItemsToUpdate.hasOwnProperty(row.id)) {
+				if (localItemsToUpdate && localItemsToUpdate.hasOwnProperty(rowID)) {
 					this.setState((prevState) => {
 						const localItems = prevState.localItemsToUpdate
-						delete localItems[row.id]
+						delete localItems[rowID]
 						return { localItemsToUpdate: localItems }
 					})
 				}
@@ -323,6 +347,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 
 	performGlobalSearch = debounce((searchText: string) => {
 		this.setState({ globalSearchText: searchText })
+		if (isEmpty(searchText)) return this.reRenderTable()
 
 		const fields = this.props.meta.capabilities.search?.fields
 		if (!fields) return
@@ -334,7 +359,10 @@ export class TableBVC extends Component<tableProps, tableState> {
 			keys: fields,
 		})
 
-		this.setState({ globalSearchResults: results, globalSearchLoading: false })
+		this.setState({ tableRowsReRender: true, globalSearchResults: results, globalSearchLoading: false }, () => {
+			this.reRenderTable()
+			this.setState({ tableRowsReRender: false })
+		})
 	}, 300)
 
 	performGlobalSearchAgain = () => {
@@ -535,7 +563,10 @@ export class TableBVC extends Component<tableProps, tableState> {
 						visible={this.state.filterModal}
 						onOk={this.closeFilterModal}
 						onCancel={() => {
-							this.setState({ masterFilterCriteria: null })
+							this.setState({ masterFilterCriteria: null, tableRowsReRender: true }, () => {
+								this.reRenderTable()
+								this.setState({ tableRowsReRender: false })
+							})
 							this.closeFilterModal()
 						}}
 						destroyOnClose={true}
@@ -579,6 +610,10 @@ export class TableBVC extends Component<tableProps, tableState> {
 												delete update[dataIndex]
 												this.setState({ masterFilterCriteria: update })
 											}
+											this.setState({ tableRowsReRender: true }, () => {
+												this.reRenderTable()
+												this.setState({ tableRowsReRender: false })
+											})
 										}}
 										className='table-bvc-master-filter-input-group'
 									/>
