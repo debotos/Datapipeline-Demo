@@ -13,7 +13,7 @@ import {
 } from '@ant-design/icons'
 import styled from 'styled-components'
 import debounce from 'lodash/debounce'
-import { unionBy, uniq } from 'lodash'
+import { isEqual, unionBy, uniq } from 'lodash'
 import matchSorter from 'match-sorter'
 
 import './table.scss'
@@ -59,20 +59,6 @@ type tableState = {
 export class TableBVC extends Component<tableProps, tableState> {
 	private globalSearchInput = React.createRef<any>()
 	searchInput: any
-
-	handleSearchBtnClick = (e: any) => {
-		const { showSearchBox } = this.state
-		const node = this.globalSearchInput.current
-
-		if (showSearchBox) {
-			// Already showing
-			this.setState({ globalSearchText: '' })
-			node && node.handleReset(e)
-		} else {
-			node && node.focus()
-		}
-		this.setState((prevState) => ({ showSearchBox: !prevState.showSearchBox }))
-	}
 
 	componentDidMount() {
 		const { data, meta } = this.props
@@ -345,9 +331,32 @@ export class TableBVC extends Component<tableProps, tableState> {
 		setTimeout(hide, 300)
 	}
 
+	handleSearchBtnClick = async (e: any) => {
+		e.persist()
+		const { showSearchBox, globalSearchText } = this.state
+		const node = this.globalSearchInput.current
+
+		if (showSearchBox) {
+			// Already showing and have searchText
+			if (globalSearchText) {
+				const hide = message.loading('Resetting search & loading all data...', 0)
+				await sleep(100)
+				setTimeout(() => {
+					this.setState({ globalSearchText: '' })
+					node && node.handleReset(e)
+					hide()
+				}, 400)
+			}
+		} else {
+			node && node.focus()
+		}
+
+		this.setState((prevState) => ({ showSearchBox: !prevState.showSearchBox }))
+	}
+
 	performGlobalSearch = debounce((searchText: string) => {
 		this.setState({ globalSearchText: searchText })
-		if (isEmpty(searchText)) return this.reRenderTable()
+		if (!searchText) this.reRenderTable()
 
 		const fields = this.props.meta.capabilities.search?.fields
 		if (!fields) return
@@ -562,7 +571,9 @@ export class TableBVC extends Component<tableProps, tableState> {
 						title='Master Filter'
 						visible={this.state.filterModal}
 						okButtonProps={{ loading: working }}
+						okText='Apply changes'
 						onOk={async () => {
+							if (isEmpty(this.state.masterFilterCriteria)) return this.closeFilterModal()
 							const hide = message.loading('Filtering data...', 0)
 							await sleep(200)
 							this.setState({ working: true, tableRowsReRender: true }, () => {
@@ -573,12 +584,18 @@ export class TableBVC extends Component<tableProps, tableState> {
 								})
 							})
 						}}
-						onCancel={() => {
-							this.setState({ masterFilterCriteria: null, tableRowsReRender: true }, () => {
+						cancelText='Discard all changes'
+						onCancel={async () => {
+							if (this.state.masterFilterCriteria === null) return this.closeFilterModal()
+							const hide = message.loading('Canceling all filter...', 0)
+							await sleep(200)
+							this.setState({ working: true, masterFilterCriteria: null, tableRowsReRender: true }, () => {
 								this.reRenderTable()
-								this.setState({ tableRowsReRender: false })
+								this.setState({ working: false, tableRowsReRender: false }, () => {
+									this.closeFilterModal()
+									hide()
+								})
 							})
-							this.closeFilterModal()
 						}}
 						destroyOnClose={true}
 						closable={false}
@@ -634,8 +651,11 @@ export class TableBVC extends Component<tableProps, tableState> {
 					<Modal
 						title='Settings'
 						visible={this.state.settingModal}
+						okText='Apply changes'
 						onOk={async () => {
-							const hide = message.loading('Processing column...', 0)
+							const tableSettings = meta.capabilities?.setting?.props
+							if (isEqual(tableSettings, this.state.tableSettings)) return this.closeSettingModal()
+							const hide = message.loading('Processing columns...', 0)
 							await sleep(200)
 							this.setState({ working: true, tableRowsReRender: true }, () => {
 								this.reRenderTable()
@@ -645,14 +665,23 @@ export class TableBVC extends Component<tableProps, tableState> {
 								})
 							})
 						}}
-						onCancel={() => {
-							this.setState({ tableSettings: meta.capabilities?.setting?.props, tableRowsReRender: true }, () => {
+						cancelText='Discard all changes'
+						onCancel={async () => {
+							const tableSettings = meta.capabilities?.setting?.props
+							if (this.state.tableSettings === null) return this.closeSettingModal()
+							const hide = message.loading('Resetting columns...', 0)
+							await sleep(200)
+							this.setState({ working: true, tableSettings, tableRowsReRender: true }, () => {
 								this.reRenderTable()
-								this.setState({ tableRowsReRender: false })
+								this.setState({ working: false, tableRowsReRender: false }, () => {
+									this.closeSettingModal()
+									hide()
+								})
 							})
-							this.closeSettingModal()
 						}}
 						destroyOnClose={true}
+						closable={false}
+						maskClosable={false}
 						style={{ top: 25 }}
 						bodyStyle={{ height: '80vh', overflow: 'scroll' }}
 					>
