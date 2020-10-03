@@ -356,7 +356,7 @@ export class TableBVC extends Component<tableProps, tableState> {
 
 	performGlobalSearch = debounce((searchText: string) => {
 		this.setState({ globalSearchText: searchText })
-		if (!searchText) this.reRenderTable()
+		if (!searchText) return this.reRenderTable()
 
 		const fields = this.props.meta.capabilities.search?.fields
 		if (!fields) return
